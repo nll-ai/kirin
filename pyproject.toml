@@ -61,7 +61,7 @@ select = ["E", "F", "I"]
 include-package-data = true
 
 [tool.setuptools.packages.find]
-where = ["gitdata"]
+where = ["."]
 
 [project]
 name = "gitdata"
