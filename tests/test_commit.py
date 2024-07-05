@@ -6,7 +6,7 @@ from gitdata.dataset import DatasetCommit
 
 
 def test_from_empty_commit(tmp_path):
-    """Tests the DatasetCommit.from_empty_commit() method."""
+    """Tests the DatasetCommit."""
     # A commit with an empty commit hash is an empty commit hash.
     # This is a special case.
     commit1 = DatasetCommit(root_dir=tmp_path, dataset_name="test_dataset")
