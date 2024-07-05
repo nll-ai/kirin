@@ -1,4 +1,4 @@
-"""Tests for the gitdata.dataset module."""
+"""Tests for the gitdata.dataset.Dataset class."""
 import random
 import string
 import tempfile
