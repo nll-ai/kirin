@@ -16,6 +16,14 @@ class Catalog:
         """Post-initialization function for the Catalog class."""
         self.datasets_dir = self.root_dir / "datasets"
 
+
+    def __len__(self) -> int:
+        """Return the number of datasets in the catalog.
+
+        :return: The number of datasets in the catalog.
+        """
+        return len(list(self.datasets_dir.iterdir()))
+
     def datasets(self) -> List[str]:
         """Return a list of the names of the datasets in the catalog.
 
