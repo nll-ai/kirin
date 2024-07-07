@@ -12,18 +12,10 @@ dependencies:
 - jupyterlab
 - pip
 - twine
-# Standard PyData stack
-- matplotlib
-- numpy
-- pandas
-- pymc
-- scikit-learn
-- scipy
-- seaborn
-- statsmodels
 # Utilities
 - pyprojroot
 - python-dotenv
+- s3fs-fuse
 # CLI development
 - typer
 - typer-cli
