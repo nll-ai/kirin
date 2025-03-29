@@ -69,7 +69,6 @@ version = "0.0.1"
 dependencies = [
     "pyprojroot",
     "python-dotenv",
-    "s3fs-fuse",
     "typer"
 ]
 readme = "README.md"
