@@ -149,3 +149,10 @@ oryx-build-commands.txt
 .DS_Store
 docs/cli.md
 data/
+
+# SQLite database
+message_log.db
+
+# pixi environments
+.pixi
+*.egg-info

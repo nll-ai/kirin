@@ -67,10 +67,10 @@ where = ["."]
 name = "gitdata"
 version = "0.0.1"
 dependencies = [
-    "matplotlib",
-    "pandas",
-    "scikit-learn",
-    "numpy",
+    "pyprojroot",
+    "python-dotenv",
+    "s3fs-fuse",
+    "typer"
 ]
 readme = "README.md"
 
@@ -91,3 +91,17 @@ gitdata = "gitdata.cli:app"
 omit = [
     "tests/*",
 ]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["osx-arm64"]
+
+[tool.pixi.pypi-dependencies]
+gitdata = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+docs = { features = ["docs"], solve-group = "default" }
+tests = { features = ["tests"], solve-group = "default" }
+
+[tool.pixi.tasks]
