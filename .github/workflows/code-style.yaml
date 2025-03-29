@@ -1,7 +1,6 @@
-# Run code style checks on each pull request.
 name: Code style checks
 
-on: [pull_request]
+on: [push, pull_request]
 
 jobs:
   linting:
@@ -9,4 +8,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+
+      - name: Setup Pixi Environment
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          cache: true
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+
       - uses: pre-commit/action@v2.0.0
