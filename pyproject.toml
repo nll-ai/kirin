@@ -69,13 +69,15 @@ version = "0.0.1"
 dependencies = [
     "pyprojroot",
     "python-dotenv",
-    "typer"
+    "typer",
+    "json5",
 ]
 readme = "README.md"
 
 [project.optional-dependencies]
 tests = [
-    "pytest"
+    "pytest",
+    "pytest-cov",
 ]
 docs = [
     "mkdocs-material",

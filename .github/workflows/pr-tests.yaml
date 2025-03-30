@@ -71,6 +71,6 @@ jobs:
         with:
           cache: true
 
-      - name: Run pyds-cli
+      - name: Run tests
         run: |
-          pixi run pyds --help
+          pixi run -e tests pytest
