@@ -46,7 +46,7 @@ jobs:
           git config --global user.name "GitHub Tester"
           git config --global user.email "github@tester.com"
 
-          pixi run test
+          pixi run -e tests pytest
 
   # This helps us check that pyproject.toml's `project` table's `dependencies`
   # are defined completely.
