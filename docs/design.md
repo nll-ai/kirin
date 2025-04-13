@@ -263,10 +263,13 @@ A laboratory scientist conducting experimental research:
        }
    )
 
-   # Add raw instrument output files
-   experiment.add_files(
-       ["spectrometer/run_001.raw", "spectrometer/run_002.raw"],
-       "Initial spectrometer runs"
+   # Commit raw instrument output files
+   experiment.commit(
+       add_files=[
+           "spectrometer/run_001.raw",
+           "spectrometer/run_002.raw"
+       ],
+       commit_message="Initial spectrometer runs"
    )
    ```
 
@@ -733,8 +736,11 @@ repo = Repository("path/to/repo", backend="local")
 # Create a dataset
 dataset = repo.create_dataset("my_dataset", "Description of my dataset")
 
-# Add files
-commit_hash = dataset.add_files(["file1.csv", "file2.json"], "Initial commit")
+# Add files and commit in a single operation
+commit_hash = dataset.commit(
+    add_files=["file1.csv", "file2.json"],
+    commit_message="Initial commit"
+)
 
 # Checkout a specific version
 dataset.checkout(commit_hash)
@@ -1042,7 +1048,7 @@ The system includes mechanisms to handle complex scenarios:
 
 ### 4.2 CLI Design
 
-The command-line interface will mirror Git's familiar commands:
+The command-line interface will mirror Git's familiar commands but with some streamlining:
 
 ```bash
 # Initialize
@@ -1051,9 +1057,14 @@ gitdata init --backend=s3 --config=s3://bucket/config.json
 # Create dataset
 gitdata dataset create my_dataset "Description of my dataset"
 
-# Add files
-gitdata add my_dataset file1.csv file2.json
-gitdata commit my_dataset -m "Initial commit"
+# Add files and commit in a single command
+gitdata commit my_dataset -a file1.csv file2.json -m "Initial commit"
+
+# Add and remove files in a single commit
+gitdata commit my_dataset -a new_file.csv -r old_file.csv -m "Replace old file with new"
+
+# To remove files only
+gitdata commit my_dataset -r obsolete_file.csv -m "Remove obsolete file"
 
 # List datasets
 gitdata list-datasets
@@ -1074,7 +1085,7 @@ gitdata log my_dataset
 gitdata usage my_dataset/file1.csv
 
 # Execute transformation scripts with lineage tracking
-gitdata run transform.py --inputs data.csv --outputs result.csv --description "Transform data" --params '{"method": "normalize"}'
+gitdata run transform.py -m "Transform data" --params '{"method": "normalize"}'
 
 # Query lineage
 gitdata lineage ancestors processed/result.csv
