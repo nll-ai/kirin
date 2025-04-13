@@ -31,6 +31,364 @@ GitData aims to provide a robust solution with the following properties:
 7. **Zero-copy operations**: Minimize data copying through memory mapping and streaming operations whenever possible
 8. **Clean API**: Provide both a programmatic API and CLI for easy integration
 
+### 1.3 Jobs to be Done
+
+Using Clayton Christensen's "Jobs to be Done" framework, we can identify the key user personas and the specific jobs they need to accomplish with GitData:
+
+#### 1.3.1 Data Scientist / ML Engineer
+
+**Jobs to be Done:**
+
+1. **Track Experiment Data**: "I need to keep track of which datasets were used in which experiments so I can reproduce my results."
+   - GitData enables this through content-addressed storage and automatic lineage tracking.
+   - Example: "When my model performed exceptionally well, I could trace back exactly which version of the dataset was used and recreate the conditions."
+
+2. **Find and Use the Right Data Version**: "I need to identify and access specific versions of datasets for training models."
+   - GitData's versioning system with explicit commits makes this possible.
+   - Example: "I needed to compare model performance on data from Q1 vs Q2, and GitData let me checkout each version effortlessly."
+
+3. **Collaborate with Team Members**: "I need to share datasets with colleagues in a way that ensures we're all using the same exact data."
+   - The content-addressed storage ensures data integrity across team members.
+   - Example: "My colleague in another country could reproduce my analysis because GitData guaranteed we had identical datasets."
+
+4. **Document Data Transformations**: "I need to track how raw data is transformed into model-ready data."
+   - The lineage tracking captures the entire transformation pipeline.
+   - Example: "When questioned about our preprocessing steps, I could show the exact sequence of transformations from raw to processed data."
+
+#### 1.3.2 Data Engineer
+
+**Jobs to be Done:**
+
+1. **Manage Data Pipelines**: "I need to ensure data pipelines produce consistent, traceable outputs."
+   - GitData's automatic tracking of inputs and outputs creates a clear audit trail.
+   - Example: "When a downstream process broke, I could trace back through the pipeline to identify which transformation introduced the issue."
+
+2. **Optimize Storage Usage**: "I need to handle large datasets efficiently without wasting storage."
+   - Content-addressed storage with deduplication and zero-copy operations reduces storage overhead.
+   - Example: "Despite having multiple versions of our 500GB dataset, we only used 600GB of storage because GitData only stored the changed portions."
+
+3. **Support Multiple Storage Solutions**: "I need to work with data across various storage systems our organization uses."
+   - The backend-agnostic design allows seamless work across storage solutions.
+   - Example: "We migrated from local storage to S3 without changing our workflows because GitData abstracted away the storage layer."
+
+4. **Ensure Data Governance**: "I need to track who accesses what data and how it's used."
+   - Usage tracking provides comprehensive audit logs.
+   - Example: "For compliance reporting, I could generate a complete report of which teams accessed sensitive datasets."
+
+#### 1.3.3 Data Team Manager / Lead
+
+**Jobs to be Done:**
+
+1. **Ensure Reproducibility**: "I need to guarantee that our team's work is reproducible for scientific integrity and audit purposes."
+   - End-to-end versioning and lineage tracking supports full reproducibility.
+   - Example: "When preparing a paper for submission, we could include GitData references that allowed reviewers to verify our results."
+
+2. **Manage Technical Debt**: "I need to understand data dependencies to prevent cascading failures when data changes."
+   - Lineage visualization helps identify dependencies.
+   - Example: "Before making a major change to our core dataset, I could see all downstream analyses that would be affected."
+
+3. **Accelerate Onboarding**: "I need new team members to quickly understand our data ecosystem."
+   - Data catalogs and lineage visualization provide a map of available data and relationships.
+   - Example: "New hires could browse our data catalog to understand available datasets and how they relate to each other."
+
+4. **Support Regulatory Compliance**: "I need to demonstrate data provenance for regulatory compliance."
+   - Complete tracking of data origins and transformations provides necessary documentation.
+   - Example: "During an audit, we could show the complete history of how customer data was processed and anonymized."
+
+#### 1.3.4 MLOps Engineer
+
+**Jobs to be Done:**
+
+1. **Deploy Models with Data Dependencies**: "I need to package models with their exact data dependencies."
+   - Content-addressed references ensure exact data versions are specified.
+   - Example: "When deploying to production, our CI/CD pipeline could pull the exact data version used in validation."
+
+2. **Monitor Data Drift**: "I need to compare production data against training data to detect drift."
+   - Versioned datasets make it easy to compare current data with historical versions.
+   - Example: "Our monitoring system could compare daily production inputs against the original training data to detect shifts."
+
+3. **Implement Data-Centric CI/CD**: "I need automated tests that verify data quality across pipeline stages."
+   - Lineage tracking enables validation at each transformation step.
+   - Example: "Our CI pipeline ran tests against each version of the data to ensure transformations preserved key statistical properties."
+
+4. **Roll Back Data When Needed**: "I need to quickly revert to previous data versions if issues arise."
+   - Version control provides the ability to checkout any previous state.
+   - Example: "When we discovered an issue with the latest data processing, we could roll back to the previous version in minutes while debugging."
+
+#### 1.3.5 Laboratory Scientist
+
+**Jobs to be Done:**
+
+1. **Ensure Experimental Reproducibility**: "I need to document and version all data associated with my laboratory experiments."
+   - Content-addressed storage ensures data integrity and versioning for all experimental outputs.
+   - Example: "Six months after publication, we could precisely reconstruct our experimental dataset when responding to reviewer questions."
+
+2. **Track Sample Lineage**: "I need to track how samples and their derivatives are processed through multiple analyses."
+   - File lineage features provide a complete chain of custody for samples through the analytical pipeline.
+   - Example: "When an unusual pattern appeared in our final results, we could trace it back to the original sample and specific processing steps."
+
+3. **Manage Collaborative Research**: "I need to share experimental data with collaborators while maintaining version control."
+   - Dataset versioning and backend-agnostic storage facilitate secure collaboration.
+   - Example: "Our collaborators at another institution could access the exact data versions we used, ensuring consistent analysis across research groups."
+
+4. **Document Methods and Parameters**: "I need to record the exact parameters used for each instrument and analysis."
+   - Transformation tracking records all processing parameters alongside the data.
+   - Example: "Years later, we could verify the exact instrument settings and analysis parameters used to generate each data file."
+
+### 1.4 Feature-to-Job Mapping
+
+The table below maps GitData features to the specific jobs they help users accomplish:
+
+| GitData Feature | Primary Jobs Addressed | Key User Personas |
+|----------------|------------------------|-------------------|
+| **Content-Addressed Storage** | • Track Experiment Data<br>• Find and Use the Right Data Version<br>• Collaborate with Team Members<br>• Ensure Reproducibility<br>• Ensure Experimental Reproducibility | Data Scientist, ML Engineer, Team Lead, Laboratory Scientist |
+| **Automatic Lineage Tracking** | • Document Data Transformations<br>• Manage Data Pipelines<br>• Track Sample Lineage<br>• Manage Technical Debt | Data Scientist, Data Engineer, Laboratory Scientist |
+| **Backend-Agnostic Storage** | • Support Multiple Storage Solutions<br>• Optimize Storage Usage<br>• Manage Collaborative Research | Data Engineer, MLOps Engineer, Laboratory Scientist |
+| **Dataset Versioning** | • Deploy Models with Data Dependencies<br>• Roll Back Data When Needed<br>• Monitor Data Drift<br>• Ensure Experimental Reproducibility | MLOps Engineer, Data Engineer, Laboratory Scientist |
+| **Usage Tracking** | • Document Data Usage<br>• Ensure Data Governance<br>• Support Regulatory Compliance<br>• Document Methods and Parameters | Team Lead, Laboratory Scientist |
+| **Zero-Copy Operations** | • Optimize Storage Usage<br>• Handle Large Datasets | Data Engineer, MLOps Engineer |
+| **Data Catalog** | • Accelerate Onboarding<br>• Find the Right Data Version<br>• Manage Collaborative Research | Team Lead, Data Scientist, Laboratory Scientist |
+| **Path-Based API** | • Implement Data-Centric CI/CD<br>• Manage Data Pipelines | MLOps Engineer, Data Engineer |
+
+### 1.5 User Workflows
+
+To illustrate how GitData supports common workflows, here are examples of how different users accomplish their tasks:
+
+#### Model Development Workflow
+
+A data scientist developing a new model:
+
+1. **Discover and Access Data**:
+   ```python
+   # Browse the catalog to find relevant datasets
+   datasets = repo.list_datasets(tags=["customer", "transactions"])
+
+   # Checkout a specific version for reproducibility
+   transactions = repo.get_dataset("transactions").checkout("2023-q2")
+   ```
+
+2. **Prepare and Transform Data**:
+   ```python
+   # All transformations are automatically tracked
+   with repo.track_processing(description="Preprocess transactions"):
+       # Read input data
+       df = pd.read_csv(repo.Path("transactions/daily.csv"))
+
+       # Transform data
+       df_clean = clean_transactions(df)
+
+       # Save processed version
+       df_clean.to_csv(repo.Path("transactions/clean.csv"))
+   ```
+
+3. **Train Model with Version Awareness**:
+   ```python
+   # Train using specific data versions, capturing exact data dependencies
+   model = train_model(repo.Path("transactions/clean.csv"))
+
+   # Record model with data lineage
+   with repo.track_processing(description="Train transaction model"):
+       model.save(repo.Path("models/transaction_classifier.pkl"))
+   ```
+
+4. **Document and Share Results**:
+   ```python
+   # Get full lineage information for reporting
+   data_lineage = repo.get_file_ancestors("models/transaction_classifier.pkl")
+
+   # Generate visualizations of data flow
+   repo.visualize_lineage("models/transaction_classifier.pkl", output="report.svg")
+   ```
+
+#### Data Pipeline Workflow
+
+A data engineer building an ETL pipeline:
+
+1. **Set Up Extract Stage**:
+   ```python
+   # Extract from source and track provenance
+   with repo.track_processing(description="Extract from OLTP"):
+       extract_data_from_source(
+           source_db="production_db",
+           output_path=repo.Path("raw/daily_extract.parquet")
+       )
+   ```
+
+2. **Implement Transform Stage**:
+   ```python
+   # Transform with full tracking
+   with repo.track_processing(description="Transform daily data"):
+       # Use zero-copy operations for large files
+       with repo.Path("raw/daily_extract.parquet").open_stream() as stream:
+           # Process incrementally
+           result = transform_stream(stream)
+           result.to_parquet(repo.Path("transformed/daily.parquet"))
+   ```
+
+3. **Execute Load Stage**:
+   ```python
+   # Load with tracking
+   with repo.track_processing(description="Load to data warehouse"):
+       load_to_warehouse(
+           source=repo.Path("transformed/daily.parquet"),
+           target="warehouse.daily_facts"
+       )
+   ```
+
+4. **Verify Pipeline Integrity**:
+   ```python
+   # Verify the complete lineage from source to destination
+   lineage = repo.get_file_ancestors("transformed/daily.parquet")
+
+   # Check for data quality at each stage
+   for stage in lineage:
+       validate_data_quality(stage)
+   ```
+
+#### Laboratory Research Workflow
+
+A laboratory scientist conducting experimental research:
+
+1. **Capture Experimental Data**:
+   ```python
+   # Create a dataset for the experiment with metadata
+   experiment = repo.create_dataset(
+       "experiment_2023_06",
+       description="Protein binding kinetics experiment",
+       metadata={
+           "researcher": "Dr. Smith",
+           "equipment": "Mass Spectrometer Model XYZ",
+           "temperature": "22C",
+           "protocol_version": "v2.3"
+       }
+   )
+
+   # Add raw instrument output files
+   experiment.add_files(
+       ["spectrometer/run_001.raw", "spectrometer/run_002.raw"],
+       "Initial spectrometer runs"
+   )
+   ```
+
+2. **Process and Analyze Experimental Data**:
+   ```python
+   # All analysis steps are automatically tracked
+   with repo.track_processing(
+       description="Mass spec data processing",
+       parameters={"baseline_correction": "adaptive", "peak_detection": "centroid"}
+   ):
+       # Read raw data
+       raw_data = read_spectrometer_data(repo.Path("spectrometer/run_001.raw"))
+
+       # Process data with analysis software
+       processed_data = process_spectrometer_data(raw_data)
+
+       # Save processed results
+       processed_data.to_csv(repo.Path("processed/peaks_001.csv"))
+
+       # Generate visualization
+       plot_spectrum(processed_data).savefig(repo.Path("figures/spectrum_001.png"))
+   ```
+
+3. **Generate Publication-Ready Results**:
+   ```python
+   # Combine and analyze processed data
+   with repo.track_processing(description="Binding kinetics analysis"):
+       # Load all processed runs
+       runs = []
+       for file_path in repo.Path("processed").glob("peaks_*.csv"):
+           runs.append(pd.read_csv(file_path))
+
+       # Calculate binding kinetics
+       kinetics = calculate_binding_parameters(runs)
+
+       # Save final results
+       kinetics.to_csv(repo.Path("results/binding_kinetics.csv"))
+
+       # Generate publication figure
+       create_publication_figure(kinetics).savefig(
+           repo.Path("figures/figure_3_binding_curve.png"), dpi=300
+       )
+   ```
+
+4. **Document and Share Research**:
+   ```python
+   # Generate complete provenance for publication
+   lineage = repo.get_file_ancestors("results/binding_kinetics.csv")
+
+   # Create research package for collaborators
+   package = repo.create_snapshot(
+       files=["results/*", "figures/*", "processed/*"],
+       include_lineage=True,
+       output="research_package.zip"
+   )
+
+   # Generate methods section with exact parameters
+   methods_text = repo.generate_methods_text(
+       "results/binding_kinetics.csv",
+       template="templates/methods_section.md"
+   )
+   ```
+
+#### Laboratory Comparative Analysis Workflow
+
+A laboratory scientist comparing results across multiple experiments:
+
+1. **Identify Relevant Experiments**:
+   ```python
+   # Find all experiments with a specific characteristic
+   experiments = repo.search_datasets(
+       metadata={"protocol_version": "v2.*"},
+       tags=["protein-binding"]
+   )
+
+   # Create a collection of related experiments
+   collection = repo.create_collection(
+       "binding_kinetics_comparison",
+       datasets=[exp.name for exp in experiments]
+   )
+   ```
+
+2. **Standardize and Compare Results**:
+   ```python
+   # Process data from multiple experiments with standard methods
+   with repo.track_processing(description="Comparative analysis"):
+       # Collect results from each experiment
+       all_results = []
+       for experiment in collection.datasets:
+           # Access the specific version used in the experiment
+           kinetics_file = experiment.get_file("results/binding_kinetics.csv")
+           all_results.append(pd.read_csv(kinetics_file))
+
+       # Perform comparative analysis
+       comparison = compare_experimental_results(all_results)
+
+       # Save comparative results
+       comparison.to_csv(repo.Path("comparative/binding_comparison.csv"))
+
+       # Generate comparison visualization
+       plot_comparison(comparison).savefig(
+           repo.Path("comparative/binding_comparison.png")
+       )
+   ```
+
+3. **Validate Protocol Improvements**:
+   ```python
+   # Analyze protocol version impact
+   protocol_impact = repo.analyze_metadata_impact(
+       collection=collection,
+       target_file="results/binding_kinetics.csv",
+       groupby="protocol_version",
+       metrics=["affinity", "specificity"]
+   )
+
+   # Generate protocol evolution report
+   generate_protocol_report(
+       protocol_impact,
+       output=repo.Path("reports/protocol_evolution.pdf")
+   )
+   ```
+
 ## 2. System Architecture
 
 ### 2.1 Core Components
