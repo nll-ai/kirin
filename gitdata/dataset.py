@@ -580,7 +580,9 @@ class Dataset:
         # Initialize branch manager first
         logger.info(f"PERF: Initializing branch manager for {self.dataset_dir}")
         start_time = time.time()
-        self.branch_manager = BranchManager(self.dataset_dir, self.fs)
+        self.branch_manager = BranchManager(
+            self.dataset_dir, self.fs, self.dataset_name
+        )
         end_time = time.time()
         logger.info(
             f"PERF: Branch manager initialization took {end_time - start_time:.3f}s"

@@ -1,30 +1,104 @@
 """Custom model code for gitdata."""
 
 import fsspec
+from typing import Optional
 
+from loguru import logger
+
+from .local_state import LocalStateManager
 from .utils import strip_protocol
 
 
 class BranchManager:
-    """Manages branches for a dataset using Git's approach.
+    """Manages branches for a dataset using distributed local state.
 
-    Branches are stored as individual files in refs/heads/ directory,
-    each containing a commit hash. The current branch is stored in HEAD file.
-    This mirrors Git's internal structure exactly.
+    This class now uses local state management (like git's .git/HEAD and
+    .git/refs/heads/) while keeping actual files and commit data on remote
+    storage. This follows git's distributed model where each local copy
+    maintains its own state.
     """
 
-    def __init__(self, dataset_dir: str, fs: fsspec.AbstractFileSystem):
+    def __init__(
+        self,
+        dataset_dir: str,
+        fs: fsspec.AbstractFileSystem,
+        dataset_name: str,
+        local_state_dir: Optional[str] = None,
+    ):
         self.dataset_dir = dataset_dir
         self.fs = fs
-        self.refs_dir = f"{dataset_dir}/refs/heads"
-        self.head_file = f"{dataset_dir}/HEAD"
+        self.dataset_name = dataset_name
 
-        # Ensure refs directory exists
-        self.fs.makedirs(strip_protocol(self.refs_dir), exist_ok=True)
+        # Initialize local state manager
+        self.local_state = LocalStateManager(dataset_name, local_state_dir)
 
-    def _get_branch_file(self, branch_name: str) -> str:
-        """Get the file path for a branch reference."""
-        return f"{self.refs_dir}/{branch_name}"
+        # Remote paths for reference (but we don't store state there anymore)
+        self.remote_refs_dir = f"{dataset_dir}/refs/heads"
+        self.remote_head_file = f"{dataset_dir}/HEAD"
+
+        # Ensure remote refs directory exists (for backward compatibility)
+        self.fs.makedirs(strip_protocol(self.remote_refs_dir), exist_ok=True)
+
+        # Sync local state with remote state if remote has branches
+        self._sync_with_remote_if_needed()
+
+    def _sync_with_remote_if_needed(self):
+        """Sync local state with remote state if remote has branches but local doesn't."""
+        try:
+            # Check if remote has branches
+            remote_branches = self._get_remote_branches()
+            local_branches = self.local_state.list_branches()
+
+            # If remote has branches but local doesn't, sync from remote
+            if remote_branches and not local_branches:
+                logger.info(
+                    f"Syncing local state with remote branches: {remote_branches}"
+                )
+                self._sync_from_remote(remote_branches)
+        except Exception as e:
+            logger.warning(f"Failed to sync with remote state: {e}")
+
+    def _get_remote_branches(self) -> list[str]:
+        """Get branches from remote storage."""
+        try:
+            files = self.fs.glob(f"{strip_protocol(self.remote_refs_dir)}/*")
+            return [f.split("/")[-1] for f in files if not f.endswith("/")]
+        except Exception:
+            return []
+
+    def _get_remote_branch_commit(self, branch_name: str) -> Optional[str]:
+        """Get commit hash for a branch from remote storage."""
+        try:
+            branch_file = f"{self.remote_refs_dir}/{branch_name}"
+            with self.fs.open(strip_protocol(branch_file), "r") as f:
+                return f.read().strip()
+        except Exception:
+            return None
+
+    def _get_remote_head(self) -> Optional[str]:
+        """Get HEAD from remote storage."""
+        try:
+            with self.fs.open(strip_protocol(self.remote_head_file), "r") as f:
+                content = f.read().strip()
+                if content.startswith("ref: refs/heads/"):
+                    return content.split("/")[-1]
+                return None
+        except Exception:
+            return None
+
+    def _sync_from_remote(self, remote_branches: list[str]):
+        """Sync local state from remote branches."""
+        for branch_name in remote_branches:
+            commit_hash = self._get_remote_branch_commit(branch_name)
+            if commit_hash:
+                self.local_state.set_branch_commit(branch_name, commit_hash)
+                logger.info(f"Synced branch '{branch_name}' to {commit_hash[:8]}")
+
+        # Set current branch from remote HEAD
+        remote_head = self._get_remote_head()
+        if remote_head and remote_head in remote_branches:
+            self.local_state.set_current_branch(remote_head)
+            logger.info(f"Set current branch to '{remote_head}' from remote")
 
     def create_branch(self, name: str, commit_hash: str) -> str:
         """Create a new branch pointing to the specified commit.
@@ -39,22 +113,7 @@ class BranchManager:
         Raises:
             ValueError: If branch already exists or name is invalid
         """
-        branch_file = self._get_branch_file(name)
-
-        if name == "main" and self.fs.exists(strip_protocol(branch_file)):
-            raise ValueError(
-                "Cannot create a branch named 'main' - it's the default branch"
-            )
-
-        # Check if branch already exists
-        if self.fs.exists(strip_protocol(branch_file)):
-            raise ValueError(f"Branch '{name}' already exists")
-
-        # Create the branch file with the commit hash
-        with self.fs.open(strip_protocol(branch_file), "w") as f:
-            f.write(commit_hash)
-
-        return commit_hash
+        return self.local_state.create_branch(name, commit_hash)
 
     def get_branch_commit(self, name: str) -> str:
         """Get the commit hash that a branch points to.
@@ -68,13 +127,10 @@ class BranchManager:
         Raises:
             ValueError: If branch doesn't exist
         """
-        branch_file = self._get_branch_file(name)
-
-        if not self.fs.exists(strip_protocol(branch_file)):
+        commit_hash = self.local_state.get_branch_commit(name)
+        if commit_hash is None:
             raise ValueError(f"Branch '{name}' does not exist")
-
-        with self.fs.open(strip_protocol(branch_file), "r") as f:
-            return f.read().strip()
+        return commit_hash
 
     def update_branch(self, name: str, commit_hash: str):
         """Update a branch to point to a new commit.
@@ -86,13 +142,9 @@ class BranchManager:
         Raises:
             ValueError: If branch doesn't exist
         """
-        branch_file = self._get_branch_file(name)
-
-        if not self.fs.exists(strip_protocol(branch_file)):
+        if not self.local_state.branch_exists(name):
             raise ValueError(f"Branch '{name}' does not exist")
-
-        with self.fs.open(strip_protocol(branch_file), "w") as f:
-            f.write(commit_hash)
+        self.local_state.set_branch_commit(name, commit_hash)
 
     def delete_branch(self, name: str):
         """Delete a branch.
@@ -106,12 +158,7 @@ class BranchManager:
         if name == "main":
             raise ValueError("Cannot delete the main branch")
 
-        branch_file = self._get_branch_file(name)
-
-        if not self.fs.exists(strip_protocol(branch_file)):
-            raise ValueError(f"Branch '{name}' does not exist")
-
-        self.fs.rm(strip_protocol(branch_file))
+        self.local_state.delete_branch(name)
 
     def list_branches(self) -> list[str]:
         """List all branch names.
@@ -119,12 +166,7 @@ class BranchManager:
         Returns:
             List of branch names
         """
-        try:
-            # List all files in the refs/heads directory
-            files = self.fs.glob(f"{strip_protocol(self.refs_dir)}/*")
-            return [f.split("/")[-1] for f in files if not f.endswith("/")]
-        except Exception:
-            return []
+        return list(self.local_state.list_branches())
 
     def get_current_branch(self) -> str:
         """Get the name of the current branch.
@@ -132,19 +174,7 @@ class BranchManager:
         Returns:
             Name of the current branch (defaults to 'main' if HEAD doesn't exist)
         """
-        try:
-            with self.fs.open(strip_protocol(self.head_file), "r") as f:
-                content = f.read().strip()
-                # Handle both "ref: refs/heads/branch_name" and direct commit hashes
-                if content.startswith("ref: refs/heads/"):
-                    return content.split("/")[-1]
-                else:
-                    # If HEAD contains a commit hash directly, we're in detached HEAD
-                    # state. For now, we'll treat this as main branch
-                    return "main"
-        except FileNotFoundError:
-            # Default to main branch if HEAD doesn't exist
-            return "main"
+        return self.local_state.get_current_branch()
 
     def set_current_branch(self, name: str):
         """Set the current branch.
@@ -155,14 +185,9 @@ class BranchManager:
         Raises:
             ValueError: If branch doesn't exist
         """
-        # Verify the branch exists
-        branch_file = self._get_branch_file(name)
-        if not self.fs.exists(strip_protocol(branch_file)):
+        if not self.local_state.branch_exists(name):
             raise ValueError(f"Branch '{name}' does not exist")
-
-        # Update HEAD to point to the branch
-        with self.fs.open(strip_protocol(self.head_file), "w") as f:
-            f.write(f"ref: refs/heads/{name}")
+        self.local_state.set_current_branch(name)
 
     def get_current_commit(self) -> str:
         """Get the commit hash of the current branch.
@@ -170,8 +195,10 @@ class BranchManager:
         Returns:
             Commit hash of the current branch
         """
-        current_branch = self.get_current_branch()
-        return self.get_branch_commit(current_branch)
+        commit_hash = self.local_state.get_current_commit()
+        if commit_hash is None:
+            raise ValueError("No current commit found")
+        return commit_hash
 
     def update_current_branch(self, commit_hash: str):
         """Update the current branch to point to a new commit.

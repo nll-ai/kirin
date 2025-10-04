@@ -107,6 +107,26 @@ components. When working on the web UI:
 - Test UI changes to ensure they match the overall design language
 - **Run markdownlint on any Markdown file that is created or edited**
 
+### Linting Guidelines
+
+**IMPORTANT**: Only fix linting errors that cannot be automatically fixed by
+linters like ruff. The project has pre-commit hooks that handle automatic
+linting fixes (formatting, import sorting, etc.). Focus on:
+
+- Logic errors and bugs that require manual intervention
+- Issues that cannot be automatically resolved by linters
+- Code quality problems that need human judgment
+
+**Do NOT fix**:
+
+- Import sorting (handled by isort/ruff)
+- Code formatting (handled by black/ruff)
+- Line length issues (handled by formatters)
+- Whitespace and spacing (handled by formatters)
+
+The pre-commit hooks will automatically handle these formatting issues, so focus
+on substantive code improvements.
+
 ## Logging Standards
 
 **CRITICAL**: This project uses **loguru** for all logging throughout the
@@ -392,6 +412,40 @@ When writing tests for the project:
   Use `def test_function_name():` pattern
 - **No test classes** - Avoid `class TestSomething:` patterns. Use
   function-based tests with descriptive names
+
+#### Pytest-Style Test Functions
+
+**PREFERRED**: Use pytest-style function-based tests instead of unittest-style classes:
+
+```python
+# ✅ CORRECT - Pytest function style
+def test_local_state_initialization():
+    """Test that local state initializes correctly."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        lsm = LocalStateManager("test-dataset", temp_dir)
+        assert lsm.get_current_branch() == "main"
+
+def test_branch_operations():
+    """Test basic branch operations."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        lsm = LocalStateManager("test-dataset", temp_dir)
+        # Test implementation...
+```
+
+```python
+# ❌ AVOID - Unittest class style
+class TestLocalStateManager:
+    def test_local_state_initialization(self):
+        # Test implementation...
+```
+
+**Benefits of pytest-style functions**:
+
+- **Simpler structure** - No class overhead, just functions
+- **Easier to read** - More straightforward test organization
+- **Better pytest integration** - Follows pytest best practices
+- **Cleaner output** - Test names are more direct in pytest output
+- **Easier maintenance** - Less boilerplate code
 
 ### Documentation and Examples
 
