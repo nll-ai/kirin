@@ -893,6 +893,166 @@ async def delete_branch(request: Request):
         return HTMLResponse(content=error_html, status_code=500)
 
 
+# Merge operations
+@app.get("/merge", response_class=HTMLResponse)
+async def merge_page(request: Request):
+    """Show merge interface."""
+    if current_dataset is None:
+        raise HTTPException(status_code=400, detail="No dataset loaded")
+
+    try:
+        branches = current_dataset.list_branches()
+        current_branch = current_dataset.get_current_branch()
+
+        return templates.TemplateResponse(
+            "merge.html",
+            {
+                "request": request,
+                "branches": branches,
+                "current_branch": current_branch,
+                "dataset_name": current_dataset.dataset_name,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error loading merge page: {e}", exc_info=True)
+        error_html = (
+            f'<div class="alert alert-error">Error loading merge page: {str(e)}</div>'
+        )
+        return HTMLResponse(content=error_html, status_code=500)
+
+
+@app.post("/merge/preview")
+async def preview_merge(request: Request):
+    """Preview merge conflicts without performing the merge."""
+    if current_dataset is None:
+        raise HTTPException(status_code=400, detail="No dataset loaded")
+
+    form = await request.form()
+    source_branch = form.get("source_branch")
+    target_branch = form.get("target_branch")
+
+    if not source_branch or not target_branch:
+        raise HTTPException(
+            status_code=400, detail="Both source and target branches are required"
+        )
+
+    try:
+        # Get commit hashes for both branches
+        source_commit_hash = current_dataset.get_branch_commit(source_branch)
+        target_commit_hash = current_dataset.get_branch_commit(target_branch)
+
+        # Load the commits
+        from .dataset import DatasetCommit
+
+        source_commit = DatasetCommit.from_json(
+            root_dir=current_dataset.root_dir,
+            dataset_name=current_dataset.dataset_name,
+            version_hash=source_commit_hash,
+            fs=current_dataset.fs,
+        )
+        target_commit = DatasetCommit.from_json(
+            root_dir=current_dataset.root_dir,
+            dataset_name=current_dataset.dataset_name,
+            version_hash=target_commit_hash,
+            fs=current_dataset.fs,
+        )
+
+        # Detect conflicts
+        conflicts = current_dataset._detect_merge_conflicts(
+            source_commit, target_commit
+        )
+
+        # Get file lists for both branches
+        source_files = source_commit._file_dict()
+        target_files = target_commit._file_dict()
+
+        return templates.TemplateResponse(
+            "merge_preview.html",
+            {
+                "request": request,
+                "source_branch": source_branch,
+                "target_branch": target_branch,
+                "source_commit": source_commit_hash[:8],
+                "target_commit": target_commit_hash[:8],
+                "conflicts": conflicts,
+                "source_files": source_files,
+                "target_files": target_files,
+                "dataset_name": current_dataset.dataset_name,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error previewing merge: {e}", exc_info=True)
+        error_html = (
+            f'<div class="alert alert-error">Error previewing merge: {str(e)}</div>'
+        )
+        return HTMLResponse(content=error_html, status_code=500)
+
+
+@app.post("/merge/execute")
+async def execute_merge(request: Request):
+    """Execute the merge operation."""
+    if current_dataset is None:
+        raise HTTPException(status_code=400, detail="No dataset loaded")
+
+    form = await request.form()
+    source_branch = form.get("source_branch")
+    target_branch = form.get("target_branch")
+    strategy = form.get("strategy", "auto")
+
+    if not source_branch or not target_branch:
+        raise HTTPException(
+            status_code=400, detail="Both source and target branches are required"
+        )
+
+    try:
+        # Execute the merge
+        result = current_dataset.merge(source_branch, target_branch, strategy)
+
+        if result["success"]:
+            # Clear commit cache since we created a new commit
+            cache_key = (current_dataset.dataset_name, current_dataset.root_dir)
+            if cache_key in commit_cache:
+                del commit_cache[cache_key]
+                logger.info(
+                    f"Cleared commit cache for dataset: {current_dataset.dataset_name}"
+                )
+
+            success_html = f"""
+            <div class="alert alert-success">
+                <h3>Merge Successful!</h3>
+                <p>Successfully merged '{source_branch}' into '{target_branch}'</p>
+                <p>Merge commit: {result["merge_commit"][:8]}</p>
+            </div>
+            <script>
+                // Redirect to dataset view
+                window.location.href = '/dataset-view';
+            </script>
+            """
+            return HTMLResponse(content=success_html, status_code=200)
+        else:
+            # Merge requires manual resolution
+            error_html = f"""
+            <div class="alert alert-warning">
+                <h3>Manual Resolution Required</h3>
+                <p>Merge conflicts detected. Please resolve conflicts manually.</p>
+                <p>Conflicts: {len(result["conflicts"])} files</p>
+            </div>
+            """
+            return HTMLResponse(content=error_html, status_code=400)
+
+    except ValueError as e:
+        error_html = (
+            f'<div class="alert alert-error">Error merging branches: {str(e)}</div>'
+        )
+        return HTMLResponse(content=error_html, status_code=400)
+    except Exception as e:
+        logger.error(f"Error executing merge: {e}", exc_info=True)
+        error_html = (
+            f'<div class="alert alert-error">Error executing merge: {str(e)}</div>'
+        )
+        return HTMLResponse(content=error_html, status_code=500)
+
+
 def run_server(
     dataset_url: str = None,
     dataset_name: str = None,

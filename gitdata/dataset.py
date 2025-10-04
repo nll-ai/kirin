@@ -1,5 +1,8 @@
 """Implementation for the Dataset and DatasetCommit classes."""
 
+import os
+import shutil
+import tempfile
 from dataclasses import dataclass, field
 from datetime import datetime
 from hashlib import sha256
@@ -331,12 +334,25 @@ class DatasetCommit:
         # i.e. which files are going to be present.
 
         hash_hexes = []
+        # Start with existing file hashes
+        hash_hexes.extend(self.file_hashes)
+
         # For each file, create the hash directory and copy the file to it
         if add_files is not None:
             if isinstance(add_files, (str, Path)):
                 add_files = [add_files]
             for filepath in add_files:
                 filepath_str = str(filepath)
+                filename = Path(filepath).name
+
+                # Check if this file already exists in the dataset
+                # If it does, we need to remove the old version first
+                if filename in self._file_dict():
+                    old_file_path = self._file_dict()[filename]
+                    old_hash = old_file_path.split("/")[-2]  # Extract hash from path
+                    if old_hash in hash_hexes:
+                        hash_hexes.remove(old_hash)
+
                 # Detect the source filesystem
                 # (files could be local or from another cloud)
                 source_fs = get_filesystem(filepath_str)
@@ -346,14 +362,11 @@ class DatasetCommit:
                 file_hash_dir = f"{self.data_dir}/{hash_hex}"
                 self.fs.makedirs(strip_protocol(file_hash_dir), exist_ok=True)
                 # Copy the file to the destination
-                filename = Path(filepath).name
                 dest_path = f"{file_hash_dir}/{filename}"
                 # Use put_file for cross-filesystem copying
                 with source_fs.open(strip_protocol(filepath_str), "rb") as src:
                     with self.fs.open(strip_protocol(dest_path), "wb") as dst:
                         dst.write(src.read())
-
-        hash_hexes.extend(self.file_hashes)
 
         # Finally, compute the hash of the removed files
         # and remove them from the hash_hexes
@@ -693,6 +706,8 @@ class Dataset:
         # Update the current branch to point to the new commit
         self.branch_manager.update_current_branch(new_commit.version_hash)
 
+        return new_commit.version_hash
+
     def metadata(self) -> dict:
         """Return the metadata for the dataset.
 
@@ -1019,6 +1034,247 @@ class Dataset:
             The commit hash the branch points to
         """
         return self.branch_manager.get_branch_commit(name)
+
+    def merge(
+        self, source_branch: str, target_branch: str = None, strategy: str = "auto"
+    ) -> dict:
+        """Merge one branch into another.
+
+        Args:
+            source_branch: The branch to merge from
+            target_branch: The branch to merge into (defaults to current branch)
+            strategy: Conflict resolution strategy ("auto", "ours", "theirs", "manual")
+
+        Returns:
+            Dictionary with merge result information including conflicts if any
+
+        Raises:
+            ValueError: If branches don't exist or merge is not possible
+        """
+        if target_branch is None:
+            target_branch = self.get_current_branch()
+
+        # Validate branches exist
+        if source_branch not in self.list_branches():
+            raise ValueError(f"Source branch '{source_branch}' does not exist")
+        if target_branch not in self.list_branches():
+            raise ValueError(f"Target branch '{target_branch}' does not exist")
+
+        # Get commit hashes for both branches
+        source_commit_hash = self.get_branch_commit(source_branch)
+        target_commit_hash = self.get_branch_commit(target_branch)
+
+        # Load the commits
+        source_commit = DatasetCommit.from_json(
+            root_dir=self.root_dir,
+            dataset_name=self.dataset_name,
+            version_hash=source_commit_hash,
+            fs=self.fs,
+        )
+        target_commit = DatasetCommit.from_json(
+            root_dir=self.root_dir,
+            dataset_name=self.dataset_name,
+            version_hash=target_commit_hash,
+            fs=self.fs,
+        )
+
+        # Detect conflicts at file level
+        conflicts = self._detect_merge_conflicts(source_commit, target_commit)
+
+        result = {
+            "source_branch": source_branch,
+            "target_branch": target_branch,
+            "source_commit": source_commit_hash,
+            "target_commit": target_commit_hash,
+            "conflicts": conflicts,
+            "strategy": strategy,
+        }
+
+        # If there are conflicts and strategy is not manual, resolve them
+        if conflicts and strategy != "manual":
+            resolved_files = self._resolve_conflicts(
+                conflicts, strategy, source_commit, target_commit
+            )
+            result["resolved_files"] = resolved_files
+
+            # Create merge commit
+            merge_commit_hash = self._create_merge_commit(
+                source_commit, target_commit, resolved_files, conflicts
+            )
+            result["merge_commit"] = merge_commit_hash
+
+            # Update target branch to point to merge commit
+            self.branch_manager.create_branch(
+                f"{target_branch}_backup", target_commit_hash
+            )
+            self.branch_manager.set_current_branch(target_branch)
+            branch_file = self.branch_manager._get_branch_file(target_branch)
+            with self.fs.open(strip_protocol(branch_file), "w") as f:
+                f.write(merge_commit_hash)
+
+            result["success"] = True
+        elif conflicts and strategy == "manual":
+            result["success"] = False
+            result["requires_manual_resolution"] = True
+        else:
+            # No conflicts, create merge commit
+            merge_commit_hash = self._create_merge_commit(
+                source_commit, target_commit, {}, []
+            )
+            result["merge_commit"] = merge_commit_hash
+            result["success"] = True
+
+        return result
+
+    def _detect_merge_conflicts(
+        self, source_commit: DatasetCommit, target_commit: DatasetCommit
+    ) -> list:
+        """Detect file-level conflicts between two commits.
+
+        Args:
+            source_commit: The source commit
+            target_commit: The target commit
+
+        Returns:
+            List of conflict information for files that exist in both commits
+            with different content
+        """
+        conflicts = []
+
+        # Get file dictionaries for both commits
+        source_files = source_commit._file_dict()
+        target_files = target_commit._file_dict()
+
+        # Find files that exist in both commits
+        common_files = set(source_files.keys()) & set(target_files.keys())
+
+        for filename in common_files:
+            source_path = source_files[filename]
+            target_path = target_files[filename]
+
+            # Extract content hashes from paths
+            source_hash = source_path.split("/")[-2]  # Second to last component
+            target_hash = target_path.split("/")[-2]
+
+            # If hashes are different, we have a conflict
+            if source_hash != target_hash:
+                conflicts.append(
+                    {
+                        "filename": filename,
+                        "source_hash": source_hash,
+                        "target_hash": target_hash,
+                        "source_path": source_path,
+                        "target_path": target_path,
+                    }
+                )
+
+        return conflicts
+
+    def _resolve_conflicts(
+        self,
+        conflicts: list,
+        strategy: str,
+        source_commit: DatasetCommit,
+        target_commit: DatasetCommit,
+    ) -> dict:
+        """Resolve conflicts using the specified strategy.
+
+        Args:
+            conflicts: List of conflict information
+            strategy: Resolution strategy ("ours", "theirs")
+            source_commit: Source commit
+            target_commit: Target commit
+
+        Returns:
+            Dictionary mapping filenames to chosen file paths
+        """
+        resolved_files = {}
+
+        for conflict in conflicts:
+            filename = conflict["filename"]
+
+            if strategy == "ours":
+                # Keep target branch version
+                resolved_files[filename] = conflict["target_path"]
+            elif strategy == "theirs":
+                # Keep source branch version
+                resolved_files[filename] = conflict["source_path"]
+            else:
+                # Default to target branch version
+                resolved_files[filename] = conflict["target_path"]
+
+        return resolved_files
+
+    def _create_merge_commit(
+        self,
+        source_commit: DatasetCommit,
+        target_commit: DatasetCommit,
+        resolved_files: dict,
+        conflicts: list,
+    ) -> str:
+        """Create a merge commit combining files from both branches.
+
+        Args:
+            source_commit: Source commit
+            target_commit: Target commit
+            resolved_files: Files resolved from conflicts
+            conflicts: List of conflicts
+
+        Returns:
+            Hash of the created merge commit
+        """
+        # Get file dictionaries
+        source_files = source_commit._file_dict()
+        target_files = target_commit._file_dict()
+
+        # Start with target branch files
+        merged_files = target_files.copy()
+
+        # Add files from source branch that don't exist in target
+        for filename, file_path in source_files.items():
+            if filename not in merged_files:
+                merged_files[filename] = file_path
+
+        # Override with resolved files
+        for filename, file_path in resolved_files.items():
+            merged_files[filename] = file_path
+
+        # Create merge commit message
+        commit_message = (
+            f"Merge branch '{source_commit.dataset_name}' "
+            f"into {target_commit.dataset_name}"
+        )
+        if conflicts:
+            commit_message += f"\n\nResolved {len(conflicts)} conflicts"
+
+        # Create a new commit with the merged files
+        # We need to create temporary files for the merge commit
+        temp_dir = tempfile.mkdtemp()
+        try:
+            # Copy all merged files to temporary directory
+            for filename, file_path in merged_files.items():
+                temp_file_path = f"{temp_dir}/{filename}"
+                # Copy file from source to temp location
+                with self.fs.open(strip_protocol(file_path), "rb") as src:
+                    with open(temp_file_path, "wb") as dst:
+                        dst.write(src.read())
+
+            # Create merge commit using the Dataset's commit method
+            # First, switch to target branch
+            self.checkout(target_commit.version_hash)
+
+            # Create the merge commit
+            merge_commit_hash = self.commit(
+                commit_message=commit_message,
+                add_files=[f"{temp_dir}/{f}" for f in merged_files.keys()],
+            )
+
+            return merge_commit_hash
+
+        finally:
+            # Clean up temporary directory
+            if temp_dir and os.path.exists(temp_dir):
+                shutil.rmtree(temp_dir)
 
 
 class DatasetError(Exception):

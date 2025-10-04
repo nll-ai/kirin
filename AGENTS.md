@@ -4,27 +4,36 @@ This document provides guidelines for AI agents working on the GitData project.
 
 ## Core Philosophy: Git for Data
 
-**GitData is "git" for data** - this application follows git conventions and workflows for data management. This means:
+**GitData is "git" for data** - this application follows git conventions and
+workflows for data management. This means:
 
-- **Staging Changes**: All changes must be staged before committing (no direct modifications)
+- **Staging Changes**: All changes must be staged before committing (no direct
+  modifications)
 - **Commit Messages**: Every commit requires a meaningful commit message
 - **Atomic Operations**: Changes are grouped into atomic commits
-- **Version Control**: Full history tracking with branching and tagging capabilities
-- **No Direct Removal**: Files cannot be directly removed - they must be staged for removal and committed with a message
+- **Version Control**: Full history tracking with branching and tagging
+  capabilities
+- **No Direct Removal**: Files cannot be directly removed - they must be staged
+  for removal and committed with a message
 
 ### Git Conventions to Follow
 
-1. **Staging Before Committing**: Users must stage changes (add/remove files) before committing
-2. **Meaningful Commit Messages**: Every commit requires a descriptive message explaining the changes
+1. **Staging Before Committing**: Users must stage changes (add/remove files)
+   before committing
+2. **Meaningful Commit Messages**: Every commit requires a descriptive message
+   explaining the changes
 3. **Atomic Commits**: Each commit should represent a logical unit of work
-4. **No Direct File Operations**: Never allow direct file removal without staging and committing
-5. **Branching and Tagging**: Support for git-like branching and tagging workflows
+4. **No Direct File Operations**: Never allow direct file removal without
+   staging and committing
+5. **Branching and Tagging**: Support for git-like branching and tagging
+   workflows
 6. **History Preservation**: Maintain complete history of all changes
 
 ### UI/UX Implications
 
 - **Staging UI**: Provide clear visual indicators for staged changes
-- **Commit Button**: Primary action that requires both staged changes and commit message
+- **Commit Button**: Primary action that requires both staged changes and commit
+  message
 - **No Direct Actions**: Remove buttons that bypass the staging/commit workflow
 - **Clear Workflow**: Guide users through the stage → commit → push workflow
 
@@ -32,10 +41,13 @@ This document provides guidelines for AI agents working on the GitData project.
 
 ### UI Framework: shadcn/ui
 
-This project uses **shadcn/ui** as the design system for all user interface components. When working on the web UI:
+This project uses **shadcn/ui** as the design system for all user interface
+components. When working on the web UI:
 
-- **Use shadcn/ui components and styling patterns** - All UI elements should follow shadcn/ui design principles
-- **CSS Variables** - The project uses CSS custom properties defined in the `:root` selector for consistent theming:
+- **Use shadcn/ui components and styling patterns** - All UI elements should
+  follow shadcn/ui design principles
+- **CSS Variables** - The project uses CSS custom properties defined in the
+  `:root` selector for consistent theming:
   - `--background`, `--foreground` for text and backgrounds
   - `--card`, `--card-foreground` for panel backgrounds
   - `--primary`, `--primary-foreground` for primary actions
@@ -93,6 +105,7 @@ This project uses **shadcn/ui** as the design system for all user interface comp
 - Use the established component classes and CSS variables
 - Follow the responsive design patterns used throughout the application
 - Test UI changes to ensure they match the overall design language
+- **Run markdownlint on any Markdown file that is created or edited**
 
 ## Static File Serving
 
@@ -221,6 +234,7 @@ The commit endpoint supports multiple operation types:
 - **No operations**: Properly rejected with clear error message
 
 **Implementation Details**:
+
 - `files: list[UploadFile] = File(default=[])` - File uploads are optional
 - `remove_files: list[str] = Form([])` - File removals are optional
 - Validation ensures at least one operation is specified
@@ -278,13 +292,16 @@ The project includes a Marimo notebook at `notebooks/prototype.py` that serves a
 - **Visualization**: Commit history and dataset exploration
 
 **Notebook Guidelines**:
+
 - **Keep it updated** - Add new capabilities and examples to the notebook
 - **Use real examples** - Show actual use cases, not just toy examples
 - **Document patterns** - Include comments explaining the GitData patterns
-- **Test regularly** - Use `uvx marimo check notebooks/prototype.py` to validate the notebook
+- **Test regularly** - Use `uvx marimo check notebooks/prototype.py` to validate
+  the notebook
 - **Interactive demos** - Make it runnable and educational
 
 **Notebook Validation**:
+
 ```bash
 # Check notebook for issues
 uvx marimo check notebooks/prototype.py
@@ -297,17 +314,110 @@ uvx marimo run notebooks/prototype.py
 
 When writing tests for the project:
 
-- **Always write tests in the test suite** - Place test files in the `/tests/` directory following the existing naming conventions
-- **Use the test environment** - Always run tests with `pixi run -e tests pytest` or `pixi run -e tests pytest tests/test_filename.py`
-- **Test new functionality immediately** - Write tests for new features before or alongside implementation
-- **Follow existing test patterns** - Use the same structure and naming conventions as existing tests in the test suite
-- **Use pytest function style only** - Write tests as functions, not classes. Use `def test_function_name():` pattern
-- **No test classes** - Avoid `class TestSomething:` patterns. Use function-based tests with descriptive names
+- **Always write tests in the test suite** - Place test files in the `/tests/`
+  directory following the existing naming conventions
+- **Use the test environment** - Always run tests with
+  `pixi run -e tests pytest` or `pixi run -e tests pytest tests/test_filename.py`
+- **Test new functionality immediately** - Write tests for new features before
+  or alongside implementation
+- **Follow existing test patterns** - Use the same structure and naming
+  conventions as existing tests in the test suite
+- **Use pytest function style only** - Write tests as functions, not classes.
+  Use `def test_function_name():` pattern
+- **No test classes** - Avoid `class TestSomething:` patterns. Use
+  function-based tests with descriptive names
 
 ### Documentation and Examples
 
-- **Tests are the primary demonstration** - Tests serve as the main way to show functionality and usage patterns
-- **No example scripts needed** - Do not create standalone example scripts to demonstrate functionality
-- **Comprehensive test coverage** - Write tests that cover both basic usage and edge cases
-- **Test documentation** - Use descriptive test names and docstrings to explain what each test demonstrates
-- **Real-world scenarios** - Write tests that reflect actual usage patterns and workflows
+- **Tests are the primary demonstration** - Tests serve as the main way to show
+  functionality and usage patterns
+- **No example scripts needed** - Do not create standalone example scripts to
+  demonstrate functionality
+- **Comprehensive test coverage** - Write tests that cover both basic usage and
+  edge cases
+- **Test documentation** - Use descriptive test names and docstrings to explain
+  what each test demonstrates
+- **Real-world scenarios** - Write tests that reflect actual usage patterns and
+  workflows
+
+## Documentation Standards
+
+### Markdown Style Guidelines
+
+All Markdown documentation in the project must follow **Markdownlint** rules for consistency and quality. This ensures:
+
+- **Consistent formatting** across all documentation files
+- **Improved readability** for developers and contributors
+- **Automated linting** can catch style issues early
+- **Professional appearance** in rendered documentation
+
+**Required**: All Markdown files must pass Markdownlint validation with zero errors.
+
+**Installation and Usage**:
+
+- Use `pixi global install markdownlint-cli` for installation
+- Run `markdownlint <filename>` on any Markdown file before committing
+- All documentation changes must pass markdownlint validation
+
+**Key Markdownlint Rules to Follow**:
+
+- Use consistent heading hierarchy (no skipped levels)
+- Use proper list formatting (consistent bullet points or numbers)
+- Wrap lines at 80 characters for readability
+- Use proper link formatting with descriptive text
+- Ensure consistent spacing around headers and lists
+- Use proper code block formatting with language specification
+- Avoid trailing whitespace and multiple consecutive blank lines
+
+**Validation**:
+
+```bash
+# Install markdownlint using pixi (recommended)
+pixi global install markdownlint-cli
+
+# Alternative: Install using npm
+npm install -g markdownlint-cli
+
+# Check all Markdown files
+markdownlint docs/*.md
+
+# Check specific file
+markdownlint docs/design.md
+```
+
+**Required Workflow**: Run markdownlint on any Markdown file that is created or edited before committing changes.
+
+**Common Issues to Avoid**:
+
+- ❌ Inconsistent heading levels (skipping from H1 to H3)
+- ❌ Long lines without proper wrapping
+- ❌ Inconsistent list formatting
+- ❌ Missing language specification in code blocks
+- ❌ Trailing whitespace
+- ❌ Multiple consecutive blank lines
+
+**Examples**:
+
+```markdown
+<!-- Good: Proper heading hierarchy -->
+# Main Title
+## Section
+### Subsection
+
+<!-- Bad: Skipped heading level -->
+# Main Title
+### Subsection (skipped H2)
+
+<!-- Good: Proper code block -->
+```python
+def example_function():
+    return "Hello, World!"
+```
+
+<!-- Bad: Missing language specification -->
+```python
+def example_function():
+    return "Hello, World!"
+```
+
+```
