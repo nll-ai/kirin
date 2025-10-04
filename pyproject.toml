@@ -113,3 +113,6 @@ docs = { features = ["docs"], solve-group = "default" }
 tests = { features = ["tests"], solve-group = "default" }
 
 [tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+loguru = ">=0.7.3,<0.8"

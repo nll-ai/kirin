@@ -1,11 +1,11 @@
 """Web UI for gitdata using FastAPI and HTMX."""
 
-import logging
 import os
 import random
 import shutil
 import tempfile
 import time
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Optional
 
@@ -13,6 +13,7 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from loguru import logger
 
 from gitdata.dataset import (
     Dataset,
@@ -20,12 +21,35 @@ from gitdata.dataset import (
     strip_protocol,
 )
 
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+# Configure loguru
+logger.remove()  # Remove default handler
+logger.add(
+    lambda msg: print(msg, end=""),
+    format=(
+        "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+        "<level>{level: <8}</level> | "
+        "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
+        "<level>{message}</level>"
+    ),
+    level="INFO",
 )
-logger = logging.getLogger(__name__)
+
+
+@contextmanager
+def perf_timer(operation_name: str, logger_instance=None):
+    """Context manager for timing operations with detailed logging."""
+    if logger_instance is None:
+        logger_instance = logger
+
+    start_time = time.time()
+    logger_instance.info(f"PERF: Starting {operation_name}")
+
+    try:
+        yield
+    finally:
+        end_time = time.time()
+        duration = end_time - start_time
+        logger_instance.info(f"PERF: Completed {operation_name} in {duration:.3f}s")
 
 
 # Create FastAPI app
@@ -51,7 +75,11 @@ current_dataset: Optional[Dataset] = None
 
 # Commit history cache: {(dataset_name, root_dir): (commits_list, timestamp)}
 commit_cache = {}
-CACHE_TTL = 300  # 5 minutes cache
+CACHE_TTL = 1800  # 30 minutes cache (increased from 5 minutes)
+
+# File dictionary cache: {(dataset_name, root_dir, commit_hash): (file_dict, timestamp)}
+file_dict_cache = {}
+FILE_CACHE_TTL = 600  # 10 minutes cache
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -86,11 +114,9 @@ async def load_dataset(request: Request):
 
     try:
         logger.info(f"Initializing Dataset object for '{dataset_name}'")
-        current_dataset = Dataset(root_dir=dataset_url, dataset_name=dataset_name)
-        logger.info(
-            f"Successfully loaded dataset '{dataset_name}' "
-            f"with {len(current_dataset.current_commit.file_hashes)} files"
-        )
+        with perf_timer(f"Dataset initialization for '{dataset_name}'"):
+            current_dataset = Dataset(root_dir=dataset_url, dataset_name=dataset_name)
+        logger.info(f"Successfully loaded dataset '{dataset_name}'")
 
         # Redirect to the direct dataset URL for bookmarkability
         from urllib.parse import quote
@@ -138,13 +164,19 @@ async def dataset_direct(
             )
 
     try:
-        # Load the dataset
-        logger.info(f"Loading dataset via direct URL: {dataset_name} from {url}")
-        current_dataset = Dataset(root_dir=url, dataset_name=dataset_name)
-        logger.info(
-            f"Dataset '{dataset_name}' loaded successfully "
-            f"with {len(current_dataset.current_commit.file_hashes)} files"
-        )
+        # Check if we already have this dataset loaded
+        if (
+            current_dataset
+            and current_dataset.dataset_name == dataset_name
+            and current_dataset.root_dir == url
+        ):
+            logger.info(f"Reusing already loaded dataset: {dataset_name}")
+        else:
+            # Load the dataset
+            logger.info(f"Loading dataset via direct URL: {dataset_name} from {url}")
+            with perf_timer(f"Dataset loading for '{dataset_name}' from {url}"):
+                current_dataset = Dataset(root_dir=url, dataset_name=dataset_name)
+            logger.info(f"Dataset '{dataset_name}' loaded successfully")
 
         # If commit specified, checkout that commit
         if commit:
@@ -175,7 +207,8 @@ async def dataset_view(request: Request):
     try:
         # Get all commits (cached)
         logger.info(f"Fetching commits for dataset '{current_dataset.dataset_name}'")
-        all_commits = get_all_commits(current_dataset)
+        with perf_timer(f"Commits loading for '{current_dataset.dataset_name}'"):
+            all_commits = get_all_commits(current_dataset)
         logger.info(f"Found {len(all_commits)} commits total")
 
         # Show only first 5 commits initially
@@ -183,20 +216,27 @@ async def dataset_view(request: Request):
         has_more = len(all_commits) > 5
         logger.info(f"Showing {len(initial_commits)} initial commits")
 
-        # Get files from current commit
+        # Get files from current commit (using cached file dict)
         files = []
         if current_dataset.current_commit.file_hashes:
             logger.info(
                 f"Fetching file list for current commit "
                 f"({current_dataset.current_version_hash()[:8]})"
             )
-            file_dict = current_dataset.file_dict
-            files = [{"name": name, "path": path} for name, path in file_dict.items()]
+            with perf_timer(
+                f"File list loading for commit {current_dataset.current_version_hash()[:8]}"
+            ):
+                file_dict = get_cached_file_dict(current_dataset)
+                files = [
+                    {"name": name, "path": path} for name, path in file_dict.items()
+                ]
             logger.info(f"Found {len(files)} files in current commit")
         else:
             logger.info("Current commit has no files")
 
-        return templates.TemplateResponse(
+        logger.info(f"PERF: Rendering dataset view template")
+        start_time = time.time()
+        response = templates.TemplateResponse(
             "dataset_view.html",
             {
                 "request": request,
@@ -210,6 +250,9 @@ async def dataset_view(request: Request):
                 "commits_loaded": len(initial_commits),
             },
         )
+        end_time = time.time()
+        logger.info(f"PERF: Template rendering took {end_time - start_time:.3f}s")
+        return response
     except Exception as e:
         logger.error(f"Error loading dataset view: {e}", exc_info=True)
         raise HTTPException(
@@ -269,17 +312,18 @@ async def get_commit_files(request: Request, commit_hash: str):
             f"hashes={current_dataset.current_commit.file_hashes}"
         )
 
-        # Get files
+        # Get files using cached file dictionary
         files = []
         if current_dataset.current_commit.file_hashes:
             logger.info(f"Listing files for commit {commit_hash[:8]}")
             import time
 
             start_time = time.time()
-            file_dict = current_dataset.file_dict
+            file_dict = get_cached_file_dict(current_dataset, commit_hash)
             end_time = time.time()
             logger.info(
-                f"File dict retrieval took {end_time - start_time:.3f}s for commit {commit_hash[:8]}"
+                f"File dict retrieval took {end_time - start_time:.3f}s "
+                f"for commit {commit_hash[:8]}"
             )
             files = [{"name": name, "path": path} for name, path in file_dict.items()]
             logger.info(
@@ -409,7 +453,8 @@ async def commit_files(
 ):
     """Add files and commit them to the dataset."""
     logger.info(
-        f"Adding {len(files)} files, removing {len(remove_files)} files with message: {commit_message}"
+        f"Adding {len(files)} files, removing {len(remove_files)} files "
+        f"with message: {commit_message}"
     )
     if current_dataset is None:
         logger.warning("Attempted to commit files but no dataset is loaded")
@@ -449,7 +494,8 @@ async def commit_files(
 
                 # Commit changes to dataset
                 logger.info(
-                    f"Committing {len(temp_paths)} files to add, {len(remove_files)} files to remove"
+                    f"Committing {len(temp_paths)} files to add, "
+                    f"{len(remove_files)} files to remove"
                 )
                 current_dataset.commit(
                     commit_message=commit_message,
@@ -462,7 +508,8 @@ async def commit_files(
                 if cache_key in commit_cache:
                     del commit_cache[cache_key]
                     logger.info(
-                        f"Cleared commit cache for dataset: {current_dataset.dataset_name}"
+                        f"Cleared commit cache for dataset: "
+                        f"{current_dataset.dataset_name}"
                     )
             finally:
                 # Clean up temporary directory
@@ -471,7 +518,8 @@ async def commit_files(
         else:
             # No files to upload, just commit removals
             logger.info(
-                f"Committing {len(temp_paths)} files to add, {len(remove_files)} files to remove"
+                f"Committing {len(temp_paths)} files to add, "
+                f"{len(remove_files)} files to remove"
             )
             current_dataset.commit(
                 commit_message=commit_message,
@@ -495,6 +543,36 @@ async def commit_files(
 
         logger.info(f"Successfully committed changes: {', '.join(action_summary)}")
 
+        # Clear caches after successful commit
+        cache_key = (current_dataset.dataset_name, current_dataset.root_dir)
+        if cache_key in commit_cache:
+            del commit_cache[cache_key]
+            logger.info(
+                f"Cleared commit cache for dataset: {current_dataset.dataset_name}"
+            )
+
+        # Clear file dict cache for this dataset
+        keys_to_remove = [key for key in file_dict_cache.keys() if key[:2] == cache_key]
+        for key in keys_to_remove:
+            del file_dict_cache[key]
+        if keys_to_remove:
+            logger.info(
+                f"Cleared {len(keys_to_remove)} file dict cache entries "
+                f"for dataset: {current_dataset.dataset_name}"
+            )
+
+        # Clear dataset's internal caches
+        if hasattr(current_dataset, "_commits_data_cache"):
+            current_dataset._commits_data_cache = None
+            logger.info(
+                f"Cleared commits data cache for dataset: {current_dataset.dataset_name}"
+            )
+        if hasattr(current_dataset, "_latest_version_hash_cache"):
+            current_dataset._latest_version_hash_cache = None
+            logger.info(
+                f"Cleared latest version hash cache for dataset: {current_dataset.dataset_name}"
+            )
+
         # Return success message
         success_html = f"""
         <div class="bg-green-50 border border-green-200 rounded-md p-4">
@@ -503,7 +581,10 @@ async def commit_files(
                     <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20"
                          fill="currentColor">
                         <path fill-rule="evenodd"
-                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 "
+                              "00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 "
+                              "00-1.414 1.414l2 2a1 1 0 "
+                              "001.414 0l4-4z"
                               clip-rule="evenodd" />
                     </svg>
                 </div>
@@ -522,9 +603,27 @@ async def commit_files(
                             View Dataset →
                         </a>
                     </div>
+                    <div class="mt-3 text-sm text-green-600">
+                        <p id="redirect-notification">Redirecting to dataset in <span id="countdown">5</span> seconds...</p>
+                    </div>
                 </div>
             </div>
         </div>
+        <script>
+            let countdown = 5;
+            const countdownElement = document.getElementById('countdown');
+            const redirectNotification = document.getElementById('redirect-notification');
+
+            const timer = setInterval(() => {{
+                countdown--;
+                countdownElement.textContent = countdown;
+
+                if (countdown <= 0) {{
+                    clearInterval(timer);
+                    window.location.href = '/dataset-view';
+                }}
+            }}, 1000);
+        </script>
         """
         return HTMLResponse(content=success_html, status_code=200)
 
@@ -674,21 +773,21 @@ def get_all_commits(dataset: Dataset, use_cache: bool = True) -> list:
     try:
         dataset_path = strip_protocol(dataset.dataset_dir)
         logger.debug(f"Searching for commit.json files in: {dataset_path}")
-        jsons = dataset.fs.glob(f"{dataset_path}/*/commit.json")
-        if not jsons:
+
+        # Use cached commits data to avoid duplicate file reads
+        logger.info(f"PERF: Getting cached commits data for {dataset.dataset_name}")
+        start_time = time.time()
+        commits_dict = dataset._get_commits_data()
+        end_time = time.time()
+        logger.info(
+            f"PERF: Getting cached commits data took {end_time - start_time:.3f}s"
+        )
+
+        if not commits_dict:
             logger.info("No commits found in dataset")
             return []
 
-        logger.debug(f"Found {len(jsons)} commit.json files")
-
-        # Build commit information with parent-child relationships
-        commits_dict = {}
-        for json_file in jsons:
-            with dataset.fs.open(json_file, "r") as f:
-                import json5 as json
-
-                data = json.loads(f.read())
-                commits_dict[data["version_hash"]] = data
+        logger.debug(f"Found {len(commits_dict)} commits")
 
         logger.debug(f"Parsed {len(commits_dict)} commits")
 
@@ -736,6 +835,62 @@ def get_all_commits(dataset: Dataset, use_cache: bool = True) -> list:
     except DatasetNoCommitsError:
         logger.info("Dataset has no commits yet")
         return []
+
+
+def get_cached_file_dict(dataset: Dataset, commit_hash: str = None) -> dict:
+    """Get file dictionary with caching to improve performance.
+
+    :param dataset: The dataset to get files from
+    :param commit_hash: Optional commit hash to get files from specific commit
+    :return: Dictionary mapping filenames to file paths
+    """
+    if commit_hash is None:
+        commit_hash = dataset.current_version_hash()
+
+    cache_key = (dataset.dataset_name, dataset.root_dir, commit_hash)
+
+    # Check cache first
+    if cache_key in file_dict_cache:
+        cached_dict, timestamp = file_dict_cache[cache_key]
+        age = time.time() - timestamp
+        if age < FILE_CACHE_TTL:
+            logger.debug(
+                f"Using cached file dict for {dataset.dataset_name} "
+                f"commit {commit_hash[:8]} (age: {age:.1f}s)"
+            )
+            return cached_dict
+        else:
+            logger.debug(f"File dict cache expired for {dataset.dataset_name}")
+
+    logger.debug(
+        f"Building file dict for {dataset.dataset_name} commit {commit_hash[:8]}"
+    )
+
+    try:
+        # Get file dictionary from dataset
+        logger.info(f"PERF: Building file dict for commit {commit_hash[:8]}")
+        start_time = time.time()
+
+        if commit_hash == dataset.current_version_hash():
+            file_dict = dataset.file_dict
+        else:
+            # Get file dict for specific commit
+            commit = dataset.current_commit
+            dataset.checkout(commit_hash)
+            file_dict = dataset.file_dict
+            dataset.checkout(commit.version_hash)  # Restore original commit
+
+        end_time = time.time()
+        logger.info(f"PERF: File dict building took {end_time - start_time:.3f}s")
+
+        # Cache the results
+        file_dict_cache[cache_key] = (file_dict, time.time())
+        logger.debug(f"Cached file dict with {len(file_dict)} files")
+
+        return file_dict
+    except Exception as e:
+        logger.error(f"Error building file dict: {e}")
+        return {}
 
 
 # Branch management routes

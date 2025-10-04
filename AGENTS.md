@@ -107,6 +107,42 @@ components. When working on the web UI:
 - Test UI changes to ensure they match the overall design language
 - **Run markdownlint on any Markdown file that is created or edited**
 
+## Logging Standards
+
+**CRITICAL**: This project uses **loguru** for all logging throughout the codebase. Never use the standard Python `logging` module.
+
+### Logging Requirements
+
+- **Always use loguru**: Import with `from loguru import logger`
+- **Never use standard logging**: Do not use `import logging` or `logging.getLogger()`
+- **Consistent formatting**: Use the configured loguru format for all log messages
+- **Performance logging**: Use `PERF:` prefix for performance-related log messages
+
+### Implementation Pattern
+
+```python
+# ✅ CORRECT - Use loguru
+from loguru import logger
+
+logger.info("This is an info message")
+logger.error("This is an error message")
+logger.info("PERF: Operation completed in 0.123s")
+
+# ❌ WRONG - Don't use standard logging
+import logging
+logger = logging.getLogger(__name__)
+```
+
+### Configuration
+
+The web UI configures loguru with a specific format that includes:
+- Timestamp in green
+- Log level
+- Module, function, and line number in cyan
+- Message content
+
+All new code must follow this logging standard to maintain consistency across the project.
+
 ## Static File Serving
 
 The application is configured to serve static files from the `/gitdata/static/` directory:

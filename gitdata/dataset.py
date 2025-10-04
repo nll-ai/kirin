@@ -3,6 +3,7 @@
 import os
 import shutil
 import tempfile
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from hashlib import sha256
@@ -11,6 +12,7 @@ from typing import List, Optional
 
 import fsspec
 import json5 as json
+from loguru import logger
 
 from .models import BranchManager
 from .utils import strip_protocol
@@ -549,53 +551,112 @@ class Dataset:
 
         # Initialize filesystem if not provided - auto-detect from root_dir
         if self.fs is None:
+            logger.info(f"PERF: Initializing filesystem for {self.root_dir}")
+            start_time = time.time()
             self.fs = get_filesystem(self.root_dir)
+            end_time = time.time()
+            logger.info(
+                f"PERF: Filesystem initialization took {end_time - start_time:.3f}s"
+            )
 
         self.data_dir = f"{self.root_dir}/data"
+        logger.info(f"PERF: Creating data directory: {self.data_dir}")
+        start_time = time.time()
         self.fs.makedirs(strip_protocol(self.data_dir), exist_ok=True)
+        end_time = time.time()
+        logger.info(f"PERF: Data directory creation took {end_time - start_time:.3f}s")
 
         self.dataset_dir = f"{self.root_dir}/datasets/{self.dataset_name}"
+        logger.info(f"PERF: Creating dataset directory: {self.dataset_dir}")
+        start_time = time.time()
         self.fs.makedirs(strip_protocol(self.dataset_dir), exist_ok=True)
+        end_time = time.time()
+        logger.info(
+            f"PERF: Dataset directory creation took {end_time - start_time:.3f}s"
+        )
 
         self.json_path = f"{self.dataset_dir}/dataset.json"
 
         # Initialize branch manager first
+        logger.info(f"PERF: Initializing branch manager for {self.dataset_dir}")
+        start_time = time.time()
         self.branch_manager = BranchManager(self.dataset_dir, self.fs)
+        end_time = time.time()
+        logger.info(
+            f"PERF: Branch manager initialization took {end_time - start_time:.3f}s"
+        )
 
-        # This is the only class attribute that we change
-        # throughout the lifetime of the object!
-        try:
-            # Try to get the current branch's commit
-            current_branch = self.branch_manager.get_current_branch()
-            if current_branch == "main":
-                # For main branch, use the latest version hash
-                version_hash = self.latest_version_hash()
-            else:
-                # For other branches, get the commit from the branch
-                version_hash = self.branch_manager.get_branch_commit(current_branch)
-
-            self.current_commit = DatasetCommit.from_json(
-                root_dir=self.root_dir,
-                dataset_name=self.dataset_name,
-                version_hash=version_hash,
-                fs=self.fs,
-            )
-        except (DatasetNoCommitsError, ValueError):
-            # No commits or branch doesn't exist, create initial commit
-            initial_hash = sha256(self.dataset_name.encode()).hexdigest()
-            self.current_commit = DatasetCommit(
-                root_dir=self.root_dir,
-                dataset_name=self.dataset_name,
-                version_hash=initial_hash,
-                commit_message="",
-                file_hashes=[],
-                parent_hash="",
-                fs=self.fs,
-            )
-            # Create main branch with the initial commit
-            self.branch_manager.create_branch("main", initial_hash)
-
+        # Initialize current_commit lazily to avoid expensive operations during init
+        self._current_commit = None
         self._file_dict = {}
+        self._latest_version_hash_cache = None
+        self._commits_data_cache = (
+            None  # Cache for commit data to avoid duplicate reads
+        )
+
+    @property
+    def current_commit(self) -> "DatasetCommit":
+        """Lazily load the current commit to avoid expensive operations during init."""
+        if self._current_commit is None:
+            logger.info(f"Lazy loading current commit for dataset: {self.dataset_name}")
+            try:
+                # Try to get the current branch's commit
+                logger.info(f"PERF: Getting current branch for {self.dataset_name}")
+                start_time = time.time()
+                current_branch = self.branch_manager.get_current_branch()
+                end_time = time.time()
+                logger.info(
+                    f"PERF: Get current branch took {end_time - start_time:.3f}s"
+                )
+
+                if current_branch == "main":
+                    # For main branch, use the latest version hash
+                    version_hash = self.latest_version_hash()
+                else:
+                    # For other branches, get the commit from the branch
+                    logger.info(f"PERF: Getting branch commit for {current_branch}")
+                    start_time = time.time()
+                    version_hash = self.branch_manager.get_branch_commit(current_branch)
+                    end_time = time.time()
+                    logger.info(
+                        f"PERF: Get branch commit took {end_time - start_time:.3f}s"
+                    )
+
+                logger.info(
+                    f"PERF: Creating DatasetCommit from JSON for {version_hash[:8]}"
+                )
+                start_time = time.time()
+                self._current_commit = DatasetCommit.from_json(
+                    root_dir=self.root_dir,
+                    dataset_name=self.dataset_name,
+                    version_hash=version_hash,
+                    fs=self.fs,
+                )
+                end_time = time.time()
+                logger.info(
+                    f"PERF: DatasetCommit.from_json took {end_time - start_time:.3f}s"
+                )
+            except (DatasetNoCommitsError, ValueError):
+                # No commits or branch doesn't exist, create initial commit
+                initial_hash = sha256(self.dataset_name.encode()).hexdigest()
+                self._current_commit = DatasetCommit(
+                    root_dir=self.root_dir,
+                    dataset_name=self.dataset_name,
+                    version_hash=initial_hash,
+                    commit_message="",
+                    file_hashes=[],
+                    parent_hash="",
+                    fs=self.fs,
+                )
+                # Create main branch with the initial commit
+                self.branch_manager.create_branch("main", initial_hash)
+
+        return self._current_commit
+
+    @current_commit.setter
+    def current_commit(self, value: "DatasetCommit"):
+        """Set the current commit."""
+        self._current_commit = value
 
     @default_return_value(return_val="")
     def current_version_hash(self) -> str:
@@ -613,18 +674,27 @@ class Dataset:
 
         :return: The hash of the latest version of the dataset.
         """
-        jsons = self.fs.glob(f"{strip_protocol(self.dataset_dir)}/*/commit.json")
-        if not jsons:
+        # Use cache if available
+        if self._latest_version_hash_cache is not None:
+            return self._latest_version_hash_cache
+
+        logger.info(f"Computing latest version hash for dataset: {self.dataset_name}")
+
+        # Use cached commits data to avoid duplicate file reads
+        commits_data = self._get_commits_data()
+
+        if not commits_data:
             raise DatasetNoCommitsError(
                 "No commit.json files found in "
                 + str(self.dataset_dir)
                 + ". It appears that the dataset has not yet had data committed to it."
             )
-        commit_to_parent = dict()
-        for json_file in jsons:
-            with self.fs.open(json_file, "r") as f:
-                data = json.loads(f.read())
-                commit_to_parent[data["version_hash"]] = data["parent_hash"]
+
+        # Build commit_to_parent mapping from cached data
+        commit_to_parent = {
+            version_hash: data["parent_hash"]
+            for version_hash, data in commits_data.items()
+        }
 
         # Now, find the commit that is not a parent to any other commit.
 
@@ -632,13 +702,48 @@ class Dataset:
         # there should only be one commit
         # with no parents and no files that is automatically created.
         if len(commit_to_parent) == 1:
-            return list(commit_to_parent.keys())[0]
+            result = list(commit_to_parent.keys())[0]
+        else:
+            # Otherwise, find the commit that is not a parent to any other commit.
+            commits = set(commit_to_parent.keys())
+            parents = set(commit_to_parent.values())
+            commit_set = parents.symmetric_difference(commits)
+            result = [c for c in commit_set if c][0]
 
-        # Otherwise, find the commit that is not a parent to any other commit.
-        commits = set(commit_to_parent.keys())
-        parents = set(commit_to_parent.values())
-        commit_set = parents.symmetric_difference(commits)
-        return [c for c in commit_set if c][0]
+        # Cache the result
+        self._latest_version_hash_cache = result
+        return result
+
+    def _get_commits_data(self) -> dict:
+        """Get commit data with caching to avoid duplicate file reads."""
+        if self._commits_data_cache is not None:
+            logger.info(f"PERF: Using cached commits data for {self.dataset_name}")
+            return self._commits_data_cache
+
+        logger.info(f"PERF: Loading commits data for {self.dataset_name}")
+        start_time = time.time()
+
+        jsons = self.fs.glob(f"{strip_protocol(self.dataset_dir)}/*/commit.json")
+        if not jsons:
+            self._commits_data_cache = {}
+            return {}
+
+        commits_data = {}
+        for json_file in jsons:
+            try:
+                with self.fs.open(json_file, "r") as f:
+                    data = json.loads(f.read())
+                    commits_data[data["version_hash"]] = data
+            except Exception as e:
+                logger.warning(f"Failed to read commit file {json_file}: {e}")
+                continue
+
+        end_time = time.time()
+        logger.info(f"PERF: Loading commits data took {end_time - start_time:.3f}s")
+
+        # Cache the results
+        self._commits_data_cache = commits_data
+        return commits_data
 
     def resolve_commit_hash(self, partial_hash: str) -> str:
         """Resolve a partial commit hash to a full commit hash.
@@ -733,6 +838,11 @@ class Dataset:
         # Clear any existing cache before setting new commit
         if hasattr(self, "current_commit") and self.current_commit:
             self.current_commit._clear_file_dict_cache()
+
+        # Clear latest version hash cache
+        self._latest_version_hash_cache = None
+        # Clear commits data cache
+        self._commits_data_cache = None
 
         self.current_commit = DatasetCommit.from_json(
             root_dir=self.root_dir,
