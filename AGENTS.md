@@ -37,7 +37,7 @@ workflows for data management. This means:
 - **No Direct Actions**: Remove buttons that bypass the staging/commit workflow
 - **Clear Workflow**: Guide users through the stage → commit → push workflow
 
-## Design System
+## Design System & CSS Architecture
 
 ### UI Framework: shadcn/ui
 
@@ -57,132 +57,29 @@ components. When working on the web UI:
   - `--destructive`, `--destructive-foreground` for destructive actions
   - `--radius` for border radius consistency
 
-- **Component Classes** - Use the established component classes:
-  - `.btn` with variants: `.btn-primary`, `.btn-secondary`, `.btn-ghost`, `.btn-destructive`
-  - `.input` for form inputs
-  - `.panel` for card-like containers
-  - `.panel-header` and `.panel-title` for panel headers
-  - `.panel-content` for panel body content
-  - `.file-item` for file list items
+### Component Classes & Layout Patterns
 
-- **Layout Patterns** - Follow established layout patterns:
-  - Use `.container` for main content areas
-  - Use `.header` for page headers with titles and descriptions
-  - Use grid layouts with `.grid` and responsive breakpoints
-  - Use `.space-y-*` for consistent vertical spacing
+**Component Classes** - Use the established component classes:
 
-### Styling Guidelines
+- `.btn` with variants: `.btn-primary`, `.btn-secondary`, `.btn-ghost`, `.btn-destructive`
+- `.input` for form inputs
+- `.panel` for card-like containers
+- `.panel-header` and `.panel-title` for panel headers
+- `.panel-content` for panel body content
+- `.file-item`, `.file-icon`, `.file-name` for file list items
+- `.nav-bar`, `.breadcrumb`, `.breadcrumb-separator` for navigation
 
-1. **Always use the CSS custom properties** instead of hardcoded colors
-2. **Follow the established component patterns** from existing templates
-3. **Use semantic class names** that match shadcn/ui conventions
-4. **Maintain consistency** with the existing design system
-5. **Test responsive behavior** on different screen sizes
+**Layout Patterns** - Follow established layout patterns:
 
-### Examples
+- Use `.container` for main content areas
+- Use `.header` for page headers with titles and descriptions
+- Use grid layouts with `.grid` and responsive breakpoints
+- Use `.space-y-*` for consistent vertical spacing
 
-```html
-<!-- Good: Using shadcn/ui patterns -->
-<div class="panel">
-    <div class="panel-header">
-        <h2 class="panel-title">Title</h2>
-    </div>
-    <div class="panel-content">
-        <button class="btn btn-primary">Action</button>
-    </div>
-</div>
+### CSS Architecture
 
-<!-- Avoid: Custom styling that doesn't follow the system -->
-<div class="bg-white rounded-lg shadow-md p-6">
-    <h2 class="text-xl font-semibold mb-4">Title</h2>
-    <button class="bg-blue-600 text-white px-4 py-2 rounded-md">Action</button>
-</div>
-```
-
-## Development Guidelines
-
-- Always maintain consistency with the existing shadcn/ui design system
-- Use the established component classes and CSS variables
-- Follow the responsive design patterns used throughout the application
-- Test UI changes to ensure they match the overall design language
-- **Run markdownlint on any Markdown file that is created or edited**
-
-### Linting Guidelines
-
-**IMPORTANT**: Only fix linting errors that cannot be automatically fixed by
-linters like ruff. The project has pre-commit hooks that handle automatic
-linting fixes (formatting, import sorting, etc.). Focus on:
-
-- Logic errors and bugs that require manual intervention
-- Issues that cannot be automatically resolved by linters
-- Code quality problems that need human judgment
-
-**Do NOT fix**:
-
-- Import sorting (handled by isort/ruff)
-- Code formatting (handled by black/ruff)
-- Line length issues (handled by formatters)
-- Whitespace and spacing (handled by formatters)
-
-The pre-commit hooks will automatically handle these formatting issues, so focus
-on substantive code improvements.
-
-## Logging Standards
-
-**CRITICAL**: This project uses **loguru** for all logging throughout the
-codebase. Never use the standard Python `logging` module.
-
-### Logging Requirements
-
-- **Always use loguru**: Import with `from loguru import logger`
-- **Never use standard logging**: Do not use `import logging` or `logging.getLogger()`
-- **Consistent formatting**: Use the configured loguru format for all log messages
-- **Performance logging**: Use `PERF:` prefix for performance-related log messages
-
-### Implementation Pattern
-
-```python
-# ✅ CORRECT - Use loguru
-from loguru import logger
-
-logger.info("This is an info message")
-logger.error("This is an error message")
-logger.info("PERF: Operation completed in 0.123s")
-
-# ❌ WRONG - Don't use standard logging
-import logging
-logger = logging.getLogger(__name__)
-```
-
-### Configuration
-
-The web UI configures loguru with a specific format that includes:
-
-- Timestamp in green
-- Log level
-- Module, function, and line number in cyan
-- Message content
-
-All new code must follow this logging standard to maintain consistency across
-the project.
-
-## Static File Serving
-
-The application is configured to serve static files from the
-`/gitdata/static/` directory:
-
-- **CSS Files** - Place all stylesheets in `/gitdata/static/` directory
-- **Static Mount** - FastAPI StaticFiles is mounted at `/static` route
-- **CSS Reference** - Templates reference CSS via `/static/styles.css`
-- **Development** - Use `pixi run python -m gitdata.web_ui` to start the server
-  with auto-reload
-
-## CSS Architecture
-
-### External Stylesheet System
-
-The project now uses a centralized CSS architecture with all common styles in
-`/gitdata/static/styles.css`:
+**External Stylesheet System** - The project uses a centralized CSS
+architecture with all common styles in `/gitdata/static/styles.css`:
 
 - **Base Template** - `base.html` includes the external stylesheet via
   `<link rel="stylesheet" href="/static/styles.css">`
@@ -191,9 +88,7 @@ The project now uses a centralized CSS architecture with all common styles in
 - **Page-Specific Styles** - Only use `{% block extra_styles %}` for truly
   page-specific CSS that can't be reused
 
-### Template Structure Guidelines
-
-When creating new templates, follow this simplified pattern:
+**Template Structure Guidelines**:
 
 ```html
 {% extends "base.html" %}
@@ -230,18 +125,25 @@ When creating new templates, follow this simplified pattern:
 {% endblock %}
 ```
 
-### CSS Best Practices
+### CSS Best Practices & Standards
 
-1. **Use External Stylesheet** - All common styles are in `/static/styles.css`
-2. **Minimal Template CSS** - Only add CSS to templates for truly page-specific styles
-3. **Consistent Component Classes** - Use the established classes from the stylesheet:
-   - `.panel`, `.panel-header`, `.panel-title`, `.panel-content`
-   - `.file-item`, `.file-icon`, `.file-name`
-   - `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-ghost`, `.btn-destructive`
-   - `.nav-bar`, `.breadcrumb`, `.breadcrumb-separator`
+**Styling Guidelines**:
 
-### Common Mistakes to Avoid
+1. **Always use the CSS custom properties** instead of hardcoded colors
+2. **Follow the established component patterns** from existing templates
+3. **Use semantic class names** that match shadcn/ui conventions
+4. **Maintain consistency** with the existing design system
+5. **Test responsive behavior** on different screen sizes
 
+**Component Standards**:
+
+- **File Icons**: Always 16px x 16px (`width: 16px; height: 16px`), use
+  `.file-icon` class, `color: hsl(var(--muted-foreground)); opacity: 0.6;`
+- **Panels**: Always use `.panel` > `.panel-header` > `.panel-content`
+  structure, `padding: 1.25rem 1.5rem` for headers, `padding: 1.5rem` for
+  content, `border: 1px solid hsl(var(--border))`
+
+**Common Mistakes to Avoid**:
 ❌ **DON'T** copy CSS from other templates - use the external stylesheet
 ❌ **DON'T** use generic CSS classes like `bg-white`, `rounded-lg`, `shadow-md`
 ❌ **DON'T** create custom styling that doesn't match the design system
@@ -252,21 +154,95 @@ When creating new templates, follow this simplified pattern:
 ✅ **DO** use the established component classes from the stylesheet
 ✅ **DO** maintain consistency with the shadcn/ui design system
 
-### File Icon Standards
+### Examples
 
-- **Size**: Always 16px x 16px (`width: 16px; height: 16px`)
-- **Class**: Use `.file-icon` class
-- **SVG**: Use the exact SVG path from `files_list.html`
-- **Styling**: `color: hsl(var(--muted-foreground)); opacity: 0.6;`
+```html
+<!-- Good: Using shadcn/ui patterns -->
+<div class="panel">
+    <div class="panel-header">
+        <h2 class="panel-title">Title</h2>
+    </div>
+    <div class="panel-content">
+        <button class="btn btn-primary">Action</button>
+    </div>
+</div>
 
-### Panel Standards
+<!-- Avoid: Custom styling that doesn't follow the system -->
+<div class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-xl font-semibold mb-4">Title</h2>
+    <button class="bg-blue-600 text-white px-4 py-2 rounded-md">Action</button>
+</div>
+```
 
-- **Structure**: Always use `.panel` > `.panel-header` > `.panel-content`
-- **Spacing**: `padding: 1.25rem 1.5rem` for headers, `padding: 1.5rem` for
-  content
-- **Borders**: `border: 1px solid hsl(var(--border))`
-- **Shadows**: Subtle shadow using 0 1px 3px 0 and 0 1px 2px -1px with
-  `rgb(0 0 0 / 0.1)`
+## Development Guidelines
+
+### Linting Guidelines
+
+**IMPORTANT**: Only fix linting errors that cannot be automatically fixed by
+linters like ruff. The project has pre-commit hooks that handle automatic
+linting fixes (formatting, import sorting, etc.). Focus on:
+
+- Logic errors and bugs that require manual intervention
+- Issues that cannot be automatically resolved by linters
+- Code quality problems that need human judgment
+
+**Do NOT fix**:
+
+- Import sorting (handled by isort/ruff)
+- Code formatting (handled by black/ruff)
+- Line length issues (handled by formatters)
+- Whitespace and spacing (handled by formatters)
+
+The pre-commit hooks will automatically handle these formatting issues, so focus
+on substantive code improvements.
+
+### Logging Standards
+
+**CRITICAL**: This project uses **loguru** for all logging throughout the
+codebase. Never use the standard Python `logging` module.
+
+**Logging Requirements**:
+
+- **Always use loguru**: Import with `from loguru import logger`
+- **Never use standard logging**: Do not use `import logging` or `logging.getLogger()`
+- **Consistent formatting**: Use the configured loguru format for all log messages
+- **Performance logging**: Use `PERF:` prefix for performance-related log messages
+
+**Implementation Pattern**:
+
+```python
+# ✅ CORRECT - Use loguru
+from loguru import logger
+
+logger.info("This is an info message")
+logger.error("This is an error message")
+logger.info("PERF: Operation completed in 0.123s")
+
+# ❌ WRONG - Don't use standard logging
+import logging
+logger = logging.getLogger(__name__)
+```
+
+The web UI configures loguru with a specific format that includes:
+
+- Timestamp in green
+- Log level
+- Module, function, and line number in cyan
+- Message content
+
+All new code must follow this logging standard to maintain consistency across
+the project.
+
+### Static File Serving
+
+The application is configured to serve static files from the
+`/gitdata/static/` directory:
+
+- **CSS Files** - Place all stylesheets in `/gitdata/static/` directory
+- **Static Mount** - FastAPI StaticFiles is mounted at `/static` route
+- **CSS Reference** - Templates reference CSS via `/static/styles.css`
+- **Development** - Use `pixi run python -m gitdata.web_ui` to start the server
+  with auto-reload
 
 ## Web UI Implementation
 
@@ -413,9 +389,7 @@ When writing tests for the project:
 - **No test classes** - Avoid `class TestSomething:` patterns. Use
   function-based tests with descriptive names
 
-#### Pytest-Style Test Functions
-
-**PREFERRED**: Use pytest-style function-based tests instead of unittest-style classes:
+**Pytest-Style Test Functions** (PREFERRED):
 
 ```python
 # ✅ CORRECT - Pytest function style
@@ -430,9 +404,7 @@ def test_branch_operations():
     with tempfile.TemporaryDirectory() as temp_dir:
         lsm = LocalStateManager("test-dataset", temp_dir)
         # Test implementation...
-```
 
-```python
 # ❌ AVOID - Unittest class style
 class TestLocalStateManager:
     def test_local_state_initialization(self):
