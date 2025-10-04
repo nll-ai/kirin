@@ -56,9 +56,12 @@
                             class="input"
                             id="branch_name"
                             name="branch_name"
-                            placeholder="e.g., feature/new-feature"
+                            placeholder="e.g., feature-new-feature"
+                            pattern="[^/]*"
+                            title="Branch names cannot contain slashes (/)"
                             required
                         />
+                        <small class="text-muted">Use hyphens (-) or underscores (_) instead of slashes</small>
                     </div>
                     <button type="submit" class="btn btn-primary">
                         Create Branch

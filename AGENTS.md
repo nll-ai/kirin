@@ -109,7 +109,8 @@ components. When working on the web UI:
 
 ## Logging Standards
 
-**CRITICAL**: This project uses **loguru** for all logging throughout the codebase. Never use the standard Python `logging` module.
+**CRITICAL**: This project uses **loguru** for all logging throughout the
+codebase. Never use the standard Python `logging` module.
 
 ### Logging Requirements
 
@@ -136,31 +137,39 @@ logger = logging.getLogger(__name__)
 ### Configuration
 
 The web UI configures loguru with a specific format that includes:
+
 - Timestamp in green
 - Log level
 - Module, function, and line number in cyan
 - Message content
 
-All new code must follow this logging standard to maintain consistency across the project.
+All new code must follow this logging standard to maintain consistency across
+the project.
 
 ## Static File Serving
 
-The application is configured to serve static files from the `/gitdata/static/` directory:
+The application is configured to serve static files from the
+`/gitdata/static/` directory:
 
 - **CSS Files** - Place all stylesheets in `/gitdata/static/` directory
 - **Static Mount** - FastAPI StaticFiles is mounted at `/static` route
 - **CSS Reference** - Templates reference CSS via `/static/styles.css`
-- **Development** - Use `pixi run python -m gitdata.web_ui` to start the server with auto-reload
+- **Development** - Use `pixi run python -m gitdata.web_ui` to start the server
+  with auto-reload
 
 ## CSS Architecture
 
 ### External Stylesheet System
 
-The project now uses a centralized CSS architecture with all common styles in `/gitdata/static/styles.css`:
+The project now uses a centralized CSS architecture with all common styles in
+`/gitdata/static/styles.css`:
 
-- **Base Template** - `base.html` includes the external stylesheet via `<link rel="stylesheet" href="/static/styles.css">`
-- **No CSS Duplication** - All common component styles are defined once in the external file
-- **Page-Specific Styles** - Only use `{% block extra_styles %}` for truly page-specific CSS that can't be reused
+- **Base Template** - `base.html` includes the external stylesheet via
+  `<link rel="stylesheet" href="/static/styles.css">`
+- **No CSS Duplication** - All common component styles are defined once in the
+  external file
+- **Page-Specific Styles** - Only use `{% block extra_styles %}` for truly
+  page-specific CSS that can't be reused
 
 ### Template Structure Guidelines
 
@@ -233,15 +242,19 @@ When creating new templates, follow this simplified pattern:
 ### Panel Standards
 
 - **Structure**: Always use `.panel` > `.panel-header` > `.panel-content`
-- **Spacing**: `padding: 1.25rem 1.5rem` for headers, `padding: 1.5rem` for content
+- **Spacing**: `padding: 1.25rem 1.5rem` for headers, `padding: 1.5rem` for
+  content
 - **Borders**: `border: 1px solid hsl(var(--border))`
-- **Shadows**: `box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)`
+- **Shadows**: Subtle shadow using 0 1px 3px 0 and 0 1px 2px -1px with
+  `rgb(0 0 0 / 0.1)`
 
 ## Web UI Implementation
 
 ### Commit Cache Management
 
-The web UI uses a caching system to improve performance when displaying commits. **Critical**: The commit cache must be invalidated after any commit operations to ensure the UI shows the latest data.
+The web UI uses a caching system to improve performance when displaying
+commits. **Critical**: The commit cache must be invalidated after any commit
+operations to ensure the UI shows the latest data.
 
 - **Cache Key**: `(dataset_name, dataset_root_dir)` tuple
 - **Cache TTL**: Configurable time-to-live for cache entries
@@ -258,7 +271,8 @@ if cache_key in commit_cache:
     logger.info(f"Cleared commit cache for dataset: {current_dataset.dataset_name}")
 ```
 
-**Failure to invalidate cache** results in stale commit lists where new commits don't appear in the UI, even though they exist in the dataset.
+**Failure to invalidate cache** results in stale commit lists where new
+commits don't appear in the UI, even though they exist in the dataset.
 
 ### File Upload Validation
 
@@ -278,7 +292,8 @@ The commit endpoint supports multiple operation types:
 
 ### Temporary File Handling
 
-When processing file uploads, the system uses temporary directories that must be properly managed:
+When processing file uploads, the system uses temporary directories that must
+be properly managed:
 
 ```python
 temp_dir = tempfile.mkdtemp()
@@ -291,7 +306,9 @@ finally:
         shutil.rmtree(temp_dir)
 ```
 
-**Critical**: The commit operation must happen **before** the temporary directory cleanup, otherwise files will be deleted before the commit can access them.
+**Critical**: The commit operation must happen **before** the temporary
+directory cleanup, otherwise files will be deleted before the commit can access
+them.
 
 ### Error Handling Patterns
 
@@ -299,32 +316,45 @@ The web UI follows consistent error handling patterns:
 
 - **400 Bad Request**: Invalid input (no dataset loaded, no operations specified)
 - **404 Not Found**: File not found for removal operations
-- **422 Unprocessable Content**: Form validation errors (fixed by making file uploads optional)
+- **422 Unprocessable Content**: Form validation errors (fixed by making file
+  uploads optional)
 - **500 Internal Server Error**: Unexpected errors with detailed logging
 
-All error responses include user-friendly HTML with appropriate styling using the design system components.
+All error responses include user-friendly HTML with appropriate styling using
+the design system components.
 
 ## Development Environment
 
 ### Pixi Environment
 
-This project uses **pixi** for dependency management and environment setup. All shell commands for testing and running the project must be executed within the pixi environment:
+This project uses **pixi** for dependency management and environment setup.
+All shell commands for testing and running the project must be executed within
+the pixi environment:
 
-- **Testing Commands**: Always use `pixi run python -m pytest` or `pixi run python script.py`
+- **Testing Commands**: Always use `pixi run python -m pytest` or
+  `pixi run python script.py`
 - **Development Server**: Use `pixi run python -m gitdata.web_ui` to start the server
 - **GitData UI**: Use `pixi run gitdata ui` to run the GitData web interface
 - **CLI Commands**: Use `pixi run python -m gitdata.cli` for command-line operations
 - **Debug Scripts**: Use `pixi run python debug_script.py` for debugging
 
-**Critical**: Never run Python commands directly without the `pixi run` prefix, as this will use the system Python instead of the project's managed environment with all required dependencies.
+**Critical**: Never run Python commands directly without the `pixi run` prefix,
+as this will use the system Python instead of the project's managed environment
+with all required dependencies.
+
+**Note**: Do not run the web UI server for the user - they will handle running
+the application themselves when needed.
 
 ### The Notebook - GitData Capabilities Showcase
 
-The project includes a Marimo notebook at `notebooks/prototype.py` that serves as the primary showcase for GitData's capabilities. This notebook demonstrates:
+The project includes a Marimo notebook at `notebooks/prototype.py` that serves
+as the primary showcase for GitData's capabilities. This notebook demonstrates:
 
-- **File Access Patterns**: How to work with remote files using the context manager
+- **File Access Patterns**: How to work with remote files using the context
+  manager
 - **Lazy Loading**: Demonstrating that files are only downloaded when accessed
-- **Integration Examples**: Real-world usage with libraries like Marimo, Polars, etc.
+- **Integration Examples**: Real-world usage with libraries like Marimo,
+  Polars, etc.
 - **Visualization**: Commit history and dataset exploration
 
 **Notebook Guidelines**:
@@ -380,7 +410,8 @@ When writing tests for the project:
 
 ### Markdown Style Guidelines
 
-All Markdown documentation in the project must follow **Markdownlint** rules for consistency and quality. This ensures:
+All Markdown documentation in the project must follow **Markdownlint** rules
+for consistency and quality. This ensures:
 
 - **Consistent formatting** across all documentation files
 - **Improved readability** for developers and contributors
@@ -391,7 +422,8 @@ All Markdown documentation in the project must follow **Markdownlint** rules for
 
 **Installation and Usage**:
 
-- Use `pixi global install markdownlint-cli` for installation
+- The user already has `markdownlint-cli` installed - only offer to install it
+  if it's not available
 - Run `markdownlint <filename>` on any Markdown file before committing
 - All documentation changes must pass markdownlint validation
 
@@ -421,7 +453,8 @@ markdownlint docs/*.md
 markdownlint docs/design.md
 ```
 
-**Required Workflow**: Run markdownlint on any Markdown file that is created or edited before committing changes.
+**Required Workflow**: Run markdownlint on any Markdown file that is created
+or edited before committing changes.
 
 **Common Issues to Avoid**:
 
@@ -454,6 +487,4 @@ def example_function():
 ```python
 def example_function():
     return "Hello, World!"
-```
-
 ```

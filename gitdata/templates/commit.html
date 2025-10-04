@@ -14,13 +14,18 @@
             <span class="font-mono">{{ dataset_name }}</span>
             <span class="breadcrumb-separator">@</span>
             <span class="badge font-mono">{{ current_commit_hash }}</span>
+            <span class="breadcrumb-separator">/</span>
+            <span class="font-mono text-muted-foreground">{{ current_branch }}</span>
         </div>
     </div>
 
     <div class="header">
         <h1>Commit Changes</h1>
         <p class="text-muted">Manage files for dataset: <strong>{{ dataset_name }}</strong></p>
-        <p class="text-muted font-mono text-sm">Current commit: {{ current_commit_hash }}</p>
+        <div class="flex items-center gap-4 text-sm text-muted-foreground">
+            <span class="font-mono">Current commit: {{ current_commit_hash }}</span>
+            <span class="font-mono">Branch: <strong>{{ current_branch }}</strong></span>
+        </div>
     </div>
 
     <div class="commit-container">

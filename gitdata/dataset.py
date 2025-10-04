@@ -1209,7 +1209,12 @@ class Dataset:
 
             # Create merge commit
             merge_commit_hash = self._create_merge_commit(
-                source_commit, target_commit, resolved_files, conflicts
+                source_commit,
+                target_commit,
+                resolved_files,
+                conflicts,
+                source_branch,
+                target_branch,
             )
             result["merge_commit"] = merge_commit_hash
 
@@ -1229,7 +1234,7 @@ class Dataset:
         else:
             # No conflicts, create merge commit
             merge_commit_hash = self._create_merge_commit(
-                source_commit, target_commit, {}, []
+                source_commit, target_commit, {}, [], source_branch, target_branch
             )
             result["merge_commit"] = merge_commit_hash
             result["success"] = True
@@ -1321,70 +1326,145 @@ class Dataset:
         target_commit: DatasetCommit,
         resolved_files: dict,
         conflicts: list,
+        source_branch: str = None,
+        target_branch: str = None,
     ) -> str:
-        """Create a merge commit combining files from both branches.
+        """Create a merge commit combining files from both branches using hash-based approach.
 
         Args:
             source_commit: Source commit
             target_commit: Target commit
             resolved_files: Files resolved from conflicts
             conflicts: List of conflicts
+            source_branch: Source branch name
+            target_branch: Target branch name
 
         Returns:
             Hash of the created merge commit
         """
-        # Get file dictionaries
+        logger.info("MERGE_PERF: Starting hash-based merge commit creation")
+        start_time = time.time()
+
+        # Get file dictionaries and hashes
         source_files = source_commit._file_dict()
         target_files = target_commit._file_dict()
+        source_hashes = source_commit.file_hashes
+        target_hashes = target_commit.file_hashes
 
-        # Start with target branch files
-        merged_files = target_files.copy()
+        logger.info(
+            f"MERGE_PERF: Source has {len(source_files)} files, "
+            f"target has {len(target_files)} files"
+        )
+
+        # Start with target branch file hashes
+        merged_hashes = target_hashes.copy()
+
+        # Handle file deletions: remove files that exist in target but not in source
+        for filename, file_path in target_files.items():
+            if filename not in source_files:
+                # This file was deleted in source branch
+                logger.info(f"MERGE_PERF: Removing file deleted in source: {filename}")
+                # Find and remove the hash for this file
+                target_file_hash = None
+                for hash_hex in target_hashes:
+                    if hash_hex in file_path:
+                        target_file_hash = hash_hex
+                        break
+
+                if target_file_hash and target_file_hash in merged_hashes:
+                    merged_hashes.remove(target_file_hash)
+                    logger.info(
+                        f"MERGE_PERF: Removed hash {target_file_hash[:8]} for deleted file {filename}"
+                    )
+                else:
+                    logger.warning(
+                        f"MERGE_PERF: Could not find hash for deleted file {filename}"
+                    )
 
         # Add files from source branch that don't exist in target
         for filename, file_path in source_files.items():
-            if filename not in merged_files:
-                merged_files[filename] = file_path
+            if filename not in target_files:
+                # This is a new file from source branch
+                logger.info(f"MERGE_PERF: Adding new file from source: {filename}")
+                # Find the hash for this file in source commit
+                source_file_hash = None
+                for hash_hex in source_hashes:
+                    if hash_hex in file_path:
+                        source_file_hash = hash_hex
+                        break
 
-        # Override with resolved files
+                if source_file_hash:
+                    merged_hashes.append(source_file_hash)
+                else:
+                    logger.warning(
+                        f"MERGE_PERF: Could not find hash for {filename} in source commit"
+                    )
+
+        # Handle resolved files (conflict resolution)
         for filename, file_path in resolved_files.items():
-            merged_files[filename] = file_path
+            logger.info(f"MERGE_PERF: Processing resolved file: {filename}")
+            # Remove old version if it exists
+            if filename in target_files:
+                old_file_path = target_files[filename]
+                old_hash = old_file_path.split("/")[-2]
+                if old_hash in merged_hashes:
+                    merged_hashes.remove(old_hash)
+
+            # Add resolved file
+            resolved_hash = file_path.split("/")[-2]
+            merged_hashes.append(resolved_hash)
+
+        # Sort hashes for deterministic ordering
+        merged_hashes = sorted(merged_hashes)
+
+        logger.info(f"MERGE_PERF: Final merged state has {len(merged_hashes)} files")
 
         # Create merge commit message
-        commit_message = (
-            f"Merge branch '{source_commit.dataset_name}' "
-            f"into {target_commit.dataset_name}"
-        )
+        if source_branch and target_branch:
+            commit_message = f"Merge branch '{source_branch}' into {target_branch}"
+        else:
+            commit_message = "Merge commit"
         if conflicts:
             commit_message += f"\n\nResolved {len(conflicts)} conflicts"
 
-        # Create a new commit with the merged files
-        # We need to create temporary files for the merge commit
-        temp_dir = tempfile.mkdtemp()
-        try:
-            # Copy all merged files to temporary directory
-            for filename, file_path in merged_files.items():
-                temp_file_path = f"{temp_dir}/{filename}"
-                # Copy file from source to temp location
-                with self.fs.open(strip_protocol(file_path), "rb") as src:
-                    with open(temp_file_path, "wb") as dst:
-                        dst.write(src.read())
+        # Create the merge commit directly using hashes
+        logger.info("MERGE_PERF: Creating merge commit with hash-based approach")
+        commit_start = time.time()
 
-            # Create merge commit using the Dataset's commit method
-            # First, switch to target branch
-            self.checkout(target_commit.version_hash)
+        # Switch to target commit first
+        self.checkout(target_commit.version_hash)
 
-            # Create the merge commit
-            merge_commit_hash = self.commit(
-                commit_message=commit_message,
-                add_files=[f"{temp_dir}/{f}" for f in merged_files.keys()],
-            )
+        # Create new commit with merged file hashes
+        # We'll create a new DatasetCommit directly instead of using self.commit()
+        hash_concat = "\n".join(merged_hashes) + "\n" + commit_message + "\n"
+        hash_concat = hash_concat + "\n" + str(datetime.now()) + "\n"
+        hasher = sha256()
+        hasher.update(hash_concat.encode("utf-8"))
+        merge_version_hash = hasher.hexdigest()
 
-            return merge_commit_hash
+        # Create the merge commit object
+        merge_commit = DatasetCommit(
+            root_dir=self.root_dir,
+            dataset_name=self.dataset_name,
+            version_hash=merge_version_hash,
+            commit_message=commit_message,
+            file_hashes=merged_hashes,
+            parent_hash=target_commit.version_hash,
+            fs=self.fs,
+        )
 
-        finally:
-            # Clean up temporary directory
-            if temp_dir and os.path.exists(temp_dir):
-                shutil.rmtree(temp_dir)
+        # Update current commit and branch
+        self.current_commit = merge_commit
+        self.branch_manager.update_current_branch(merge_version_hash)
+
+        commit_time = time.time() - commit_start
+        total_time = time.time() - start_time
+        logger.info(
+            f"MERGE_PERF: Hash-based merge commit created in {commit_time:.2f}s"
+        )
+        logger.info(f"MERGE_PERF: Total merge time: {total_time:.2f}s")
+
+        return merge_version_hash
 
 
 class DatasetError(Exception):

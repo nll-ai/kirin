@@ -204,6 +204,22 @@ async def dataset_view(request: Request):
         logger.warning("Attempted to view dataset but no dataset is loaded")
         raise HTTPException(status_code=400, detail="No dataset loaded")
 
+    logger.info(
+        f"DEBUG: Dataset view - current branch: {current_dataset.get_current_branch()}"
+    )
+    logger.info(
+        f"DEBUG: Dataset view - current commit: {current_dataset.current_version_hash()[:8]}"
+    )
+    logger.info(f"DEBUG: Available branches: {current_dataset.list_branches()}")
+    for branch in current_dataset.list_branches():
+        try:
+            branch_commit = current_dataset.get_branch_commit(branch)
+            logger.info(
+                f"DEBUG: Branch '{branch}' points to commit: {branch_commit[:8]}"
+            )
+        except Exception as e:
+            logger.info(f"DEBUG: Error getting commit for branch '{branch}': {e}")
+
     try:
         # Get all commits (cached)
         logger.info(f"Fetching commits for dataset '{current_dataset.dataset_name}'")
@@ -216,23 +232,27 @@ async def dataset_view(request: Request):
         has_more = len(all_commits) > 5
         logger.info(f"Showing {len(initial_commits)} initial commits")
 
-        # Get files from current commit (using cached file dict)
+        # Get files from the current branch's commit (not the checked-out commit)
         files = []
+        current_branch = current_dataset.get_current_branch()
+        branch_commit = current_dataset.get_branch_commit(current_branch)
+
+        # Check if the branch commit has files
         if current_dataset.current_commit.file_hashes:
             logger.info(
-                f"Fetching file list for current commit "
-                f"({current_dataset.current_version_hash()[:8]})"
+                f"Fetching file list for branch '{current_branch}' commit "
+                f"({branch_commit[:8]})"
             )
             with perf_timer(
-                f"File list loading for commit {current_dataset.current_version_hash()[:8]}"
+                f"File list loading for branch '{current_branch}' commit {branch_commit[:8]}"
             ):
-                file_dict = get_cached_file_dict(current_dataset)
+                file_dict = get_cached_file_dict(current_dataset, branch_commit)
                 files = [
                     {"name": name, "path": path} for name, path in file_dict.items()
                 ]
-            logger.info(f"Found {len(files)} files in current commit")
+            logger.info(f"Found {len(files)} files in branch '{current_branch}' commit")
         else:
-            logger.info("Current commit has no files")
+            logger.info(f"Branch '{current_branch}' commit has no files")
 
         logger.info(f"PERF: Rendering dataset view template")
         start_time = time.time()
@@ -427,6 +447,9 @@ async def commit_page(request: Request):
         else:
             logger.info("Current commit has no files")
 
+        # Get current branch information
+        current_branch = current_dataset.get_current_branch()
+
         return templates.TemplateResponse(
             "commit.html",
             {
@@ -434,6 +457,7 @@ async def commit_page(request: Request):
                 "dataset_name": current_dataset.dataset_name,
                 "dataset_url": current_dataset.root_dir,
                 "current_commit_hash": current_dataset.current_version_hash()[:8],
+                "current_branch": current_branch,
                 "files": files,
             },
         )
@@ -751,11 +775,13 @@ async def remove_file(
 
 
 def get_all_commits(dataset: Dataset, use_cache: bool = True) -> list:
-    """Get all commits for a dataset in chronological order.
+    """Get all commits for the current branch in chronological order.
 
     Uses caching to avoid re-reading commit files on every request.
     """
-    cache_key = (dataset.dataset_name, dataset.root_dir)
+    current_branch = dataset.get_current_branch()
+    logger.info(f"DEBUG: get_all_commits called for branch: {current_branch}")
+    cache_key = (dataset.dataset_name, dataset.root_dir, current_branch)
 
     # Check cache first
     if use_cache and cache_key in commit_cache:
@@ -787,29 +813,33 @@ def get_all_commits(dataset: Dataset, use_cache: bool = True) -> list:
             logger.info("No commits found in dataset")
             return []
 
-        logger.debug(f"Found {len(commits_dict)} commits")
+        logger.info(f"DEBUG: Found {len(commits_dict)} total commits in dataset")
+        for commit_hash, commit_data in commits_dict.items():
+            logger.info(
+                f"DEBUG: Available commit {commit_hash[:8]}: {commit_data.get('commit_message', '(initial)')} (parent: {commit_data.get('parent_hash', 'None')[:8] if commit_data.get('parent_hash') else 'None'})"
+            )
 
-        logger.debug(f"Parsed {len(commits_dict)} commits")
-
-        # Build chronological order (from newest to oldest)
+        # Build chronological order (from newest to oldest) for current branch
         ordered_commits = []
 
-        # Find the latest commit (no one has it as parent)
-        all_parents = {
-            c["parent_hash"] for c in commits_dict.values() if c["parent_hash"]
-        }
-        latest = None
-        for commit_hash in commits_dict.keys():
-            if commit_hash not in all_parents:
-                latest = commit_hash
-                break
+        # Start from the current branch's commit (not the commit we're checked out to)
+        current_commit_hash = dataset.get_branch_commit(current_branch)
+        logger.info(
+            f"DEBUG: Starting from current branch commit: {current_commit_hash[:8]}"
+        )
+        logger.info(f"DEBUG: Current branch: {current_branch}")
+        logger.info(
+            f"DEBUG: Dataset is checked out to: {dataset.current_version_hash()[:8]}"
+        )
 
-        logger.debug(f"Latest commit identified: {latest[:8] if latest else 'None'}")
-
-        # Traverse from latest to earliest
-        current = latest
+        # Traverse from current commit backwards through parent chain
+        current = current_commit_hash
+        logger.info(f"DEBUG: Starting commit traversal from: {current[:8]}")
         while current and current in commits_dict:
             commit_data = commits_dict[current]
+            logger.info(
+                f"DEBUG: Processing commit {current[:8]}: {commit_data.get('commit_message', '(initial)')}"
+            )
             ordered_commits.append(
                 {
                     "hash": current,
@@ -820,10 +850,17 @@ def get_all_commits(dataset: Dataset, use_cache: bool = True) -> list:
                 }
             )
             current = commit_data.get("parent_hash")
+            logger.info(
+                f"DEBUG: Next parent commit: {current[:8] if current else 'None'}"
+            )
             if not current:  # Empty string means no parent
                 break
 
-        logger.debug(f"Ordered {len(ordered_commits)} commits chronologically")
+        logger.info(
+            f"DEBUG: Found {len(ordered_commits)} commits for branch {current_branch}"
+        )
+        for commit in ordered_commits:
+            logger.info(f"DEBUG: Commit {commit['short_hash']}: {commit['message']}")
 
         # Cache the results
         commit_cache[cache_key] = (ordered_commits, time.time())
@@ -933,19 +970,44 @@ async def create_branch(request: Request):
     if not branch_name:
         raise HTTPException(status_code=400, detail="Branch name is required")
 
+    # Validate branch name - no slashes allowed
+    if "/" in branch_name:
+        error_html = (
+            f'<div class="alert alert-error">Branch name cannot contain slashes (/). '
+            f"Use hyphens (-) or underscores (_) instead.</div>"
+        )
+        return HTMLResponse(content=error_html, status_code=400)
+
     try:
         # Create branch pointing to current commit
         current_commit = current_dataset.current_version_hash()
         current_dataset.create_branch(branch_name, current_commit)
 
-        # Return success message
+        # Switch to the newly created branch
+        current_dataset.switch_branch(branch_name)
+
+        # Clear commit cache since we switched branches
+        # Clear cache for all branches of this dataset to ensure fresh data
+        keys_to_remove = [
+            key
+            for key in commit_cache.keys()
+            if key[:2] == (current_dataset.dataset_name, current_dataset.root_dir)
+        ]
+        for key in keys_to_remove:
+            del commit_cache[key]
+        if keys_to_remove:
+            logger.info(
+                f"Cleared {len(keys_to_remove)} commit cache entries for dataset: {current_dataset.dataset_name}"
+            )
+
+        # Return success message and redirect to dataset view
         success_html = f"""
         <div class="alert alert-success">
-            Branch '{branch_name}' created successfully
+            Branch '{branch_name}' created and switched to successfully
         </div>
         <script>
-            // Refresh the branches list
-            htmx.trigger('#branches-list', 'refresh');
+            // Redirect to dataset view to show the new branch
+            window.location.href = '/dataset-view';
         </script>
         """
         return HTMLResponse(content=success_html, status_code=200)
@@ -978,11 +1040,17 @@ async def switch_branch(request: Request):
         current_dataset.switch_branch(branch_name)
 
         # Clear commit cache since we switched branches
-        cache_key = (current_dataset.dataset_name, current_dataset.root_dir)
-        if cache_key in commit_cache:
-            del commit_cache[cache_key]
+        # Clear cache for all branches of this dataset to ensure fresh data
+        keys_to_remove = [
+            key
+            for key in commit_cache.keys()
+            if key[:2] == (current_dataset.dataset_name, current_dataset.root_dir)
+        ]
+        for key in keys_to_remove:
+            del commit_cache[key]
+        if keys_to_remove:
             logger.info(
-                f"Cleared commit cache for dataset: {current_dataset.dataset_name}"
+                f"Cleared {len(keys_to_remove)} commit cache entries for dataset: {current_dataset.dataset_name}"
             )
 
         # Return success message and redirect to dataset view
@@ -1122,7 +1190,7 @@ async def preview_merge(request: Request):
         target_files = target_commit._file_dict()
 
         return templates.TemplateResponse(
-            "merge_preview.html",
+            "merge_preview_partial.html",
             {
                 "request": request,
                 "source_branch": source_branch,
@@ -1154,22 +1222,53 @@ async def execute_merge(request: Request):
     target_branch = form.get("target_branch")
     strategy = form.get("strategy", "auto")
 
+    logger.info(f"MERGE: Starting merge execution")
+    logger.info(f"MERGE: Source branch: {source_branch}")
+    logger.info(f"MERGE: Target branch: {target_branch}")
+    logger.info(f"MERGE: Strategy: {strategy}")
+
     if not source_branch or not target_branch:
         raise HTTPException(
             status_code=400, detail="Both source and target branches are required"
         )
 
     try:
+        logger.info(
+            f"MERGE: Executing merge from '{source_branch}' into '{target_branch}'"
+        )
+        logger.info(f"MERGE: Starting merge operation...")
         # Execute the merge
         result = current_dataset.merge(source_branch, target_branch, strategy)
+        logger.info(f"MERGE: Merge operation completed")
+        logger.info(f"MERGE: Result: {result}")
 
         if result["success"]:
+            logger.info(f"MERGE: Merge successful, clearing caches")
             # Clear commit cache since we created a new commit
-            cache_key = (current_dataset.dataset_name, current_dataset.root_dir)
-            if cache_key in commit_cache:
-                del commit_cache[cache_key]
+            # Clear cache for all branches of this dataset to ensure fresh data
+            keys_to_remove = [
+                key
+                for key in commit_cache.keys()
+                if key[:2] == (current_dataset.dataset_name, current_dataset.root_dir)
+            ]
+            for key in keys_to_remove:
+                del commit_cache[key]
+            if keys_to_remove:
                 logger.info(
-                    f"Cleared commit cache for dataset: {current_dataset.dataset_name}"
+                    f"MERGE: Cleared {len(keys_to_remove)} commit cache entries for dataset: {current_dataset.dataset_name}"
+                )
+
+            # Clear file dict cache for this dataset
+            file_keys_to_remove = [
+                key
+                for key in file_dict_cache.keys()
+                if key[:2] == (current_dataset.dataset_name, current_dataset.root_dir)
+            ]
+            for key in file_keys_to_remove:
+                del file_dict_cache[key]
+            if file_keys_to_remove:
+                logger.info(
+                    f"MERGE: Cleared {len(file_keys_to_remove)} file dict cache entries for dataset: {current_dataset.dataset_name}"
                 )
 
             success_html = f"""
