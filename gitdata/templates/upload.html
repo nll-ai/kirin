@@ -3,128 +3,236 @@
 {% block title %}Commit Changes - {{ dataset_name }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Commit Changes</h1>
-        <p class="text-gray-600">Manage files for dataset: <strong>{{ dataset_name }}</strong></p>
-        <p class="text-sm text-gray-500">Current commit: {{ current_commit_hash }}</p>
+<div class="container">
+    <div class="nav-bar">
+        <div class="breadcrumb">
+            <a href="/dataset-view" class="btn btn-ghost">← Back to Dataset</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="font-mono">{{ dataset_name }}</span>
+            <span class="breadcrumb-separator">@</span>
+            <span class="badge font-mono">{{ current_commit_hash }}</span>
+        </div>
     </div>
 
-    <!-- Commit Form -->
-    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h2 class="text-xl font-semibold mb-4">Add New Files</h2>
-        <form id="commit-form" hx-post="/commit-files" hx-encoding="multipart/form-data" hx-target="#commit-result">
-            <div class="mb-4">
-                <label for="files" class="block text-sm font-medium text-gray-700 mb-2">
-                    Select Files
-                </label>
-                <input
-                    type="file"
-                    id="files"
-                    name="files"
-                    multiple
-                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                    accept="*/*"
-                >
-                <p class="text-xs text-gray-500 mt-1">You can select multiple files at once</p>
-            </div>
-
-            <div class="mb-4">
-                <label for="commit_message" class="block text-sm font-medium text-gray-700 mb-2">
-                    Commit Message
-                </label>
-                <textarea
-                    id="commit_message"
-                    name="commit_message"
-                    rows="3"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Describe the changes you're making..."
-                    required
-                ></textarea>
-            </div>
-
-            <div class="flex gap-3">
-                <button
-                    type="submit"
-                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                >
-                    Add & Commit
-                </button>
-                <button
-                    type="button"
-                    onclick="window.location.href='/dataset-view'"
-                    class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                >
-                    Back to Dataset
-                </button>
-            </div>
-        </form>
-
-        <div id="commit-result" class="mt-4"></div>
+    <div class="header">
+        <h1>Commit Changes</h1>
+        <p class="text-muted">Manage files for dataset: <strong>{{ dataset_name }}</strong></p>
+        <p class="text-muted font-mono text-sm">Current commit: {{ current_commit_hash }}</p>
     </div>
 
-    <!-- Current Files -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-xl font-semibold mb-4">Current Files</h2>
-        {% if files %}
-            <div class="space-y-2">
-                {% for file in files %}
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md">
-                    <div class="flex items-center space-x-3">
-                        <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+    <div class="commit-container">
+        <!-- Commit Form -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Add New Files</h2>
+            </div>
+            <div class="panel-content">
+                <form id="commit-form" hx-post="/commit-files" hx-encoding="multipart/form-data" hx-target="#commit-result">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="files" class="label">
+                                Select Files
+                            </label>
+                            <input
+                                type="file"
+                                id="files"
+                                name="files"
+                                multiple
+                                class="input"
+                                accept="*/*"
+                            >
+                            <p class="text-xs text-muted mt-1">You can select multiple files at once</p>
+                        </div>
+
+                        <div>
+                            <label for="commit_message" class="label">
+                                Commit Message
+                            </label>
+                            <textarea
+                                id="commit_message"
+                                name="commit_message"
+                                rows="3"
+                                class="input"
+                                placeholder="Describe the changes you're making..."
+                                required
+                            ></textarea>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button type="submit" class="btn btn-primary">
+                                Add & Commit
+                            </button>
+                            <button
+                                type="button"
+                                onclick="window.location.href='/dataset-view'"
+                                class="btn btn-secondary"
+                            >
+                                Back to Dataset
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div id="commit-result" class="mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Current Files -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Current Files</h2>
+            </div>
+            <div class="panel-content">
+                {% if files %}
+                    <div>
+                        {% for file in files %}
+                        <div class="file-item" id="file-{{ loop.index0 }}">
+                            <svg class="file-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            <span class="file-name">{{ file.name }}</span>
+                            <div class="file-actions">
+                                <button
+                                    onclick="previewFile('{{ file.name }}')"
+                                    class="btn btn-sm btn-ghost"
+                                >
+                                    Preview
+                                </button>
+                                <button
+                                    class="btn btn-sm btn-destructive stage-removal-btn"
+                                    id="stage-btn-{{ loop.index0 }}"
+                                    data-filename="{{ file.name }}"
+                                    data-index="{{ loop.index0 }}"
+                                >
+                                    Stage for Removal
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto; display: block;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                         </svg>
-                        <span class="text-sm font-medium text-gray-900">{{ file.name }}</span>
+                        <p>No files in current commit</p>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <button
-                            onclick="previewFile('{{ file.name }}')"
-                            class="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                        >
-                            Preview
-                        </button>
-                        <button
-                            onclick="removeFile('{{ file.name }}')"
-                            class="text-red-600 hover:text-red-800 text-sm font-medium"
-                        >
-                            Remove
-                        </button>
-                    </div>
-                </div>
-                {% endfor %}
+                {% endif %}
             </div>
-        {% else %}
-            <p class="text-gray-500 text-center py-8">No files in current commit</p>
-        {% endif %}
+        </div>
+
+        <!-- Staged for Removal -->
+        <div class="panel" id="staged-removals-panel" style="display: none;">
+            <div class="panel-header">
+                <h2 class="panel-title">Staged for Removal</h2>
+            </div>
+            <div class="panel-content">
+                <div id="staged-removals-list">
+                    <!-- Staged files will be added here dynamically -->
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
+let stagedForRemoval = new Set();
+
 function previewFile(filename) {
     window.open(`/file/preview?filename=${encodeURIComponent(filename)}`, '_blank');
 }
 
-function removeFile(filename) {
-    if (confirm(`Are you sure you want to remove "${filename}"?`)) {
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '/remove-file';
+function stageForRemoval(filename, index) {
+    if (stagedForRemoval.has(filename)) {
+        // Unstage the file
+        stagedForRemoval.delete(filename);
+        document.getElementById(`stage-btn-${index}`).textContent = 'Stage for Removal';
+        document.getElementById(`stage-btn-${index}`).className = 'btn btn-sm btn-destructive';
+        document.getElementById(`file-${index}`).classList.remove('staged-for-removal');
+        removeFromStagedList(filename);
+    } else {
+        // Stage the file for removal
+        stagedForRemoval.add(filename);
+        document.getElementById(`stage-btn-${index}`).textContent = 'Unstage';
+        document.getElementById(`stage-btn-${index}`).className = 'btn btn-sm btn-secondary';
+        document.getElementById(`file-${index}`).classList.add('staged-for-removal');
+        addToStagedList(filename);
+    }
+    updateCommitButton();
+}
 
-        const commitMessageInput = document.createElement('input');
-        commitMessageInput.type = 'hidden';
-        commitMessageInput.name = 'commit_message';
-        commitMessageInput.value = `Remove file: ${filename}`;
+function addToStagedList(filename) {
+    const stagedPanel = document.getElementById('staged-removals-panel');
+    const stagedList = document.getElementById('staged-removals-list');
 
-        const filenameInput = document.createElement('input');
-        filenameInput.type = 'hidden';
-        filenameInput.name = 'filename';
-        filenameInput.value = filename;
+    // Show the panel if it's hidden
+    if (stagedPanel.style.display === 'none') {
+        stagedPanel.style.display = 'block';
+    }
 
-        form.appendChild(commitMessageInput);
-        form.appendChild(filenameInput);
-        document.body.appendChild(form);
-        form.submit();
+    // Add the file to the staged list
+    const stagedItem = document.createElement('div');
+    stagedItem.className = 'file-item staged-item';
+    stagedItem.id = `staged-${filename}`;
+    stagedItem.innerHTML = `
+        <svg class="file-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+        </svg>
+        <span class="file-name">${filename}</span>
+        <div class="file-actions">
+            <span class="text-sm text-muted-foreground">Will be removed on commit</span>
+        </div>
+    `;
+    stagedList.appendChild(stagedItem);
+}
+
+function removeFromStagedList(filename) {
+    const stagedItem = document.getElementById(`staged-${filename}`);
+    if (stagedItem) {
+        stagedItem.remove();
+    }
+
+    // Hide the panel if no files are staged
+    if (stagedForRemoval.size === 0) {
+        document.getElementById('staged-removals-panel').style.display = 'none';
     }
 }
+
+function updateCommitButton() {
+    const commitButton = document.querySelector('button[type="submit"]');
+
+    if (stagedForRemoval.size > 0) {
+        commitButton.textContent = 'Add Files & Remove Staged';
+        commitButton.className = 'btn btn-primary';
+    } else {
+        commitButton.textContent = 'Add & Commit';
+        commitButton.className = 'btn btn-primary';
+    }
+}
+
+// Update the commit form to include staged removals
+document.addEventListener('DOMContentLoaded', function() {
+    const commitForm = document.getElementById('commit-form');
+
+    // Add event listeners to stage removal buttons
+    document.querySelectorAll('.stage-removal-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const filename = this.dataset.filename;
+            const index = parseInt(this.dataset.index);
+            stageForRemoval(filename, index);
+        });
+    });
+
+    commitForm.addEventListener('submit', function(e) {
+        // Add hidden inputs for staged removals
+        stagedForRemoval.forEach(filename => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'remove_files';
+            input.value = filename;
+            commitForm.appendChild(input);
+        });
+    });
+});
 </script>
 {% endblock %}

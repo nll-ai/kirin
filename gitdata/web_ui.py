@@ -3,6 +3,7 @@
 import logging
 import os
 import random
+import shutil
 import tempfile
 import time
 from pathlib import Path
@@ -10,6 +11,7 @@ from typing import Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from gitdata.dataset import (
@@ -32,12 +34,17 @@ app = FastAPI(title="GitData UI")
 # Get the directory where this file is located
 BASE_DIR = Path(__file__).resolve().parent
 TEMPLATES_DIR = BASE_DIR / "templates"
+STATIC_DIR = BASE_DIR / "static"
 
-# Create templates directory if it doesn't exist
+# Create directories if they don't exist
 TEMPLATES_DIR.mkdir(exist_ok=True)
+STATIC_DIR.mkdir(exist_ok=True)
 
 # Set up Jinja2 templates
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+# Mount static files
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 # Global state to store the current dataset
 current_dataset: Optional[Dataset] = None
@@ -388,77 +395,134 @@ async def commit_page(request: Request):
 @app.post("/commit-files", response_class=HTMLResponse)
 async def commit_files(
     request: Request,
-    files: list[UploadFile] = File(...),
+    files: list[UploadFile] = File(default=[]),
     commit_message: str = Form(...),
+    remove_files: list[str] = Form([]),
 ):
     """Add files and commit them to the dataset."""
-    logger.info(f"Adding {len(files)} files with message: {commit_message}")
+    logger.info(
+        f"Adding {len(files)} files, removing {len(remove_files)} files with message: {commit_message}"
+    )
     if current_dataset is None:
         logger.warning("Attempted to commit files but no dataset is loaded")
         raise HTTPException(status_code=400, detail="No dataset loaded")
 
+    # Validate that at least one operation is specified
+    if not files and not remove_files:
+        logger.warning("No files to add or remove specified")
+        raise HTTPException(
+            status_code=400,
+            detail="At least one file must be added or removed for a commit",
+        )
+
     try:
-        # Create temporary directory for uploaded files
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_paths = []
+        temp_paths = []
+        temp_dir = None
 
-            # Save files to temporary directory
-            for file in files:
-                if file.filename:
-                    temp_path = os.path.join(temp_dir, file.filename)
-                    temp_paths.append(temp_path)
+        # Handle file uploads if any
+        if files:
+            # Create temporary directory for uploaded files
+            temp_dir = tempfile.mkdtemp()
+            try:
+                # Save files to temporary directory
+                for file in files:
+                    if file.filename:
+                        temp_path = os.path.join(temp_dir, file.filename)
+                        temp_paths.append(temp_path)
 
-                    # Write file content
-                    with open(temp_path, "wb") as f:
-                        content = await file.read()
-                        f.write(content)
+                        # Write file content
+                        with open(temp_path, "wb") as f:
+                            content = await file.read()
+                            f.write(content)
 
-                    logger.info(f"Saved file: {file.filename} ({len(content)} bytes)")
+                        logger.info(
+                            f"Saved file: {file.filename} ({len(content)} bytes)"
+                        )
 
-            # Commit files to dataset
-            logger.info(f"Committing {len(temp_paths)} files to dataset")
+                # Commit changes to dataset
+                logger.info(
+                    f"Committing {len(temp_paths)} files to add, {len(remove_files)} files to remove"
+                )
+                current_dataset.commit(
+                    commit_message=commit_message,
+                    add_files=temp_paths if temp_paths else None,
+                    remove_files=remove_files if remove_files else None,
+                )
+
+                # Clear commit cache after successful commit
+                cache_key = (current_dataset.dataset_name, current_dataset.root_dir)
+                if cache_key in commit_cache:
+                    del commit_cache[cache_key]
+                    logger.info(
+                        f"Cleared commit cache for dataset: {current_dataset.dataset_name}"
+                    )
+            finally:
+                # Clean up temporary directory
+                if temp_dir and os.path.exists(temp_dir):
+                    shutil.rmtree(temp_dir)
+        else:
+            # No files to upload, just commit removals
+            logger.info(
+                f"Committing {len(temp_paths)} files to add, {len(remove_files)} files to remove"
+            )
             current_dataset.commit(
                 commit_message=commit_message,
-                add_files=temp_paths,
+                add_files=temp_paths if temp_paths else None,
+                remove_files=remove_files if remove_files else None,
             )
 
-            logger.info(f"Successfully committed {len(temp_paths)} files")
+            # Clear commit cache after successful commit
+            cache_key = (current_dataset.dataset_name, current_dataset.root_dir)
+            if cache_key in commit_cache:
+                del commit_cache[cache_key]
+                logger.info(
+                    f"Cleared commit cache for dataset: {current_dataset.dataset_name}"
+                )
 
-            # Return success message
-            success_html = f"""  # noqa: E501
-            <div class="bg-green-50 border border-green-200 rounded-md p-4">
-                <div class="flex">
-                    <div class="flex-shrink-0">
-                        <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20"
-                             fill="currentColor">
-                            <path fill-rule="evenodd"
-                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                  clip-rule="evenodd" />
-                        </svg>
+        action_summary = []
+        if temp_paths:
+            action_summary.append(f"added {len(temp_paths)} files")
+        if remove_files:
+            action_summary.append(f"removed {len(remove_files)} files")
+
+        logger.info(f"Successfully committed changes: {', '.join(action_summary)}")
+
+        # Return success message
+        success_html = f"""
+        <div class="bg-green-50 border border-green-200 rounded-md p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-green-400" viewBox="0 0 20 20"
+                         fill="currentColor">
+                        <path fill-rule="evenodd"
+                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                              clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-green-800">
+                        Successfully committed changes!
+                    </h3>
+                    <div class="mt-2 text-sm text-green-700">
+                        <p>Actions: {", ".join(action_summary) if action_summary else "No changes"}</p>
+                        <p>Commit message: {commit_message}</p>
+                        <p>New commit hash: {current_dataset.current_version_hash()[:8]}</p>
                     </div>
-                    <div class="ml-3">
-                        <h3 class="text-sm font-medium text-green-800">
-                            Successfully added and committed {len(temp_paths)} files!
-                        </h3>
-                        <div class="mt-2 text-sm text-green-700">
-                            <p>Commit message: {commit_message}</p>
-                            <p>New commit hash: {current_dataset.current_version_hash()[:8]}</p>
-                        </div>
-                        <div class="mt-4">
-                            <a href="/dataset-view"
-                               class="text-sm font-medium text-green-800 hover:text-green-600">
-                                View Dataset →
-                            </a>
-                        </div>
+                    <div class="mt-4">
+                        <a href="/dataset-view"
+                           class="text-sm font-medium text-green-800 hover:text-green-600">
+                            View Dataset →
+                        </a>
                     </div>
                 </div>
             </div>
-            """
-            return HTMLResponse(content=success_html, status_code=200)
+        </div>
+        """
+        return HTMLResponse(content=success_html, status_code=200)
 
     except Exception as e:
         logger.error(f"Error committing files: {e}", exc_info=True)
-        error_html = f"""  # noqa: E501
+        error_html = f"""
         <div class="bg-red-50 border border-red-200 rounded-md p-4">
             <div class="flex">
                 <div class="flex-shrink-0">
@@ -509,10 +573,18 @@ async def remove_file(
             remove_files=[filename],
         )
 
+        # Clear commit cache after successful commit
+        cache_key = (current_dataset.dataset_name, current_dataset.root_dir)
+        if cache_key in commit_cache:
+            del commit_cache[cache_key]
+            logger.info(
+                f"Cleared commit cache for dataset: {current_dataset.dataset_name}"
+            )
+
         logger.info(f"Successfully removed file '{filename}'")
 
         # Return success message
-        success_html = f"""  # noqa: E501
+        success_html = f"""
         <div class="bg-green-50 border border-green-200 rounded-md p-4">
             <div class="flex">
                 <div class="flex-shrink-0">
@@ -546,7 +618,7 @@ async def remove_file(
 
     except Exception as e:
         logger.error(f"Error removing file '{filename}': {e}", exc_info=True)
-        error_html = f"""  # noqa: E501
+        error_html = f"""
         <div class="bg-red-50 border border-red-200 rounded-md p-4">
             <div class="flex">
                 <div class="flex-shrink-0">
