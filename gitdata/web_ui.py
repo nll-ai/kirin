@@ -272,7 +272,14 @@ async def get_commit_files(request: Request, commit_hash: str):
         files = []
         if current_dataset.current_commit.file_hashes:
             logger.info(f"Listing files for commit {commit_hash[:8]}")
+            import time
+
+            start_time = time.time()
             file_dict = current_dataset.file_dict
+            end_time = time.time()
+            logger.info(
+                f"File dict retrieval took {end_time - start_time:.3f}s for commit {commit_hash[:8]}"
+            )
             files = [{"name": name, "path": path} for name, path in file_dict.items()]
             logger.info(
                 f"Found {len(files)} files in commit {commit_hash[:8]}: "

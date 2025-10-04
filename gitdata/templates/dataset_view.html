@@ -16,6 +16,26 @@
         url.searchParams.set('commit', commitHash);
         window.history.pushState({}, '', url);
     }
+
+    function showCommitLoading(commitElement) {
+        // Remove loading state from all other commit items
+        document.querySelectorAll('.commit-item.loading').forEach(item => {
+            item.classList.remove('loading');
+        });
+
+        // Add loading class to show spinner on clicked item
+        commitElement.classList.add('loading');
+
+        // Remove loading state when HTMX request completes
+        commitElement.addEventListener('htmx:afterRequest', function() {
+            commitElement.classList.remove('loading');
+        }, { once: true });
+
+        // Also remove loading state on error
+        commitElement.addEventListener('htmx:responseError', function() {
+            commitElement.classList.remove('loading');
+        }, { once: true });
+    }
 </script>
 {% endblock %}
 

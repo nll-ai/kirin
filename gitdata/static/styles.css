@@ -335,6 +335,28 @@ body {
     padding-left: calc(1.5rem - 3px);
 }
 
+.commit-item.loading {
+    background: hsl(var(--muted) / 0.7);
+    position: relative;
+    opacity: 0.8;
+    border-left: 3px solid hsl(var(--primary));
+    padding-left: calc(1.5rem - 3px);
+}
+
+.commit-item.loading::after {
+    content: '';
+    position: absolute;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    border: 2px solid hsl(var(--border));
+    border-top: 2px solid hsl(var(--primary));
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
 .commit-hash {
     font-family: "Monaco", "Courier New", monospace;
     font-size: 0.8125rem;

@@ -253,3 +253,53 @@ The web UI follows consistent error handling patterns:
 - **500 Internal Server Error**: Unexpected errors with detailed logging
 
 All error responses include user-friendly HTML with appropriate styling using the design system components.
+
+## Development Environment
+
+### Pixi Environment
+
+This project uses **pixi** for dependency management and environment setup. All shell commands for testing and running the project must be executed within the pixi environment:
+
+- **Testing Commands**: Always use `pixi run python -m pytest` or `pixi run python script.py`
+- **Development Server**: Use `pixi run python -m gitdata.web_ui` to start the server
+- **GitData UI**: Use `pixi run gitdata ui` to run the GitData web interface
+- **CLI Commands**: Use `pixi run python -m gitdata.cli` for command-line operations
+- **Debug Scripts**: Use `pixi run python debug_script.py` for debugging
+
+**Critical**: Never run Python commands directly without the `pixi run` prefix, as this will use the system Python instead of the project's managed environment with all required dependencies.
+
+### The Notebook - GitData Capabilities Showcase
+
+The project includes a Marimo notebook at `notebooks/prototype.py` that serves as the primary showcase for GitData's capabilities. This notebook demonstrates:
+
+- **File Access Patterns**: How to work with remote files using the context manager
+- **Lazy Loading**: Demonstrating that files are only downloaded when accessed
+- **Integration Examples**: Real-world usage with libraries like Marimo, Polars, etc.
+- **Visualization**: Commit history and dataset exploration
+
+**Notebook Guidelines**:
+- **Keep it updated** - Add new capabilities and examples to the notebook
+- **Use real examples** - Show actual use cases, not just toy examples
+- **Document patterns** - Include comments explaining the GitData patterns
+- **Test regularly** - Use `uvx marimo check notebooks/prototype.py` to validate the notebook
+- **Interactive demos** - Make it runnable and educational
+
+**Notebook Validation**:
+```bash
+# Check notebook for issues
+uvx marimo check notebooks/prototype.py
+
+# Run the notebook
+uvx marimo run notebooks/prototype.py
+```
+
+### Testing Guidelines
+
+When writing tests for the project:
+
+- **Always write tests in the test suite** - Place test files in the `/tests/` directory following the existing naming conventions
+- **Use the test environment** - Always run tests with `pixi run -e tests pytest` or `pixi run -e tests pytest tests/test_filename.py`
+- **Test new functionality immediately** - Write tests for new features before or alongside implementation
+- **Follow existing test patterns** - Use the same structure and naming conventions as existing tests in the test suite
+- **Use pytest function style only** - Write tests as functions, not classes. Use `def test_function_name():` pattern
+- **No test classes** - Avoid `class TestSomething:` patterns. Use function-based tests with descriptive names

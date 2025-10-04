@@ -5,7 +5,7 @@
         hx-get="/commit/{{ commit.hash }}/files"
         hx-target="#files-list"
         hx-indicator="#loading-files"
-        onclick="document.getElementById('file-preview').innerHTML = ''; updateCommitUrl('{{ commit.hash }}');"
+        onclick="document.getElementById('file-preview').innerHTML = ''; updateCommitUrl('{{ commit.hash }}'); showCommitLoading(this);"
     >
         <div class="commit-hash">{{ commit.short_hash }}</div>
         <div class="commit-message">
@@ -41,7 +41,4 @@
         <p>No commits yet</p>
     </div>
 {% endif %}
-<div id="loading-files" class="htmx-indicator" style="padding: 1rem; text-align: center;">
-    <div class="spinner" style="margin: 0 auto;"></div>
-</div>
 

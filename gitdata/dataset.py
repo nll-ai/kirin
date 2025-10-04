@@ -223,6 +223,7 @@ class DatasetCommit:
     file_hashes: list[str] = field(default_factory=list)
     parent_hash: str = field(default="")
     fs: Optional[fsspec.AbstractFileSystem] = field(default=None, repr=False)
+    _file_dict_cache: Optional[dict] = field(default=None, init=False, repr=False)
 
     @autowrite_json
     def __post_init__(self):
@@ -259,27 +260,71 @@ class DatasetCommit:
 
         :return: A dictionary of the form {filename: file_hash_dir}
         """
+        # Use cache if available
+        if self._file_dict_cache is not None:
+            return self._file_dict_cache
+
         # Return a dictionary of the form {filename: file_hash_dir}
         file_dict = {}
         # Track which (hash, filename) combinations we've already added
         used_files = set()
 
-        for file_hash in self.file_hashes:
-            hash_dir = f"{self.data_dir}/{file_hash}"
-            filepaths = sorted(self.fs.glob(f"{strip_protocol(hash_dir)}/*"))
+        # Optimize: batch glob operations when possible
+        if len(self.file_hashes) > 1:
+            # Try to get all files at once if possible
+            data_dir_stripped = strip_protocol(self.data_dir)
+            all_files = self.fs.glob(f"{data_dir_stripped}/*/*")
 
-            # Find a file in this hash directory that we haven't added yet
-            for filepath in filepaths:
-                filename = filepath.split("/")[-1]
-                file_key = (file_hash, filename)
+            # Group files by hash directory
+            files_by_hash = {}
+            for filepath in all_files:
+                # Extract hash from path: data_dir/hash/filename
+                path_parts = filepath.split("/")
+                if len(path_parts) >= 2:
+                    hash_part = path_parts[-2]  # Second to last part should be the hash
+                    if hash_part in self.file_hashes:
+                        if hash_part not in files_by_hash:
+                            files_by_hash[hash_part] = []
+                        files_by_hash[hash_part].append(filepath)
 
-                # Only add this file if we haven't used it yet
-                if file_key not in used_files:
-                    file_dict[filename] = filepath
-                    used_files.add(file_key)
-                    break  # Move to next hash in file_hashes
+            # Process files for each hash
+            for file_hash in self.file_hashes:
+                if file_hash in files_by_hash:
+                    filepaths = sorted(files_by_hash[file_hash])
+                    # Find a file in this hash directory that we haven't added yet
+                    for filepath in filepaths:
+                        filename = filepath.split("/")[-1]
+                        file_key = (file_hash, filename)
 
+                        # Only add this file if we haven't used it yet
+                        if file_key not in used_files:
+                            file_dict[filename] = filepath
+                            used_files.add(file_key)
+                            break  # Move to next hash in file_hashes
+        else:
+            # Fallback to individual glob operations for single hash
+            for file_hash in self.file_hashes:
+                hash_dir = f"{self.data_dir}/{file_hash}"
+                filepaths = sorted(self.fs.glob(f"{strip_protocol(hash_dir)}/*"))
+
+                # Find a file in this hash directory that we haven't added yet
+                for filepath in filepaths:
+                    filename = filepath.split("/")[-1]
+                    file_key = (file_hash, filename)
+
+                    # Only add this file if we haven't used it yet
+                    if file_key not in used_files:
+                        file_dict[filename] = filepath
+                        used_files.add(file_key)
+                        break  # Move to next hash in file_hashes
+
+        # Cache the result
+        self._file_dict_cache = file_dict
         return file_dict
+
+    def _clear_file_dict_cache(self):
+        """Clear the file dictionary cache."""
+        self._file_dict_cache = None
 
     @autowrite_json
     def create(
@@ -419,6 +464,76 @@ class DatasetCommit:
         )
 
 
+class LocalFilesContext:
+    """Context manager for accessing dataset files as local paths with lazy loading."""
+
+    def __init__(self, dataset: "Dataset"):
+        self.dataset = dataset
+        self.local_files = {}
+        self.remote_file_dict = None
+
+    def __enter__(self):
+        """Return lazy loading dictionary that downloads files on demand."""
+        self.remote_file_dict = self.dataset.current_commit._file_dict()
+        return LazyLocalFilesDict(self)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Clean up all temporary files."""
+        import os
+
+        for local_path in self.local_files.values():
+            if os.path.exists(local_path):
+                os.unlink(local_path)
+        self.local_files.clear()
+
+
+class LazyLocalFilesDict:
+    """Dictionary-like object that downloads files lazily on access."""
+
+    def __init__(self, context: LocalFilesContext):
+        self.context = context
+
+    def __getitem__(self, filename: str) -> str:
+        """Download file on first access and return local path."""
+        if filename not in self.context.local_files:
+            if filename not in self.context.remote_file_dict:
+                raise KeyError(f"File '{filename}' not found in dataset")
+
+            # Download file on demand
+            local_path = self.context.dataset.download_file(filename)
+            self.context.local_files[filename] = local_path
+
+        return self.context.local_files[filename]
+
+    def __contains__(self, filename: str) -> bool:
+        """Check if file exists in dataset."""
+        return filename in self.context.remote_file_dict
+
+    def keys(self):
+        """Return all available filenames."""
+        return self.context.remote_file_dict.keys()
+
+    def items(self):
+        """Return (filename, local_path) pairs, downloading files on demand."""
+        for filename in self.context.remote_file_dict.keys():
+            yield filename, self[filename]
+
+    def values(self):
+        """Return local paths, downloading files on demand."""
+        for filename in self.context.remote_file_dict.keys():
+            yield self[filename]
+
+    def get(self, filename: str, default=None):
+        """Get local path for file, returning default if not found."""
+        if filename in self.context.remote_file_dict:
+            return self[filename]
+        return default
+
+    def __len__(self):
+        """Return number of files in dataset."""
+        return len(self.context.remote_file_dict)
+
+
 @dataclass
 class Dataset:
     """A class for storing data in a git-like structure.
@@ -515,6 +630,47 @@ class Dataset:
         commit_set = parents.symmetric_difference(commits)
         return [c for c in commit_set if c][0]
 
+    def resolve_commit_hash(self, partial_hash: str) -> str:
+        """Resolve a partial commit hash to a full commit hash.
+
+        Given a partial commit hash (e.g., first 8 characters), find the full
+        commit hash that starts with that partial hash. If multiple commits
+        match, raises an error. If no commits match, raises an error.
+
+        :param partial_hash: The partial commit hash to resolve
+        :return: The full commit hash
+        :raises ValueError: If no commits match or multiple commits match
+        """
+        if not partial_hash:
+            raise ValueError("Partial hash cannot be empty")
+
+        # Get all commit.json files
+        jsons = self.fs.glob(f"{strip_protocol(self.dataset_dir)}/*/commit.json")
+        if not jsons:
+            raise DatasetNoCommitsError(
+                "No commit.json files found in "
+                + str(self.dataset_dir)
+                + ". It appears that the dataset has not yet had data committed to it."
+            )
+
+        matching_hashes = []
+        for json_file in jsons:
+            with self.fs.open(json_file, "r") as f:
+                data = json.loads(f.read())
+                full_hash = data["version_hash"]
+                if full_hash.startswith(partial_hash):
+                    matching_hashes.append(full_hash)
+
+        if not matching_hashes:
+            raise ValueError(f"No commit found matching partial hash '{partial_hash}'")
+        elif len(matching_hashes) > 1:
+            raise ValueError(
+                f"Multiple commits match partial hash '{partial_hash}': "
+                f"{matching_hashes}. Please provide more characters to make it unique."
+            )
+
+        return matching_hashes[0]
+
     @autowrite_json
     def commit(
         self,
@@ -551,6 +707,17 @@ class Dataset:
         # Checkout the latest version of the dataset if it is not specified.
         if version_hash == "":
             version_hash = self.latest_version_hash()
+        else:
+            # Try to resolve partial hash to full hash
+            try:
+                version_hash = self.resolve_commit_hash(version_hash)
+            except ValueError:
+                # If resolution fails, assume it's already a full hash
+                pass
+
+        # Clear any existing cache before setting new commit
+        if hasattr(self, "current_commit") and self.current_commit:
+            self.current_commit._clear_file_dict_cache()
 
         self.current_commit = DatasetCommit.from_json(
             root_dir=self.root_dir,
@@ -568,6 +735,42 @@ class Dataset:
         :return: A dictionary of the files in the dataset.
         """
         return self.current_commit._file_dict()
+
+    def get_local_file_dict(self) -> dict:
+        """Return a dictionary of the files in the dataset with local paths.
+
+        Downloads all files to temporary locations and returns a dictionary
+        mapping filenames to local paths. Useful when you need local file paths
+        for libraries that don't support remote paths.
+
+        :return: A dictionary mapping filenames to local file paths.
+        """
+        remote_file_dict = self.current_commit._file_dict()
+        local_file_dict = {}
+
+        for filename, remote_path in remote_file_dict.items():
+            local_path = self.download_file(filename)
+            local_file_dict[filename] = local_path
+
+        return local_file_dict
+
+    def local_files(self):
+        """Context manager for accessing files as local paths.
+
+        Downloads all files to temporary locations and provides a dictionary
+        mapping filenames to local paths. Automatically cleans up temporary
+        files when exiting the context.
+
+        :return: A context manager that yields a dictionary of local file paths.
+
+        Example:
+            >>> with ds.local_files() as local_files:
+            ...     audio_file = local_files["audio.mp3"]
+            ...     mo.audio(src=audio_file)
+            ...     df = pl.read_csv(local_files["data.csv"])
+            >>> # Files are automatically cleaned up
+        """
+        return LocalFilesContext(self)
 
     def to_dict(self) -> dict:
         """Return a dictionary representation of the dataset.
@@ -651,6 +854,87 @@ class Dataset:
             )
 
         return "\n".join(lines)
+
+    def download_file(self, filename: str, local_path: str = None) -> str:
+        """Download a file from the dataset to a local path.
+
+        :param filename: The name of the file to download.
+        :param local_path: Optional local path to save the file.
+                           If None, uses a temporary file.
+        :return: The local path where the file was saved.
+        """
+        if filename not in self.file_dict:
+            raise FileNotFoundError(f"File '{filename}' not found in dataset")
+
+        remote_path = self.file_dict[filename]
+
+        if local_path is None:
+            import os
+            import tempfile
+
+            # Create a temporary file with the same extension
+            file_ext = os.path.splitext(filename)[1]
+            temp_fd, local_path = tempfile.mkstemp(suffix=file_ext)
+            os.close(temp_fd)  # Close the file descriptor, we'll use the path
+
+        # Download the file using the filesystem
+        with self.fs.open(strip_protocol(remote_path), "rb") as src:
+            with open(local_path, "wb") as dst:
+                dst.write(src.read())
+
+        return local_path
+
+    def get_file_content(self, filename: str, mode: str = "rb") -> bytes | str:
+        """Get the content of a file as bytes or string.
+
+        :param filename: The name of the file to read.
+        :param mode: The mode to open the file ('rb' for bytes, 'r' for string).
+        :return: The file content as bytes or string.
+        """
+        if filename not in self.file_dict:
+            raise FileNotFoundError(f"File '{filename}' not found in dataset")
+
+        remote_path = self.file_dict[filename]
+
+        with self.fs.open(strip_protocol(remote_path), mode) as f:
+            return f.read()
+
+    def get_file_lines(self, filename: str) -> list[str]:
+        """Get the lines of a text file.
+
+        :param filename: The name of the file to read.
+        :return: A list of lines from the file.
+        """
+        content = self.get_file_content(filename, mode="r")
+        return content.splitlines()
+
+    def open_file(self, filename: str, mode: str = "rb"):
+        """Open a file for reading, returning a file-like object.
+
+        This is useful for streaming large files or when you need to pass
+        a file-like object to libraries like pandas, polars, etc.
+
+        :param filename: The name of the file to open.
+        :param mode: The mode to open the file ('rb', 'r', etc.).
+        :return: A file-like object that can be used with libraries
+                 expecting file paths.
+        """
+        if filename not in self.file_dict:
+            raise FileNotFoundError(f"File '{filename}' not found in dataset")
+
+        remote_path = self.file_dict[filename]
+        return self.fs.open(strip_protocol(remote_path), mode)
+
+    def get_local_path(self, filename: str) -> str:
+        """Get a local path for a file, downloading it if necessary.
+
+        This method is a convenience wrapper around download_file() that
+        provides a local path that can be used with libraries expecting file paths.
+
+        :param filename: The name of the file to get a local path for.
+        :return: The local path to the file.
+        """
+        return self.download_file(filename)
 
     def show_commit_history(self, short_hash_length: int = 8) -> None:
         """Print the commit history as a Mermaid diagram.
