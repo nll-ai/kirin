@@ -47,6 +47,8 @@
             <span class="breadcrumb-separator">/</span>
             <span class="font-mono">{{ dataset_name }}</span>
             <span class="breadcrumb-separator">@</span>
+            <span class="badge font-mono">{{ current_branch }}</span>
+            <span class="breadcrumb-separator">#</span>
             <span class="badge font-mono">{{ current_commit_hash }}</span>
         </div>
     </div>
@@ -58,6 +60,12 @@
                 <p class="text-muted font-mono text-sm">{{ dataset_url }}</p>
             </div>
             <div class="flex gap-2">
+                <a href="/branches" class="btn btn-secondary">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
+                    </svg>
+                    Branches
+                </a>
                 <a href="/commit" class="btn btn-primary">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>

@@ -12,7 +12,7 @@
 
 import marimo
 
-__generated_with = "0.16.5"
+__generated_with = "0.16.4"
 app = marimo.App(width="medium")
 
 
@@ -24,6 +24,7 @@ def _():
     import os
     import tempfile
     from pathlib import Path
+
     return Path, mo, pl, tempfile
 
 
@@ -32,6 +33,7 @@ def _():
     # Import GitData
     import gitdata
     from gitdata.dataset import Dataset
+
     return (Dataset,)
 
 

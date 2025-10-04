@@ -9,27 +9,8 @@ from typing import List, Optional
 import fsspec
 import json5 as json
 
-
-def strip_protocol(path: str) -> str:
-    """Strip protocol prefix from a path for use with fsspec filesystems.
-
-    fsspec filesystem objects already know their protocol, so paths should be
-    passed without the protocol prefix (e.g., 'bucket/path' not 'gs://bucket/path').
-
-    :param path: Path that may include protocol (e.g., 's3://bucket/path').
-    :return: Path without protocol prefix.
-
-    Examples:
-        >>> strip_protocol('s3://bucket/path/file.txt')
-        'bucket/path/file.txt'
-        >>> strip_protocol('gs://bucket/path')
-        'bucket/path'
-        >>> strip_protocol('/local/path')
-        '/local/path'
-    """
-    if "://" in path:
-        return path.split("://", 1)[1]
-    return path
+from .models import BranchManager
+from .utils import strip_protocol
 
 
 def get_filesystem(path: str | Path) -> fsspec.AbstractFileSystem:
@@ -222,6 +203,7 @@ class DatasetCommit:
     commit_message: str = field(default="")
     file_hashes: list[str] = field(default_factory=list)
     parent_hash: str = field(default="")
+    parent_hashes: list[str] = field(default_factory=list)
     fs: Optional[fsspec.AbstractFileSystem] = field(default=None, repr=False)
     _file_dict_cache: Optional[dict] = field(default=None, init=False, repr=False)
 
@@ -564,26 +546,41 @@ class Dataset:
 
         self.json_path = f"{self.dataset_dir}/dataset.json"
 
+        # Initialize branch manager first
+        self.branch_manager = BranchManager(self.dataset_dir, self.fs)
+
         # This is the only class attribute that we change
         # throughout the lifetime of the object!
         try:
-            version_hash = self.latest_version_hash()
+            # Try to get the current branch's commit
+            current_branch = self.branch_manager.get_current_branch()
+            if current_branch == "main":
+                # For main branch, use the latest version hash
+                version_hash = self.latest_version_hash()
+            else:
+                # For other branches, get the commit from the branch
+                version_hash = self.branch_manager.get_branch_commit(current_branch)
+
             self.current_commit = DatasetCommit.from_json(
                 root_dir=self.root_dir,
                 dataset_name=self.dataset_name,
                 version_hash=version_hash,
                 fs=self.fs,
             )
-        except DatasetNoCommitsError:
+        except (DatasetNoCommitsError, ValueError):
+            # No commits or branch doesn't exist, create initial commit
+            initial_hash = sha256(self.dataset_name.encode()).hexdigest()
             self.current_commit = DatasetCommit(
                 root_dir=self.root_dir,
                 dataset_name=self.dataset_name,
-                version_hash=sha256(self.dataset_name.encode()).hexdigest(),
+                version_hash=initial_hash,
                 commit_message="",
                 file_hashes=[],
                 parent_hash="",
                 fs=self.fs,
             )
+            # Create main branch with the initial commit
+            self.branch_manager.create_branch("main", initial_hash)
 
         self._file_dict = {}
 
@@ -692,6 +689,9 @@ class Dataset:
             remove_files=remove_files,
         )
         self.current_commit = new_commit
+
+        # Update the current branch to point to the new commit
+        self.branch_manager.update_current_branch(new_commit.version_hash)
 
     def metadata(self) -> dict:
         """Return the metadata for the dataset.
@@ -947,6 +947,78 @@ class Dataset:
         """
         mermaid = self.commit_history_mermaid(short_hash_length)
         print(mermaid)
+
+    # Branch management methods
+    def create_branch(self, name: str, commit_hash: str = None) -> str:
+        """Create a new branch.
+
+        Args:
+            name: Name of the branch to create
+            commit_hash: Commit hash to point to (defaults to current commit)
+
+        Returns:
+            The commit hash the branch was created with
+        """
+        if commit_hash is None:
+            commit_hash = self.current_version_hash()
+
+        return self.branch_manager.create_branch(name, commit_hash)
+
+    def list_branches(self) -> list[str]:
+        """List all branches.
+
+        Returns:
+            List of branch names
+        """
+        return self.branch_manager.list_branches()
+
+    def get_current_branch(self) -> str:
+        """Get the current branch name.
+
+        Returns:
+            Name of the current branch
+        """
+        return self.branch_manager.get_current_branch()
+
+    def switch_branch(self, name: str):
+        """Switch to a different branch.
+
+        Args:
+            name: Name of the branch to switch to
+
+        Raises:
+            ValueError: If branch doesn't exist
+        """
+        # Get the commit hash for the branch
+        commit_hash = self.branch_manager.get_branch_commit(name)
+
+        # Switch to the branch
+        self.branch_manager.set_current_branch(name)
+
+        # Update current commit to match the branch
+        self.checkout(commit_hash)
+
+    def delete_branch(self, name: str):
+        """Delete a branch.
+
+        Args:
+            name: Name of the branch to delete
+
+        Raises:
+            ValueError: If trying to delete main branch or branch doesn't exist
+        """
+        self.branch_manager.delete_branch(name)
+
+    def get_branch_commit(self, name: str) -> str:
+        """Get the commit hash that a branch points to.
+
+        Args:
+            name: Name of the branch
+
+        Returns:
+            The commit hash the branch points to
+        """
+        return self.branch_manager.get_branch_commit(name)
 
 
 class DatasetError(Exception):

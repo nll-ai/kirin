@@ -303,3 +303,11 @@ When writing tests for the project:
 - **Follow existing test patterns** - Use the same structure and naming conventions as existing tests in the test suite
 - **Use pytest function style only** - Write tests as functions, not classes. Use `def test_function_name():` pattern
 - **No test classes** - Avoid `class TestSomething:` patterns. Use function-based tests with descriptive names
+
+### Documentation and Examples
+
+- **Tests are the primary demonstration** - Tests serve as the main way to show functionality and usage patterns
+- **No example scripts needed** - Do not create standalone example scripts to demonstrate functionality
+- **Comprehensive test coverage** - Write tests that cover both basic usage and edge cases
+- **Test documentation** - Use descriptive test names and docstrings to explain what each test demonstrates
+- **Real-world scenarios** - Write tests that reflect actual usage patterns and workflows

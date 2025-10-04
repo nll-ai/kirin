@@ -62,8 +62,9 @@
                         </div>
 
                         <div class="flex gap-3">
-                            <button type="submit" class="btn btn-primary">
-                                Add & Commit
+                            <button type="submit" class="btn btn-primary" id="commit-button">
+                                <span id="commit-button-text">Add & Commit</span>
+                                <span id="commit-spinner" class="spinner" style="display: none;"></span>
                             </button>
                             <button
                                 type="button"
@@ -202,16 +203,36 @@ function removeFromStagedList(filename) {
 }
 
 function updateCommitButton() {
-    const commitButton = document.querySelector('button[type="submit"]');
-    const commitMessage = document.getElementById('commit_message');
+    const commitButtonText = document.getElementById('commit-button-text');
+    const commitButton = document.getElementById('commit-button');
 
     if (stagedForRemoval.size > 0) {
-        commitButton.textContent = 'Add Files & Remove Staged';
+        commitButtonText.textContent = 'Add Files & Remove Staged';
         commitButton.className = 'btn btn-primary';
     } else {
-        commitButton.textContent = 'Add & Commit';
+        commitButtonText.textContent = 'Add & Commit';
         commitButton.className = 'btn btn-primary';
     }
+}
+
+function showSpinner() {
+    const commitButtonText = document.getElementById('commit-button-text');
+    const commitSpinner = document.getElementById('commit-spinner');
+    const commitButton = document.getElementById('commit-button');
+
+    commitButtonText.style.display = 'none';
+    commitSpinner.style.display = 'inline-block';
+    commitButton.disabled = true;
+}
+
+function hideSpinner() {
+    const commitButtonText = document.getElementById('commit-button-text');
+    const commitSpinner = document.getElementById('commit-spinner');
+    const commitButton = document.getElementById('commit-button');
+
+    commitButtonText.style.display = 'inline';
+    commitSpinner.style.display = 'none';
+    commitButton.disabled = false;
 }
 
 // Update the commit form to include staged removals
@@ -228,6 +249,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     commitForm.addEventListener('submit', function(e) {
+        // Show spinner
+        showSpinner();
+
         // Add hidden inputs for staged removals
         stagedForRemoval.forEach(filename => {
             const input = document.createElement('input');
@@ -236,6 +260,13 @@ document.addEventListener('DOMContentLoaded', function() {
             input.value = filename;
             commitForm.appendChild(input);
         });
+    });
+
+    // Hide spinner when HTMX request completes (success or error)
+    document.body.addEventListener('htmx:afterRequest', function(event) {
+        if (event.detail.xhr.status === 200 || event.detail.xhr.status >= 400) {
+            hideSpinner();
+        }
     });
 });
 </script>

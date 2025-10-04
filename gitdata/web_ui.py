@@ -203,6 +203,7 @@ async def dataset_view(request: Request):
                 "dataset_name": current_dataset.dataset_name,
                 "dataset_url": current_dataset.root_dir,
                 "current_commit_hash": current_dataset.current_version_hash()[:8],
+                "current_branch": current_dataset.get_current_branch(),
                 "commits": initial_commits,
                 "files": files,
                 "has_more_commits": has_more,
@@ -735,6 +736,161 @@ def get_all_commits(dataset: Dataset, use_cache: bool = True) -> list:
     except DatasetNoCommitsError:
         logger.info("Dataset has no commits yet")
         return []
+
+
+# Branch management routes
+@app.get("/branches", response_class=HTMLResponse)
+async def list_branches(request: Request):
+    """List all branches for the current dataset."""
+    if current_dataset is None:
+        raise HTTPException(status_code=400, detail="No dataset loaded")
+
+    try:
+        branches = current_dataset.list_branches()
+        current_branch = current_dataset.get_current_branch()
+
+        return templates.TemplateResponse(
+            "branches_list.html",
+            {
+                "request": request,
+                "branches": branches,
+                "current_branch": current_branch,
+                "dataset_name": current_dataset.dataset_name,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error listing branches: {e}", exc_info=True)
+        error_html = (
+            f'<div class="alert alert-error">Error listing branches: {str(e)}</div>'
+        )
+        return HTMLResponse(content=error_html, status_code=500)
+
+
+@app.post("/branches/create")
+async def create_branch(request: Request):
+    """Create a new branch."""
+    if current_dataset is None:
+        raise HTTPException(status_code=400, detail="No dataset loaded")
+
+    form = await request.form()
+    branch_name = form.get("branch_name")
+
+    if not branch_name:
+        raise HTTPException(status_code=400, detail="Branch name is required")
+
+    try:
+        # Create branch pointing to current commit
+        current_commit = current_dataset.current_version_hash()
+        current_dataset.create_branch(branch_name, current_commit)
+
+        # Return success message
+        success_html = f"""
+        <div class="alert alert-success">
+            Branch '{branch_name}' created successfully
+        </div>
+        <script>
+            // Refresh the branches list
+            htmx.trigger('#branches-list', 'refresh');
+        </script>
+        """
+        return HTMLResponse(content=success_html, status_code=200)
+    except ValueError as e:
+        error_html = (
+            f'<div class="alert alert-error">Error creating branch: {str(e)}</div>'
+        )
+        return HTMLResponse(content=error_html, status_code=400)
+    except Exception as e:
+        logger.error(f"Error creating branch: {e}", exc_info=True)
+        error_html = (
+            f'<div class="alert alert-error">Error creating branch: {str(e)}</div>'
+        )
+        return HTMLResponse(content=error_html, status_code=500)
+
+
+@app.post("/branches/switch")
+async def switch_branch(request: Request):
+    """Switch to a different branch."""
+    if current_dataset is None:
+        raise HTTPException(status_code=400, detail="No dataset loaded")
+
+    form = await request.form()
+    branch_name = form.get("branch_name")
+
+    if not branch_name:
+        raise HTTPException(status_code=400, detail="Branch name is required")
+
+    try:
+        current_dataset.switch_branch(branch_name)
+
+        # Clear commit cache since we switched branches
+        cache_key = (current_dataset.dataset_name, current_dataset.root_dir)
+        if cache_key in commit_cache:
+            del commit_cache[cache_key]
+            logger.info(
+                f"Cleared commit cache for dataset: {current_dataset.dataset_name}"
+            )
+
+        # Return success message and redirect to dataset view
+        success_html = f"""
+        <div class="alert alert-success">
+            Switched to branch '{branch_name}'
+        </div>
+        <script>
+            // Redirect to dataset view
+            window.location.href = '/dataset-view';
+        </script>
+        """
+        return HTMLResponse(content=success_html, status_code=200)
+    except ValueError as e:
+        error_html = (
+            f'<div class="alert alert-error">Error switching branch: {str(e)}</div>'
+        )
+        return HTMLResponse(content=error_html, status_code=400)
+    except Exception as e:
+        logger.error(f"Error switching branch: {e}", exc_info=True)
+        error_html = (
+            f'<div class="alert alert-error">Error switching branch: {str(e)}</div>'
+        )
+        return HTMLResponse(content=error_html, status_code=500)
+
+
+@app.post("/branches/delete")
+async def delete_branch(request: Request):
+    """Delete a branch."""
+    if current_dataset is None:
+        raise HTTPException(status_code=400, detail="No dataset loaded")
+
+    form = await request.form()
+    branch_name = form.get("branch_name")
+
+    if not branch_name:
+        raise HTTPException(status_code=400, detail="Branch name is required")
+
+    try:
+        current_dataset.delete_branch(branch_name)
+
+        # Return success message
+        success_html = f"""
+        <div class="alert alert-success">
+            Branch '{branch_name}' deleted successfully
+        </div>
+        <script>
+            // Refresh the branches list
+            htmx.trigger('#branches-list', 'refresh');
+        </script>
+        """
+        return HTMLResponse(content=success_html, status_code=200)
+    except ValueError as e:
+        error_html = (
+            f'<div class="alert alert-error">Error deleting branch: {str(e)}</div>'
+        )
+        return HTMLResponse(content=error_html, status_code=400)
+    except Exception as e:
+        logger.error(f"Error deleting branch: {e}", exc_info=True)
+        error_html = (
+            f'<div class="alert alert-error">Error deleting branch: {str(e)}</div>'
+        )
+        return HTMLResponse(content=error_html, status_code=500)
 
 
 def run_server(
