@@ -71,6 +71,13 @@ dependencies = [
     "python-dotenv",
     "typer",
     "json5",
+    "fsspec",
+    "s3fs",  # For S3 support
+    "gcsfs",  # For Google Cloud Storage support
+    "fastapi",
+    "uvicorn[standard]",
+    "jinja2",
+    "python-multipart",
 ]
 readme = "README.md"
 

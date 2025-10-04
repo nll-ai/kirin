@@ -1,23 +1,133 @@
 """Implementation for the Dataset and DatasetCommit classes."""
 
-import shutil
 from dataclasses import dataclass, field
 from datetime import datetime
 from hashlib import sha256
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
+import fsspec
 import json5 as json
 
 
-def hash_file(filepath: Path) -> str:
+def strip_protocol(path: str) -> str:
+    """Strip protocol prefix from a path for use with fsspec filesystems.
+
+    fsspec filesystem objects already know their protocol, so paths should be
+    passed without the protocol prefix (e.g., 'bucket/path' not 'gs://bucket/path').
+
+    :param path: Path that may include protocol (e.g., 's3://bucket/path').
+    :return: Path without protocol prefix.
+
+    Examples:
+        >>> strip_protocol('s3://bucket/path/file.txt')
+        'bucket/path/file.txt'
+        >>> strip_protocol('gs://bucket/path')
+        'bucket/path'
+        >>> strip_protocol('/local/path')
+        '/local/path'
+    """
+    if "://" in path:
+        return path.split("://", 1)[1]
+    return path
+
+
+def get_filesystem(path: str | Path) -> fsspec.AbstractFileSystem:
+    """Get the appropriate filesystem based on the path URI.
+
+    Automatically detects the filesystem type from the URI scheme:
+    - s3://bucket/path → S3 (requires s3fs)
+      - Also works with S3-compatible services like Minio, Backblaze B2,
+        DigitalOcean Spaces
+      - Configure via environment variables or pass custom fs with endpoint_url
+    - gs://bucket/path or gcs://bucket/path → GCS (requires gcsfs)
+    - az://container/path or abfs://container/path → Azure (requires adlfs)
+    - /local/path or file:///local/path → Local filesystem
+    - http://... or https://... → HTTP/HTTPS (requires aiohttp)
+    - And many more supported by fsspec (ftp, sftp, hdfs, github, etc.)
+
+    :param path: The path or URI to parse (can be str or Path object).
+    :return: An fsspec filesystem instance.
+    :raises ValueError: If protocol not recognized or dependencies missing.
+
+    Examples:
+        >>> # Local filesystem
+        >>> fs = get_filesystem("/path/to/data")
+        >>> # S3
+        >>> fs = get_filesystem("s3://my-bucket/path")
+        >>> # Minio (S3-compatible)
+        >>> fs = get_filesystem("s3://my-bucket/path")  # Use env vars for endpoint
+        >>> # Google Cloud Storage
+        >>> fs = get_filesystem("gs://my-bucket/path")
+    """
+    # Convert Path objects to string
+    path_str = str(path)
+
+    # Handle relative or absolute local paths without scheme
+    if "://" not in path_str:
+        return fsspec.filesystem("file")
+
+    # Extract protocol from URI
+    protocol = path_str.split("://")[0]
+
+    # Mapping of protocols to their required packages
+    protocol_packages = {
+        "s3": "s3fs",
+        "gs": "gcsfs",
+        "gcs": "gcsfs",
+        "az": "adlfs",
+        "abfs": "adlfs",
+        "adl": "adlfs",
+        "hdfs": "hdfs3 or pyarrow",
+        "http": "aiohttp",
+        "https": "aiohttp",
+        "ftp": "fsspec",
+        "sftp": "paramiko",
+        "ssh": "paramiko",
+        "github": "fsspec",
+        "zip": "fsspec",
+        "tar": "fsspec",
+        "memory": "fsspec",
+        "cached": "fsspec",
+    }
+
+    try:
+        return fsspec.filesystem(protocol)
+    except ImportError as e:
+        # Get the package name for the protocol if known
+        package = protocol_packages.get(protocol, f"fsspec[{protocol}]")
+        raise ValueError(
+            f"The '{protocol}' protocol requires additional dependencies. "
+            f"Please install with: pip install {package}\n"
+            f"Original error: {e}"
+        ) from e
+    except ValueError as e:
+        # Protocol not recognized by fsspec
+        available_protocols = ", ".join(sorted(fsspec.available_protocols()))
+        raise ValueError(
+            f"Protocol '{protocol}' is not recognized by fsspec. "
+            f"Available protocols: {available_protocols}\n"
+            f"Original error: {e}"
+        ) from e
+    except Exception as e:
+        # Catch any other errors and provide helpful message
+        raise ValueError(
+            f"Failed to create filesystem for protocol '{protocol}'. Error: {e}"
+        ) from e
+
+
+def hash_file(filepath: str, fs: Optional[fsspec.AbstractFileSystem] = None) -> str:
     """Hash a file's contents using sha256 and return the hash hex digest.
 
     :param filepath: The path to the file to hash.
+    :param fs: The filesystem to use. If None, uses local filesystem.
     :return: The hash hex digest, a hex string.
     """
+    if fs is None:
+        fs = fsspec.filesystem("file")
+
     hash = sha256()
-    with open(filepath, "rb") as f:
+    with fs.open(str(filepath), "rb") as f:
         for chunk in iter(lambda: f.read(4096), b""):
             hash.update(chunk)
     return hash.hexdigest()
@@ -73,9 +183,18 @@ def autowrite_json(func):
         out = func(self, *args, **kwargs)
 
         # Write the json to the json_path.
-        if not self.json_path.parent.exists():
-            self.json_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.json_path, "w+") as f:
+        # Strip protocol for filesystem operations
+        json_path = strip_protocol(self.json_path)
+
+        # Get parent directory
+        if "/" in json_path:
+            parent_path = json_path.rsplit("/", 1)[0]
+        else:
+            parent_path = "."
+
+        if not self.fs.exists(parent_path):
+            self.fs.makedirs(parent_path, exist_ok=True)
+        with self.fs.open(json_path, "w") as f:
             f.write(json.dumps(self.to_dict()))
 
         return out
@@ -97,23 +216,32 @@ class DatasetCommit:
     A DatasetCommit is always associated with a Dataset.
     """
 
-    root_dir: Path
+    root_dir: str | Path
     dataset_name: str
     version_hash: str = field(default="")
     commit_message: str = field(default="")
     file_hashes: list[str] = field(default_factory=list)
     parent_hash: str = field(default="")
+    fs: Optional[fsspec.AbstractFileSystem] = field(default=None, repr=False)
 
     @autowrite_json
     def __post_init__(self):
         """Post-init function for the DatasetCommit class."""
+        # Convert root_dir to string for consistent handling
+        self.root_dir = str(self.root_dir)
+
+        # Initialize filesystem if not provided - auto-detect from root_dir
+        if self.fs is None:
+            self.fs = get_filesystem(self.root_dir)
+
         if self.version_hash == "":
             # generate a random hash from uuidv4
             self.version_hash = sha256(self.dataset_name.encode()).hexdigest()
 
-        self.data_dir = self.root_dir / "data"
-        self.dataset_dir = self.root_dir / "datasets" / self.dataset_name
-        self.json_path = self.dataset_dir / self.version_hash / "commit.json"
+        # Use string path joining for cross-platform compatibility
+        self.data_dir = f"{self.root_dir}/data"
+        self.dataset_dir = f"{self.root_dir}/datasets/{self.dataset_name}"
+        self.json_path = f"{self.dataset_dir}/{self.version_hash}/commit.json"
 
     def _read_json(self) -> dict:
         """Read the commit.json file for this commit.
@@ -123,7 +251,7 @@ class DatasetCommit:
 
         :return: A dictionary that follows the schema as specified in to_dict().
         """
-        with open(self.json_path, "r+") as f:
+        with self.fs.open(strip_protocol(self.json_path), "r") as f:
             return json.loads(f.read())
 
     def _file_dict(self) -> dict:
@@ -133,9 +261,24 @@ class DatasetCommit:
         """
         # Return a dictionary of the form {filename: file_hash_dir}
         file_dict = {}
+        # Track which (hash, filename) combinations we've already added
+        used_files = set()
+
         for file_hash in self.file_hashes:
-            filepath = sorted((self.data_dir / file_hash).glob("*"))[0]
-            file_dict[filepath.name] = filepath
+            hash_dir = f"{self.data_dir}/{file_hash}"
+            filepaths = sorted(self.fs.glob(f"{strip_protocol(hash_dir)}/*"))
+
+            # Find a file in this hash directory that we haven't added yet
+            for filepath in filepaths:
+                filename = filepath.split("/")[-1]
+                file_key = (file_hash, filename)
+
+                # Only add this file if we haven't used it yet
+                if file_key not in used_files:
+                    file_dict[filename] = filepath
+                    used_files.add(file_key)
+                    break  # Move to next hash in file_hashes
+
         return file_dict
 
     @autowrite_json
@@ -163,15 +306,25 @@ class DatasetCommit:
         hash_hexes = []
         # For each file, create the hash directory and copy the file to it
         if add_files is not None:
-            if isinstance(add_files, Path):
+            if isinstance(add_files, (str, Path)):
                 add_files = [add_files]
             for filepath in add_files:
-                hash_hex = hash_file(Path(filepath))
+                filepath_str = str(filepath)
+                # Detect the source filesystem
+                # (files could be local or from another cloud)
+                source_fs = get_filesystem(filepath_str)
+                # Hash the file using its source filesystem
+                hash_hex = hash_file(strip_protocol(filepath_str), source_fs)
                 hash_hexes.append(hash_hex)
-                file_hash_dir = self.data_dir / hash_hex
-                file_hash_dir.mkdir(parents=True, exist_ok=True)
-                # Copy the file, not move, to the hash directory.
-                shutil.copy(filepath, file_hash_dir / filepath.name)
+                file_hash_dir = f"{self.data_dir}/{hash_hex}"
+                self.fs.makedirs(strip_protocol(file_hash_dir), exist_ok=True)
+                # Copy the file to the destination
+                filename = Path(filepath).name
+                dest_path = f"{file_hash_dir}/{filename}"
+                # Use put_file for cross-filesystem copying
+                with source_fs.open(strip_protocol(filepath_str), "rb") as src:
+                    with self.fs.open(strip_protocol(dest_path), "wb") as dst:
+                        dst.write(src.read())
 
         hash_hexes.extend(self.file_hashes)
 
@@ -182,7 +335,9 @@ class DatasetCommit:
                 remove_files = [remove_files]
 
             for filename in remove_files:
-                hash_hex = self._file_dict()[str(filename)].parent.name
+                file_path = self._file_dict()[str(filename)]
+                # Extract hash from path (second to last component)
+                hash_hex = file_path.split("/")[-2]
                 hash_hexes.remove(hash_hex)
 
         # Sort the hash_hexes so that the order of the files in the dataset
@@ -199,8 +354,8 @@ class DatasetCommit:
         version_hash = hasher.hexdigest()
 
         # Write the new version of the dataset to the dataset directory.
-        dataset_version_dir = self.dataset_dir / version_hash
-        dataset_version_dir.mkdir(parents=True, exist_ok=True)
+        dataset_version_dir = f"{self.dataset_dir}/{version_hash}"
+        self.fs.makedirs(strip_protocol(dataset_version_dir), exist_ok=True)
 
         return DatasetCommit(
             root_dir=self.root_dir,
@@ -209,6 +364,7 @@ class DatasetCommit:
             commit_message=commit_message,
             file_hashes=hash_hexes,
             parent_hash=self.version_hash,
+            fs=self.fs,
         )
 
     def to_dict(self) -> dict:
@@ -228,25 +384,38 @@ class DatasetCommit:
 
     @classmethod
     def from_json(
-        cls, root_dir: Path, dataset_name: str, version_hash: str
+        cls,
+        root_dir: str | Path,
+        dataset_name: str,
+        version_hash: str,
+        fs: Optional[fsspec.AbstractFileSystem] = None,
     ) -> "DatasetCommit":
         """Create a DatasetCommit from a commit.json file.
 
-        :param commit_json: The path to the commit.json file.
+        :param root_dir: The root directory path (can be str or Path).
+        :param dataset_name: The name of the dataset.
+        :param version_hash: The version hash of the commit.
+        :param fs: The filesystem to use. If None, auto-detects from root_dir.
         :return: A DatasetCommit object.
         """
-        with open(
-            root_dir / "datasets" / dataset_name / version_hash / "commit.json", "r+"
-        ) as f:
+        root_dir = str(root_dir)
+        if fs is None:
+            fs = get_filesystem(root_dir)
+
+        commit_json_path = (
+            f"{root_dir}/datasets/{dataset_name}/{version_hash}/commit.json"
+        )
+        with fs.open(commit_json_path, "r") as f:
             commit_dict = json.loads(f.read())
 
         return DatasetCommit(
-            root_dir=Path(commit_dict["root_dir"]),
+            root_dir=commit_dict["root_dir"],
             dataset_name=commit_dict["dataset_name"],
             version_hash=commit_dict["version_hash"],
             commit_message=commit_dict["commit_message"],
             file_hashes=commit_dict["file_hashes"],
             parent_hash=commit_dict["parent_hash"],
+            fs=fs,
         )
 
 
@@ -257,20 +426,28 @@ class Dataset:
     `dataset.json` defines the latest commit hash of the dataset.
     """
 
-    root_dir: Path
+    root_dir: str | Path
     dataset_name: str
     description: str = field(default="")
+    fs: Optional[fsspec.AbstractFileSystem] = field(default=None, repr=False)
 
     @autowrite_json
     def __post_init__(self) -> None:
         """Create the data and dataset directories."""
-        self.data_dir = self.root_dir / "data"
-        self.data_dir.mkdir(parents=True, exist_ok=True)
+        # Convert root_dir to string for consistent handling
+        self.root_dir = str(self.root_dir)
 
-        self.dataset_dir = self.root_dir / "datasets" / self.dataset_name
-        self.dataset_dir.mkdir(parents=True, exist_ok=True)
+        # Initialize filesystem if not provided - auto-detect from root_dir
+        if self.fs is None:
+            self.fs = get_filesystem(self.root_dir)
 
-        self.json_path = self.dataset_dir / "dataset.json"
+        self.data_dir = f"{self.root_dir}/data"
+        self.fs.makedirs(strip_protocol(self.data_dir), exist_ok=True)
+
+        self.dataset_dir = f"{self.root_dir}/datasets/{self.dataset_name}"
+        self.fs.makedirs(strip_protocol(self.dataset_dir), exist_ok=True)
+
+        self.json_path = f"{self.dataset_dir}/dataset.json"
 
         # This is the only class attribute that we change
         # throughout the lifetime of the object!
@@ -280,6 +457,7 @@ class Dataset:
                 root_dir=self.root_dir,
                 dataset_name=self.dataset_name,
                 version_hash=version_hash,
+                fs=self.fs,
             )
         except DatasetNoCommitsError:
             self.current_commit = DatasetCommit(
@@ -289,6 +467,7 @@ class Dataset:
                 commit_message="",
                 file_hashes=[],
                 parent_hash="",
+                fs=self.fs,
             )
 
         self._file_dict = {}
@@ -309,7 +488,7 @@ class Dataset:
 
         :return: The hash of the latest version of the dataset.
         """
-        jsons = list(self.dataset_dir.glob("*/commit.json"))
+        jsons = self.fs.glob(f"{strip_protocol(self.dataset_dir)}/*/commit.json")
         if not jsons:
             raise DatasetNoCommitsError(
                 "No commit.json files found in "
@@ -318,7 +497,7 @@ class Dataset:
             )
         commit_to_parent = dict()
         for json_file in jsons:
-            with open(json_file, "r") as f:
+            with self.fs.open(json_file, "r") as f:
                 data = json.loads(f.read())
                 commit_to_parent[data["version_hash"]] = data["parent_hash"]
 
@@ -363,7 +542,8 @@ class Dataset:
 
         :return: The metadata for the dataset.
         """
-        with open(self.dataset_dir / "dataset.json", "r") as f:
+        dataset_json_path = f"{self.dataset_dir}/dataset.json"
+        with self.fs.open(strip_protocol(dataset_json_path), "r") as f:
             return json.loads(f.read())
 
     def checkout(self, version_hash: str = "") -> None:
@@ -376,6 +556,7 @@ class Dataset:
             root_dir=self.root_dir,
             dataset_name=self.dataset_name,
             version_hash=version_hash,
+            fs=self.fs,
         )
 
     @property
@@ -398,6 +579,90 @@ class Dataset:
             "current_version_hash": self.current_version_hash(),
             "description": self.description,
         }
+
+    def commit_history_mermaid(self, short_hash_length: int = 8) -> str:
+        """Generate a Mermaid diagram representing the commit history.
+
+        This creates a visual graph showing all commits and their parent-child
+        relationships, making it easy to see the lineage of the dataset.
+
+        :param short_hash_length: Number of characters to show for commit hashes.
+        :return: A Mermaid diagram string that can be rendered.
+
+        Example:
+            >>> ds = Dataset(root_dir="/data", dataset_name="my_dataset")
+            >>> print(ds.commit_history_mermaid())
+            >>> # Can also save to file or display in Jupyter
+        """
+        # Get all commits
+        jsons = self.fs.glob(f"{strip_protocol(self.dataset_dir)}/*/commit.json")
+
+        if not jsons:
+            return "graph TD\n    A[No commits yet]"
+
+        # Build commit information
+        commits = {}
+        for json_file in jsons:
+            with self.fs.open(json_file, "r") as f:
+                data = json.loads(f.read())
+                commits[data["version_hash"]] = data
+
+        # Start building the Mermaid diagram
+        lines = ["graph TD"]
+
+        # Add nodes and edges
+        for version_hash, commit_data in commits.items():
+            short_hash = version_hash[:short_hash_length]
+            commit_msg = commit_data.get("commit_message", "").replace('"', "'")
+
+            # Truncate long commit messages
+            if len(commit_msg) > 50:
+                commit_msg = commit_msg[:47] + "..."
+
+            # Format the node with hash and message
+            if commit_msg:
+                node_label = f"{short_hash}<br/>{commit_msg}"
+            else:
+                node_label = f"{short_hash}<br/>(initial)"
+
+            # Escape special characters for Mermaid
+            node_label = node_label.replace("[", "(").replace("]", ")")
+
+            # Create a safe node ID (alphanumeric only)
+            node_id = f"commit_{short_hash}"
+
+            # Add the node
+            lines.append(f'    {node_id}["{node_label}"]')
+
+            # Add edge from parent to this commit if parent exists
+            parent_hash = commit_data.get("parent_hash", "")
+            if parent_hash and parent_hash in commits:
+                parent_short = parent_hash[:short_hash_length]
+                parent_id = f"commit_{parent_short}"
+                lines.append(f"    {parent_id} --> {node_id}")
+
+        # Highlight the current commit
+        current_hash = self.current_version_hash()
+        if current_hash:
+            current_short = current_hash[:short_hash_length]
+            current_id = f"commit_{current_short}"
+            lines.append(
+                f"    style {current_id} fill:#90EE90,stroke:#333,stroke-width:4px"
+            )
+
+        return "\n".join(lines)
+
+    def show_commit_history(self, short_hash_length: int = 8) -> None:
+        """Print the commit history as a Mermaid diagram.
+
+        This is a convenience method that prints the Mermaid diagram to stdout.
+        In Jupyter/IPython environments with Mermaid support, the diagram will
+        be rendered. Otherwise, it prints the Mermaid syntax.
+
+        :param short_hash_length: Number of characters to show for commit hashes.
+        """
+        mermaid = self.commit_history_mermaid(short_hash_length)
+        print(mermaid)
 
 
 class DatasetError(Exception):

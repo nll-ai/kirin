@@ -1,0 +1,28 @@
+<div class="preview-panel">
+    <div class="preview-header">
+        <div>
+            <span class="font-mono text-sm">{{ filename }}</span>
+        </div>
+        <div>
+            {% if is_text %}
+                <span class="badge">Text File</span>
+            {% else %}
+                <span class="badge">Binary File</span>
+            {% endif %}
+        </div>
+    </div>
+    <div class="preview-content">
+        {% if is_text %}
+            <pre><code>{{ content }}</code></pre>
+        {% else %}
+            <div class="empty-state">
+                <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto; display: block; opacity: 0.3;">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                </svg>
+                <p style="margin-top: 1rem; font-size: 0.875rem;">Binary file - preview not available</p>
+                <p class="text-sm text-muted" style="margin-top: 0.25rem;">This file cannot be displayed as text</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+

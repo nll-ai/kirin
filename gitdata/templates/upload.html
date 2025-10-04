@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Commit Changes - {{ dataset_name }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Commit Changes</h1>
+        <p class="text-gray-600">Manage files for dataset: <strong>{{ dataset_name }}</strong></p>
+        <p class="text-sm text-gray-500">Current commit: {{ current_commit_hash }}</p>
+    </div>
+
+    <!-- Commit Form -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-semibold mb-4">Add New Files</h2>
+        <form id="commit-form" hx-post="/commit-files" hx-encoding="multipart/form-data" hx-target="#commit-result">
+            <div class="mb-4">
+                <label for="files" class="block text-sm font-medium text-gray-700 mb-2">
+                    Select Files
+                </label>
+                <input
+                    type="file"
+                    id="files"
+                    name="files"
+                    multiple
+                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    accept="*/*"
+                >
+                <p class="text-xs text-gray-500 mt-1">You can select multiple files at once</p>
+            </div>
+
+            <div class="mb-4">
+                <label for="commit_message" class="block text-sm font-medium text-gray-700 mb-2">
+                    Commit Message
+                </label>
+                <textarea
+                    id="commit_message"
+                    name="commit_message"
+                    rows="3"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Describe the changes you're making..."
+                    required
+                ></textarea>
+            </div>
+
+            <div class="flex gap-3">
+                <button
+                    type="submit"
+                    class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                    Add & Commit
+                </button>
+                <button
+                    type="button"
+                    onclick="window.location.href='/dataset-view'"
+                    class="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                >
+                    Back to Dataset
+                </button>
+            </div>
+        </form>
+
+        <div id="commit-result" class="mt-4"></div>
+    </div>
+
+    <!-- Current Files -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold mb-4">Current Files</h2>
+        {% if files %}
+            <div class="space-y-2">
+                {% for file in files %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                    <div class="flex items-center space-x-3">
+                        <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="text-sm font-medium text-gray-900">{{ file.name }}</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button
+                            onclick="previewFile('{{ file.name }}')"
+                            class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                            Preview
+                        </button>
+                        <button
+                            onclick="removeFile('{{ file.name }}')"
+                            class="text-red-600 hover:text-red-800 text-sm font-medium"
+                        >
+                            Remove
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-500 text-center py-8">No files in current commit</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function previewFile(filename) {
+    window.open(`/file/preview?filename=${encodeURIComponent(filename)}`, '_blank');
+}
+
+function removeFile(filename) {
+    if (confirm(`Are you sure you want to remove "${filename}"?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/remove-file';
+
+        const commitMessageInput = document.createElement('input');
+        commitMessageInput.type = 'hidden';
+        commitMessageInput.name = 'commit_message';
+        commitMessageInput.value = `Remove file: ${filename}`;
+
+        const filenameInput = document.createElement('input');
+        filenameInput.type = 'hidden';
+        filenameInput.name = 'filename';
+        filenameInput.value = filename;
+
+        form.appendChild(commitMessageInput);
+        form.appendChild(filenameInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

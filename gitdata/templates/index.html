@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}GitData - Load Dataset{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>GitData UI</h1>
+        <p>Version-controlled data storage with a git-like interface</p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Load Dataset</h2>
+            <p class="card-description">Enter the dataset URL and name to view its commit history and files</p>
+        </div>
+
+        <form hx-post="/load-dataset" hx-target="#result" hx-indicator="#loading">
+            <div class="form-group">
+                <label class="label" for="dataset_url">Dataset URL</label>
+                <input
+                    type="text"
+                    class="input"
+                    id="dataset_url"
+                    name="dataset_url"
+                    placeholder="e.g., /path/to/data or s3://bucket/path or gs://bucket/path"
+                    value="{{ dataset_url }}"
+                    required
+                />
+                <p class="text-muted text-sm mt-4">
+                    Supports local paths and cloud storage (S3, GCS, Azure, etc.)
+                </p>
+            </div>
+
+            <div class="form-group">
+                <label class="label" for="dataset_name">Dataset Name</label>
+                <input
+                    type="text"
+                    class="input"
+                    id="dataset_name"
+                    name="dataset_name"
+                    placeholder="e.g., my-dataset"
+                    value="{{ dataset_name }}"
+                    required
+                />
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                Load Dataset
+                <span id="loading" class="htmx-indicator spinner"></span>
+            </button>
+        </form>
+
+        <div id="result" class="mt-4"></div>
+    </div>
+
+    {% if dataset_loaded %}
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Current Dataset</h2>
+            <p class="card-description">{{ dataset_name }} - {{ dataset_url }}</p>
+        </div>
+        <a href="/dataset-view" class="btn btn-secondary">View Dataset</a>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">About</h2>
+        </div>
+        <p class="text-muted">
+            GitData provides version control for datasets with a git-like interface.
+            This UI allows you to browse commit history, view files at different commits,
+            and preview text-based files.
+        </p>
+    </div>
+</div>
+{% endblock %}
+

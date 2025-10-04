@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}Commit Changes - {{ dataset_name }}{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .commit-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+        .commit-container {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .panel {
+        background: hsl(var(--card));
+        border: 1px solid hsl(var(--border));
+        border-radius: calc(var(--radius) + 2px);
+        overflow: hidden;
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    }
+
+    .panel-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid hsl(var(--border));
+        background: hsl(var(--card));
+    }
+
+    .panel-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin: 0;
+        letter-spacing: -0.025em;
+    }
+
+    .panel-content {
+        padding: 1.5rem;
+    }
+
+    .file-item {
+        padding: 0.75rem 1.25rem;
+        border-bottom: 1px solid hsl(var(--border));
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .file-item:hover {
+        background: hsl(var(--accent));
+    }
+
+    .file-item:last-child {
+        border-bottom: none;
+    }
+
+    .file-icon {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        color: hsl(var(--muted-foreground));
+        opacity: 0.6;
+    }
+
+    .file-name {
+        font-size: 0.875rem;
+        color: hsl(var(--foreground));
+        font-weight: 400;
+        flex: 1;
+    }
+
+    .file-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .empty-state {
+        padding: 3rem 1.5rem;
+        text-align: center;
+        color: hsl(var(--muted-foreground));
+        font-size: 0.875rem;
+    }
+
+    .empty-state svg {
+        opacity: 0.3;
+        margin-bottom: 1rem;
+    }
+
+    .nav-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding: 1rem 1.5rem;
+        background: hsl(var(--card));
+        border: 1px solid hsl(var(--border));
+        border-radius: calc(var(--radius) + 2px);
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    }
+
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .breadcrumb-separator {
+        color: hsl(var(--muted-foreground));
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="nav-bar">
+        <div class="breadcrumb">
+            <a href="/dataset-view" class="btn btn-ghost">← Back to Dataset</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="font-mono">{{ dataset_name }}</span>
+            <span class="breadcrumb-separator">@</span>
+            <span class="badge font-mono">{{ current_commit_hash }}</span>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1>Commit Changes</h1>
+        <p class="text-muted">Manage files for dataset: <strong>{{ dataset_name }}</strong></p>
+        <p class="text-muted font-mono text-sm">Current commit: {{ current_commit_hash }}</p>
+    </div>
+
+    <div class="commit-container">
+        <!-- Commit Form -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Add New Files</h2>
+            </div>
+            <div class="panel-content">
+                <form id="commit-form" hx-post="/commit-files" hx-encoding="multipart/form-data" hx-target="#commit-result">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="files" class="block text-sm font-medium mb-2">
+                                Select Files
+                            </label>
+                            <input
+                                type="file"
+                                id="files"
+                                name="files"
+                                multiple
+                                class="input"
+                                accept="*/*"
+                            >
+                            <p class="text-xs text-muted-foreground mt-1">You can select multiple files at once</p>
+                        </div>
+
+                        <div>
+                            <label for="commit_message" class="block text-sm font-medium mb-2">
+                                Commit Message
+                            </label>
+                            <textarea
+                                id="commit_message"
+                                name="commit_message"
+                                rows="3"
+                                class="input"
+                                placeholder="Describe the changes you're making..."
+                                required
+                            ></textarea>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button type="submit" class="btn btn-primary">
+                                Add & Commit
+                            </button>
+                            <button
+                                type="button"
+                                onclick="window.location.href='/dataset-view'"
+                                class="btn btn-secondary"
+                            >
+                                Back to Dataset
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div id="commit-result" class="mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Current Files -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2 class="panel-title">Current Files</h2>
+            </div>
+            <div class="panel-content">
+                {% if files %}
+                    <div>
+                        {% for file in files %}
+                        <div class="file-item">
+                            <svg class="file-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            <span class="file-name">{{ file.name }}</span>
+                            <div class="file-actions">
+                                <button
+                                    onclick="previewFile('{{ file.name }}')"
+                                    class="btn btn-sm btn-ghost"
+                                >
+                                    Preview
+                                </button>
+                                <button
+                                    onclick="removeFile('{{ file.name }}')"
+                                    class="btn btn-sm btn-destructive"
+                                >
+                                    Remove
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="margin: 0 auto; display: block;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p>No files in current commit</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function previewFile(filename) {
+    window.open(`/file/preview?filename=${encodeURIComponent(filename)}`, '_blank');
+}
+
+function removeFile(filename) {
+    if (confirm(`Are you sure you want to remove "${filename}"?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/remove-file';
+
+        const commitMessageInput = document.createElement('input');
+        commitMessageInput.type = 'hidden';
+        commitMessageInput.name = 'commit_message';
+        commitMessageInput.value = `Remove file: ${filename}`;
+
+        const filenameInput = document.createElement('input');
+        filenameInput.type = 'hidden';
+        filenameInput.name = 'filename';
+        filenameInput.value = filename;
+
+        form.appendChild(commitMessageInput);
+        form.appendChild(filenameInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}
