@@ -99,7 +99,7 @@
                                         </button>
                                     </form>
                                 {% endif %}
-                                {% if branch != "main" %}
+                                {% if branch != "main" and branch != current_branch %}
                                     <form hx-post="/branches/delete" hx-target="#branch-messages" style="display: inline;"
                                           hx-confirm="Are you sure you want to delete branch '{{ branch }}'?">
                                         <input type="hidden" name="branch_name" value="{{ branch }}">

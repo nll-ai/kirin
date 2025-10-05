@@ -1092,14 +1092,14 @@ async def delete_branch(request: Request):
     try:
         current_dataset.delete_branch(branch_name)
 
-        # Return success message
+        # Return success message and refresh the branches list
         success_html = f"""
         <div class="alert alert-success">
             Branch '{branch_name}' deleted successfully
         </div>
         <script>
-            // Refresh the branches list
-            htmx.trigger('#branches-list', 'refresh');
+            // Refresh the branches list by reloading the page
+            window.location.reload();
         </script>
         """
         return HTMLResponse(content=success_html, status_code=200)
