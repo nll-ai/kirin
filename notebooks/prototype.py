@@ -4,6 +4,7 @@
 #     "polars==1.34.0",
 #     "gitdata==0.0.1",
 #     "anthropic==0.69.0",
+#     "loguru==0.7.3",
 # ]
 #
 # [tool.uv.sources]
