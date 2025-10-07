@@ -16,19 +16,6 @@ workflows for data management. This means:
 - **No Direct Removal**: Files cannot be directly removed - they must be staged
   for removal and committed with a message
 
-### Git Conventions to Follow
-
-1. **Staging Before Committing**: Users must stage changes (add/remove files)
-   before committing
-2. **Meaningful Commit Messages**: Every commit requires a descriptive message
-   explaining the changes
-3. **Atomic Commits**: Each commit should represent a logical unit of work
-4. **No Direct File Operations**: Never allow direct file removal without
-   staging and committing
-5. **Branching and Tagging**: Support for git-like branching and tagging
-   workflows
-6. **History Preservation**: Maintain complete history of all changes
-
 ### UI/UX Implications
 
 - **Staging UI**: Provide clear visual indicators for staged changes
@@ -76,7 +63,7 @@ components. When working on the web UI:
 - Use grid layouts with `.grid` and responsive breakpoints
 - Use `.space-y-*` for consistent vertical spacing
 
-### CSS Architecture
+### CSS Architecture & Best Practices
 
 **External Stylesheet System** - The project uses a centralized CSS
 architecture with all common styles in `/gitdata/static/styles.css`:
@@ -125,8 +112,6 @@ architecture with all common styles in `/gitdata/static/styles.css`:
 {% endblock %}
 ```
 
-### CSS Best Practices & Standards
-
 **Styling Guidelines**:
 
 1. **Always use the CSS custom properties** instead of hardcoded colors
@@ -154,7 +139,7 @@ architecture with all common styles in `/gitdata/static/styles.css`:
 ✅ **DO** use the established component classes from the stylesheet
 ✅ **DO** maintain consistency with the shadcn/ui design system
 
-### Examples
+**Examples**:
 
 ```html
 <!-- Good: Using shadcn/ui patterns -->
@@ -403,94 +388,8 @@ def _(dataset, temp_dir):
 - **Clear Dependencies** - Use explicit parameter names to declare what
   variables each cell needs
 - **Return Variables** - Always return variables that subsequent cells need
-
-**CRITICAL: Marimo Cell Dependency Management**:
-
-Marimo requires explicit variable flow between cells. Common issues and solutions:
-
-**Variable Flow Requirements**:
-
-- **Always return variables** that subsequent cells need
-- **Use explicit parameter names** in function signatures to declare dependencies
-- **Avoid intermediate cells** that don't return required variables
-- **Test dependency chains** by running cells in order
-
-**Common Error Patterns**:
-
-```python
-# ❌ WRONG - Cell doesn't return dataset
-@app.cell
-def _(dataset):
-    dataset.get_commits()
-    return  # Missing dataset return!
-
-# ✅ CORRECT - Cell returns dataset for next cell
-@app.cell
-def _(dataset):
-    commits = dataset.get_commits()
-    return dataset,  # Explicitly return dataset
-```
-
-**Debugging Cell Dependencies**:
-
-- Add debug prints to verify variable state
-- Check that each cell returns required variables
-- Ensure parameter names match returned variables
-- Use `marimo check` to validate cell dependencies
-
-**Best Practices**:
-
-- **Minimize intermediate cells** - Only create cells that serve a purpose
-- **Explicit returns** - Always return variables that other cells need
-- **Clear dependencies** - Use descriptive parameter names
-- **Test incrementally** - Run cells one by one to verify variable flow
-- **Avoid test discovery complexity** - Use simple `_()` naming instead of
-  `test_*` patterns
-
-**CRITICAL: Marimo Display Output**:
-
-Marimo requires explicit display of output objects. Common issues and solutions:
-
-**Display Requirements**:
-
-- **Always assign display objects to variables** - Don't call display
-  functions directly
-- **Explicitly display the variable** - Use the variable name as the last line
-- **Conditional displays** - Handle both success and fallback cases
-
-**Common Error Patterns**:
-
-```python
-# ❌ WRONG - No output displayed
-@app.cell
-def _(dataset, mo):
-    """Visualize commit history as Mermaid diagram."""
-    viz_commits = dataset.get_commits()
-    if viz_commits:
-        mo.mermaid(dataset.commit_history_mermaid())  # No output!
-    else:
-        mo.md("No commits to visualize yet")  # No output!
-    return
-
-# ✅ CORRECT - Output properly displayed
-@app.cell
-def _(dataset, mo):
-    """Visualize commit history as Mermaid diagram."""
-    viz_commits = dataset.get_commits()
-    if viz_commits:
-        display_viz = mo.mermaid(dataset.commit_history_mermaid())
-    else:
-        display_viz = mo.md("No commits to visualize yet")
-    display_viz  # Explicitly display the result
-    return
-```
-
-**Display Best Practices**:
-
-- **Assign to variables** - Always assign display objects to variables first
-- **Display explicitly** - Use the variable name as the last line to show output
-- **Handle conditions** - Use if/else to handle different display scenarios
-- **Test displays** - Verify that output actually appears in the notebook
+- **Display Output** - Always assign display objects to variables and
+  explicitly display them
 
 **Required Inline Script Metadata Pattern**:
 
@@ -510,15 +409,6 @@ All Marimo notebooks must include the following PEP723-style metadata at the top
 # gitdata = { path = "../", editable = true }
 # ///
 ```
-
-**Key Requirements**:
-
-- **Python Version**: Always specify `requires-python = ">=3.13"`
-- **Kirin Dependency**: Include `gitdata==0.0.1` in dependencies
-- **Editable Source**: Use `[tool.uv.sources]` with
-  `gitdata = { path = "../", editable = true }`
-- **Additional Dependencies**: Include any other libraries the notebook needs
-- **Metadata Block**: Must be at the very top of the file, before any imports
 
 **Notebook Validation**:
 
@@ -577,7 +467,7 @@ class TestLocalStateManager:
 - **Cleaner output** - Test names are more direct in pytest output
 - **Easier maintenance** - Less boilerplate code
 
-### Documentation and Examples
+**Documentation and Examples**:
 
 - **Tests are the primary demonstration** - Tests serve as the main way to show
   functionality and usage patterns
@@ -639,15 +529,6 @@ markdownlint docs/design.md
 
 **Required Workflow**: Run markdownlint on any Markdown file that is created
 or edited before committing changes.
-
-**CRITICAL**: Always use markdownlint to lint any markdown files that are in
-the repo.
-
-**MANDATORY**: Run markdownlint on every markdown file that is edited.
-
-**REQUIRED**: Always fix any issues that are caught by markdownlint.
-
-**NOTE**: The user is using `fd` instead of `find` for file operations.
 
 **Common Issues to Avoid**:
 
