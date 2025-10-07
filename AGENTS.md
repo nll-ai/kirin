@@ -326,6 +326,38 @@ with all required dependencies.
 **Note**: Do not run the web UI server for the user - they will handle running
 the application themselves when needed.
 
+### Script Metadata Requirements
+
+**MANDATORY**: All Python scripts must include PEP723-style inline script
+metadata for dependency management. This ensures scripts can be run with
+proper dependency resolution.
+
+**Required Pattern**:
+
+```python
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "polars==1.34.0",
+#     "gitdata==0.0.1",
+#     "anthropic==0.69.0",
+#     "loguru==0.7.3",
+# ]
+#
+# [tool.uv.sources]
+# gitdata = { path = "../", editable = true }
+# ///
+```
+
+**Key Requirements**:
+
+- **Python Version**: Always specify `requires-python = ">=3.13"`
+- **Kirin Dependency**: Include `gitdata==0.0.1` in dependencies
+- **Editable Source**: Use `[tool.uv.sources]` with
+  `gitdata = { path = "../", editable = true }`
+- **Additional Dependencies**: Include any other libraries the script needs
+- **Metadata Block**: Must be at the very top of the file, before any imports
+
 ### The Notebook - Kirin Capabilities Showcase
 
 The project includes a Marimo notebook at `notebooks/prototype.py` that serves
