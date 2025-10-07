@@ -1,6 +1,7 @@
 # Kirin Documentation
 
-Welcome to the Kirin documentation! Kirin is a content-addressed storage system for data versioning that provides Git-like workflows for datasets.
+Welcome to the Kirin documentation! Kirin is a content-addressed storage system
+for data versioning that provides Git-like workflows for datasets.
 
 ## Quickstart
 
@@ -19,16 +20,22 @@ mkdocs serve
 ## Documentation
 
 ### Architecture & Design
+
 - [Design Document](./design.md) - Overall system architecture and design goals
 - [API Documentation](./api.md) - Programmatic API reference
 - [Branching Guide](./branching.md) - Git-like branching and merging workflows
 
 ### Technical Decisions
-- [HashFS Evaluation](./hashfs-evaluation.md) - Detailed analysis of HashFS integration
-- [Ecosystem Due Diligence](./ecosystem-diligence.md) - Evaluation of third-party libraries
-- [ADR: HashFS Integration](./adr-hashfs-evaluation.md) - Architectural decision record
+
+- [HashFS Evaluation](./hashfs-evaluation.md) - Detailed analysis of HashFS
+  integration
+- [Ecosystem Due Diligence](./ecosystem-diligence.md) - Evaluation of
+  third-party libraries
+- [ADR: HashFS Integration](./adr-hashfs-evaluation.md) - Architectural decision
+  record
 
 ### Cloud Storage
+
 - [Cloud Storage Authentication](./cloud-storage-auth.md) - Setting up cloud backends
 
 ## Why Kirin Exists

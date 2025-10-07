@@ -40,7 +40,8 @@ ds.commit("Add analysis script", add_files=["analyze.py"])
 
 ### Cloud Authentication
 
-If you get authentication errors, see the [Cloud Storage Authentication Guide](docs/cloud-storage-auth.md) or use helper functions:
+If you get authentication errors, see the [Cloud Storage Authentication
+Guide](docs/cloud-storage-auth.md) or use helper functions:
 
 ```python
 from kirin import Dataset, get_gcs_filesystem
@@ -63,12 +64,14 @@ pixi run kirin ui --url /path/to/data --name my-dataset
 ```
 
 ### Features
+
 - 📊 **Dataset visualization** - Browse commits and files
 - 🌿 **Branch management** - Create, switch, and delete branches
 - 📝 **Commit interface** - Add/remove files with commit messages
 - 🔄 **Real-time updates** - See changes instantly
 
 ### Branch Management
+
 1. Load a dataset in the web UI
 2. Click the "Branches" button
 3. Create new branches, switch between them, or delete branches

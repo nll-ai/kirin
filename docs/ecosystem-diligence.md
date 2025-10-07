@@ -98,16 +98,21 @@ GitData's multi-backend requirements.
 
 - **Pros**: Git-native, proven scalability, familiar to developers
 - **Cons**: Complex implementation, not optimized for data workflows
-- **Decision**: Current fsspec-based approach is more suitable for data science use cases
+- **Decision**: Current fsspec-based approach is more suitable for data science
+  use cases
 
 ## Lessons Learned
 
 1. **Architecture matters more than features**: GitData's multi-backend,
    version-controlled architecture is more valuable than simple content addressing
-2. **fsspec is the right abstraction**: Provides the flexibility needed for multi-backend support
-3. **Version control is essential**: Content addressing alone isn't sufficient for data versioning
-4. **Metadata tracking is critical**: Usage analytics and lineage tracking are key differentiators
-5. **Performance optimization**: Streaming and memory efficiency are crucial for large datasets
+2. **fsspec is the right abstraction**: Provides the flexibility needed for
+   multi-backend support
+3. **Version control is essential**: Content addressing alone isn't sufficient
+   for data versioning
+4. **Metadata tracking is critical**: Usage analytics and lineage tracking are
+   key differentiators
+5. **Performance optimization**: Streaming and memory efficiency are crucial
+   for large datasets
 
 ## Future Considerations
 
