@@ -147,7 +147,8 @@ Using Clayton Christensen's "Jobs to be Done" framework, we can identify the key
 
 ### 1.4 Feature-to-Job Mapping
 
-The table below maps Kirin features to the specific jobs they help users accomplish:
+The table below maps Kirin features to the specific jobs they help users
+accomplish:
 
 | Kirin Feature | Primary Jobs Addressed | Key User Personas |
 |----------------|------------------------|-------------------|
