@@ -1,10 +1,10 @@
-# GitData: Content-Addressed Storage for Data Versioning
+# Kirin: Content-Addressed Storage for Data Versioning
 
 ## Design Document
 
 ## 1. Introduction
 
-GitData is a tool for version-controlling data using content-addressed storage. The primary goals are to enable file versioning and file set versioning in a way that is backend-agnostic, serverless, and supports the creation of data catalogs.
+Kirin is a tool for version-controlling data using content-addressed storage. The primary goals are to enable file versioning and file set versioning in a way that is backend-agnostic, serverless, and supports the creation of data catalogs.
 
 ### 1.1 Problem Statement
 
@@ -20,7 +20,7 @@ Data versioning is a critical need in machine learning and data science workflow
 
 ### 1.2 Design Goals
 
-GitData aims to provide a robust solution with the following properties:
+Kirin aims to provide a robust solution with the following properties:
 
 1. **Backend-agnostic storage**: Support any storage backend (local filesystem, S3, Dropbox, Google Drive, SharePoint, etc.)
 2. **Content-addressed storage**: Use hashing to ensure data integrity and deduplication
@@ -33,23 +33,23 @@ GitData aims to provide a robust solution with the following properties:
 
 ### 1.3 Jobs to be Done
 
-Using Clayton Christensen's "Jobs to be Done" framework, we can identify the key user personas and the specific jobs they need to accomplish with GitData:
+Using Clayton Christensen's "Jobs to be Done" framework, we can identify the key user personas and the specific jobs they need to accomplish with Kirin:
 
 #### 1.3.1 Data Scientist / ML Engineer
 
 **Jobs to be Done:**
 
 1. **Track Experiment Data**: "I need to keep track of which datasets were used in which experiments so I can reproduce my results."
-   - GitData enables this through content-addressed storage and automatic lineage tracking.
+   - Kirin enables this through content-addressed storage and automatic lineage tracking.
    - Example: "When my model performed exceptionally well, I could trace back exactly which version of the dataset was used and recreate the conditions."
 
 2. **Find and Use the Right Data Version**: "I need to identify and access specific versions of datasets for training models."
-   - GitData's versioning system with explicit commits makes this possible.
-   - Example: "I needed to compare model performance on data from Q1 vs Q2, and GitData let me checkout each version effortlessly."
+   - Kirin's versioning system with explicit commits makes this possible.
+   - Example: "I needed to compare model performance on data from Q1 vs Q2, and Kirin let me checkout each version effortlessly."
 
 3. **Collaborate with Team Members**: "I need to share datasets with colleagues in a way that ensures we're all using the same exact data."
    - The content-addressed storage ensures data integrity across team members.
-   - Example: "My colleague in another country could reproduce my analysis because GitData guaranteed we had identical datasets."
+   - Example: "My colleague in another country could reproduce my analysis because Kirin guaranteed we had identical datasets."
 
 4. **Document Data Transformations**: "I need to track how raw data is transformed into model-ready data."
    - The lineage tracking captures the entire transformation pipeline.
@@ -60,16 +60,16 @@ Using Clayton Christensen's "Jobs to be Done" framework, we can identify the key
 **Jobs to be Done:**
 
 1. **Manage Data Pipelines**: "I need to ensure data pipelines produce consistent, traceable outputs."
-   - GitData's automatic tracking of inputs and outputs creates a clear audit trail.
+   - Kirin's automatic tracking of inputs and outputs creates a clear audit trail.
    - Example: "When a downstream process broke, I could trace back through the pipeline to identify which transformation introduced the issue."
 
 2. **Optimize Storage Usage**: "I need to handle large datasets efficiently without wasting storage."
    - Content-addressed storage with deduplication and zero-copy operations reduces storage overhead.
-   - Example: "Despite having multiple versions of our 500GB dataset, we only used 600GB of storage because GitData only stored the changed portions."
+   - Example: "Despite having multiple versions of our 500GB dataset, we only used 600GB of storage because Kirin only stored the changed portions."
 
 3. **Support Multiple Storage Solutions**: "I need to work with data across various storage systems our organization uses."
    - The backend-agnostic design allows seamless work across storage solutions.
-   - Example: "We migrated from local storage to S3 without changing our workflows because GitData abstracted away the storage layer."
+   - Example: "We migrated from local storage to S3 without changing our workflows because Kirin abstracted away the storage layer."
 
 4. **Ensure Data Governance**: "I need to track who accesses what data and how it's used."
    - Usage tracking provides comprehensive audit logs.
@@ -81,7 +81,7 @@ Using Clayton Christensen's "Jobs to be Done" framework, we can identify the key
 
 1. **Ensure Reproducibility**: "I need to guarantee that our team's work is reproducible for scientific integrity and audit purposes."
    - End-to-end versioning and lineage tracking supports full reproducibility.
-   - Example: "When preparing a paper for submission, we could include GitData references that allowed reviewers to verify our results."
+   - Example: "When preparing a paper for submission, we could include Kirin references that allowed reviewers to verify our results."
 
 2. **Manage Technical Debt**: "I need to understand data dependencies to prevent cascading failures when data changes."
    - Lineage visualization helps identify dependencies.
@@ -137,9 +137,9 @@ Using Clayton Christensen's "Jobs to be Done" framework, we can identify the key
 
 ### 1.4 Feature-to-Job Mapping
 
-The table below maps GitData features to the specific jobs they help users accomplish:
+The table below maps Kirin features to the specific jobs they help users accomplish:
 
-| GitData Feature | Primary Jobs Addressed | Key User Personas |
+| Kirin Feature | Primary Jobs Addressed | Key User Personas |
 |----------------|------------------------|-------------------|
 | **Content-Addressed Storage** | • Track Experiment Data<br>• Find and Use the Right Data Version<br>• Collaborate with Team Members<br>• Ensure Reproducibility<br>• Ensure Experimental Reproducibility | Data Scientist, ML Engineer, Team Lead, Laboratory Scientist |
 | **Automatic Lineage Tracking** | • Document Data Transformations<br>• Manage Data Pipelines<br>• Track Sample Lineage<br>• Manage Technical Debt | Data Scientist, Data Engineer, Laboratory Scientist |
@@ -152,7 +152,7 @@ The table below maps GitData features to the specific jobs they help users accom
 
 ### 1.5 User Workflows
 
-To illustrate how GitData supports common workflows, here are examples of how different users accomplish their tasks:
+To illustrate how Kirin supports common workflows, here are examples of how different users accomplish their tasks:
 
 #### Model Development Workflow
 
@@ -591,7 +591,7 @@ class Catalog:
 3. **Data Processing Flow**:
    - User accesses input data files
    - Processing is performed
-   - Output files are stored in GitData
+   - Output files are stored in Kirin
    - Relationship between input and output files is recorded in the lineage tracker
    - Processing context and provenance information is maintained
    - Lineage graph is updated to reflect the new derivation relationships
@@ -728,7 +728,7 @@ The Python API will be designed for ease of use while providing access to all fe
 
 ```python
 # Basic usage
-from gitdata import Repository
+from kirin import Repository
 
 # Initialize repository
 repo = Repository("path/to/repo", backend="local")
@@ -844,7 +844,7 @@ repo.visualize_lineage("processed/result.csv", depth=2)
 
 ### 4.1.1 Path-Based API with Automatic Tracking
 
-GitData provides a pathlib-compatible API that automatically tracks file accesses:
+Kirin provides a pathlib-compatible API that automatically tracks file accesses:
 
 1. **Repository Path Objects**:
    - `repo.Path(path)` creates a Path-like object that behaves like `pathlib.Path`
@@ -877,7 +877,7 @@ GitData provides a pathlib-compatible API that automatically tracks file accesse
 
 ### 4.1.2 Input/Output Detection Mechanisms
 
-GitData employs several complementary strategies to determine whether a Path is being used as input or output:
+Kirin employs several complementary strategies to determine whether a Path is being used as input or output:
 
 1. **Explicit Mode Declaration**:
 
@@ -1136,7 +1136,7 @@ All access to data will be recorded in the usage tracking database, providing a 
 
 ### 7.1 Zero-Copy Architecture
 
-GitData is designed with a zero-copy philosophy wherever possible:
+Kirin is designed with a zero-copy philosophy wherever possible:
 
 - **Memory-mapped files**: When working with local files, memory mapping is used to avoid loading entire files into memory
 - **Streaming operations**: For operations on large files, streaming interfaces are provided to process data incrementally
@@ -1239,7 +1239,7 @@ Specialized data processing pipelines could be implemented to leverage the zero-
 
 ## 10. Conclusion
 
-GitData's redesigned architecture provides a robust, flexible system for data versioning that meets all the specified requirements:
+Kirin's redesigned architecture provides a robust, flexible system for data versioning that meets all the specified requirements:
 
 1. It supports multiple storage backends
 2. It uses content-addressed storage for integrity and deduplication

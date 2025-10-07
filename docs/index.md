@@ -1,6 +1,6 @@
-# GitData Documentation
+# Kirin Documentation
 
-Welcome to the GitData documentation! GitData is a content-addressed storage system for data versioning that provides Git-like workflows for datasets.
+Welcome to the Kirin documentation! Kirin is a content-addressed storage system for data versioning that provides Git-like workflows for datasets.
 
 ## Quickstart
 
@@ -31,9 +31,9 @@ mkdocs serve
 ### Cloud Storage
 - [Cloud Storage Authentication](./cloud-storage-auth.md) - Setting up cloud backends
 
-## Why GitData Exists
+## Why Kirin Exists
 
-GitData addresses critical needs in machine learning and data science workflows:
+Kirin addresses critical needs in machine learning and data science workflows:
 
 - **Data Versioning**: Track changes to datasets with Git-like commits and branches
 - **Content-Addressed Storage**: Ensure data integrity and enable deduplication

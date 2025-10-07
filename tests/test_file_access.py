@@ -5,7 +5,7 @@ import tempfile
 import pytest
 from pathlib import Path
 
-from gitdata import Dataset
+from kirin import Dataset
 
 
 def test_download_file(tmp_path):

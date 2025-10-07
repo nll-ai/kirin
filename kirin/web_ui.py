@@ -1,4 +1,4 @@
-"""Web UI for gitdata using FastAPI and HTMX."""
+"""Web UI for kirin using FastAPI and HTMX."""
 
 import os
 import random
@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from loguru import logger
 
-from gitdata.dataset import (
+from kirin.dataset import (
     Dataset,
     DatasetNoCommitsError,
     strip_protocol,

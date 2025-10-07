@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from gitdata.dataset import Dataset
-from gitdata.models import BranchManager
+from kirin.dataset import Dataset
+from kirin.models import BranchManager
 
 
 def test_branch_manager_initialization():

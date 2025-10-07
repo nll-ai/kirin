@@ -1,4 +1,4 @@
-"""Custom CLI for gitdata.
+"""Custom CLI for kirin.
 
 This is totally optional;
 if you want to use it, though,
@@ -20,7 +20,7 @@ app = typer.Typer()
 @app.command()
 def hello():
     """Echo the project's name."""
-    typer.echo("This project's name is gitdata")
+    typer.echo("This project's name is kirin")
 
 
 @app.command()
@@ -44,7 +44,7 @@ def ui(
         False, "--no-reload", help="Disable auto-reload mode"
     ),
 ):
-    """Launch the GitData web UI.
+    """Launch the Kirin web UI.
 
     The UI provides a git-like interface for browsing datasets with commit history,
     file listings, and text file previews.
@@ -56,23 +56,23 @@ def ui(
 
     Examples:
         # Launch UI and load a dataset on startup
-        gitdata ui --url /path/to/data --name my-dataset
+        kirin ui --url /path/to/data --name my-dataset
 
         # Launch UI on specific port
-        gitdata ui --port 8080
+        kirin ui --port 8080
 
         # Launch UI without auto-reload
-        gitdata ui --no-reload
+        kirin ui --no-reload
 
         # Direct URL access (after starting the server)
         # http://localhost:8080/d/my-dataset?url=/path/to/data
     """
-    from gitdata.web_ui import run_server
+    from kirin.web_ui import run_server
 
     # Use auto_reload=True by default unless --no-reload is specified
     auto_reload = not no_reload
 
-    typer.echo("🚀 Launching GitData UI...")
+    typer.echo("🚀 Launching Kirin UI...")
     if dataset_url and dataset_name:
         typer.echo(f"📦 Loading dataset: {dataset_name} from {dataset_url}")
 

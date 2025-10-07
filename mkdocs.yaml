@@ -1,5 +1,5 @@
-site_name: "gitdata"
-site_url: https://ericmjl.github.io/gitdata
+site_name: "kirin"
+site_url: https://ericmjl.github.io/kirin
 
 docs_dir: docs/
 
@@ -38,7 +38,7 @@ plugins:
             docstring_style: restructured-text
       # custom_templates: templates
       watch:
-        - gitdata
+        - kirin
 # Taken from here: https://squidfunk.github.io/mkdocs-material/extensions/codehilite/
 markdown_extensions:
   - codehilite
@@ -52,8 +52,8 @@ extra_css:
 extra_javascript:
   - config.js
 
-repo_name: "ericmjl/gitdata"
-repo_url: "https://github.com/ericmjl/gitdata"
+repo_name: "ericmjl/kirin"
+repo_url: "https://github.com/ericmjl/kirin"
 
 extra:
   social:

@@ -1,17 +1,23 @@
 # Cloud Storage Authentication Guide
 
-When using `gitdata` with cloud storage backends (S3, GCS, Azure, etc.), you need to provide authentication credentials. This guide shows you how to authenticate with different cloud providers.
+When using `gitdata` with cloud storage backends (S3, GCS, Azure, etc.), you need
+to provide authentication credentials. This guide shows you how to authenticate
+with different cloud providers.
 
 ## Google Cloud Storage (GCS)
 
 ### Error You Might See
-```
-gcsfs.retry.HttpError: Anonymous caller does not have storage.objects.list access to the Google Cloud Storage bucket. Permission 'storage.objects.list' denied on resource (or it may not exist)., 401
+
+```text
+gcsfs.retry.HttpError: Anonymous caller does not have storage.objects.list access
+to the Google Cloud Storage bucket. Permission 'storage.objects.list' denied on
+resource (or it may not exist)., 401
 ```
 
 ### Solutions
 
 #### Option 1: Application Default Credentials (Recommended)
+
 Use `gcloud` CLI to set up credentials:
 
 ```bash
@@ -22,15 +28,16 @@ gcloud auth application-default login
 Then use gitdata normally:
 
 ```python
-from gitdata.dataset import Dataset
+from kirin.dataset import Dataset
 
 # Will automatically use your gcloud credentials
 ds = Dataset(root_dir="gs://my-bucket/datasets", dataset_name="my_data")
 ```
 
 #### Option 2: Service Account Key File
+
 ```python
-from gitdata.dataset import Dataset
+from kirin.dataset import Dataset
 import fsspec
 
 # Create filesystem with service account
@@ -48,21 +55,23 @@ ds = Dataset(
 ```
 
 #### Option 3: Environment Variable
+
 ```bash
 export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
 ```
 
 ```python
-from gitdata.dataset import Dataset
+from kirin.dataset import Dataset
 
 # Will automatically use the credentials from environment variable
 ds = Dataset(root_dir="gs://my-bucket/datasets", dataset_name="my_data")
 ```
 
 #### Option 4: Pass Credentials Directly
+
 ```python
 import fsspec
-from gitdata.dataset import Dataset
+from kirin.dataset import Dataset
 
 fs = fsspec.filesystem(
     'gs',
@@ -76,19 +85,22 @@ ds = Dataset(root_dir="gs://my-bucket/datasets", dataset_name="my_data", fs=fs)
 ## Amazon S3
 
 ### Option 1: AWS CLI Credentials (Recommended)
+
 ```bash
 # Configure AWS credentials
 aws configure
 ```
 
 Then use normally:
+
 ```python
-from gitdata.dataset import Dataset
+from kirin.dataset import Dataset
 
 ds = Dataset(root_dir="s3://my-bucket/datasets", dataset_name="my_data")
 ```
 
 ### Option 2: Environment Variables
+
 ```bash
 export AWS_ACCESS_KEY_ID="your-access-key"
 export AWS_SECRET_ACCESS_KEY="your-secret-key"
@@ -96,9 +108,10 @@ export AWS_DEFAULT_REGION="us-east-1"
 ```
 
 ### Option 3: Pass Credentials Explicitly
+
 ```python
 import fsspec
-from gitdata.dataset import Dataset
+from kirin.dataset import Dataset
 
 fs = fsspec.filesystem(
     's3',
@@ -113,9 +126,10 @@ ds = Dataset(root_dir="s3://my-bucket/datasets", dataset_name="my_data", fs=fs)
 ## S3-Compatible Services (Minio, Backblaze B2, DigitalOcean Spaces)
 
 ### Minio Example
+
 ```python
 import fsspec
-from gitdata.dataset import Dataset
+from kirin.dataset import Dataset
 
 fs = fsspec.filesystem(
     's3',
@@ -130,9 +144,10 @@ ds = Dataset(root_dir="s3://my-bucket/datasets", dataset_name="my_data", fs=fs)
 ```
 
 ### Backblaze B2 Example
+
 ```python
 import fsspec
-from gitdata.dataset import Dataset
+from kirin.dataset import Dataset
 
 fs = fsspec.filesystem(
     's3',
@@ -149,14 +164,16 @@ ds = Dataset(root_dir="s3://my-bucket/datasets", dataset_name="my_data", fs=fs)
 ## Azure Blob Storage
 
 ### Option 1: Azure CLI Credentials
+
 ```bash
 az login
 ```
 
 ### Option 2: Connection String
+
 ```python
 import fsspec
-from gitdata.dataset import Dataset
+from kirin.dataset import Dataset
 
 fs = fsspec.filesystem(
     'az',
@@ -167,9 +184,10 @@ ds = Dataset(root_dir="az://container/path", dataset_name="my_data", fs=fs)
 ```
 
 ### Option 3: Account Key
+
 ```python
 import fsspec
-from gitdata.dataset import Dataset
+from kirin.dataset import Dataset
 
 fs = fsspec.filesystem(
     'az',
@@ -185,14 +203,16 @@ ds = Dataset(root_dir="az://container/path", dataset_name="my_data", fs=fs)
 For any cloud provider, the pattern is:
 
 1. **Auto-detect (works if credentials are already configured)**:
+
    ```python
    ds = Dataset(root_dir="protocol://bucket/path", dataset_name="my_data")
    ```
 
 2. **Explicit authentication (recommended for production)**:
+
    ```python
    import fsspec
-   from gitdata.dataset import Dataset
+   from kirin.dataset import Dataset
 
    # Create authenticated filesystem
    fs = fsspec.filesystem('protocol', **auth_kwargs)
@@ -207,7 +227,7 @@ For local development/testing without cloud access, you can use:
 
 ```python
 # In-memory filesystem (no cloud needed)
-from gitdata.dataset import Dataset
+from kirin.dataset import Dataset
 
 ds = Dataset(root_dir="memory://test-data", dataset_name="my_data")
 ```
@@ -215,23 +235,28 @@ ds = Dataset(root_dir="memory://test-data", dataset_name="my_data")
 ## Troubleshooting
 
 ### Issue: "Anonymous caller" or "Access Denied"
+
 - **Cause**: No credentials provided
 - **Solution**: Set up credentials using one of the methods above
 
 ### Issue: "Permission denied"
+
 - **Cause**: Credentials don't have required permissions
-- **Solution**: Ensure your IAM role/service account has read/write permissions on the bucket
+- **Solution**: Ensure your IAM role/service account has read/write permissions
+  on the bucket
 
 ### Issue: "Bucket does not exist"
+
 - **Cause**: Bucket name is incorrect or doesn't exist
 - **Solution**: Create the bucket first or check the bucket name
 
 ### Issue: Import errors like "No module named 's3fs'"
+
 - **Cause**: Cloud storage package not installed
 - **Solution**: Install required package:
+
   ```bash
   pip install s3fs      # For S3
   pip install gcsfs     # For GCS
   pip install adlfs     # For Azure
   ```
-

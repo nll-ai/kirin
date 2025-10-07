@@ -12,7 +12,7 @@ Integration test for complete GitData workflow:
 import shutil
 from pathlib import Path
 
-from gitdata import Dataset
+from kirin import Dataset
 from loguru import logger
 
 

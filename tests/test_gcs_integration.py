@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from gitdata.dataset import Dataset
+from kirin.dataset import Dataset
 
 # Check if GCS credentials are available
 GCS_AVAILABLE = False

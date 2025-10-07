@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from gitdata.catalog import Catalog
-from gitdata.testing_utils import dummy_file
+from kirin.catalog import Catalog
+from kirin.testing_utils import dummy_file
 
 
 @pytest.fixture

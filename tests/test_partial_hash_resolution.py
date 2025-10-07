@@ -3,7 +3,7 @@
 import pytest
 from unittest.mock import Mock, patch
 import pytest
-from gitdata.dataset import Dataset, DatasetNoCommitsError
+from kirin.dataset import Dataset, DatasetNoCommitsError
 
 
 class TestPartialHashResolution:

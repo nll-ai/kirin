@@ -8,9 +8,9 @@ import shutil
 import fsspec
 import pytest
 
-from gitdata.dataset import Dataset
-from gitdata.local_state import LocalStateManager
-from gitdata.models import BranchManager
+from kirin.dataset import Dataset
+from kirin.local_state import LocalStateManager
+from kirin.models import BranchManager
 
 
 def test_local_state_initialization():

@@ -1,13 +1,13 @@
-# GitData API Reference
+# Kirin API Reference
 
 ## Core Classes
 
 ### Dataset
 
-The main class for working with GitData datasets.
+The main class for working with Kirin datasets.
 
 ```python
-from gitdata import Dataset
+from kirin import Dataset
 
 # Create or load a dataset
 dataset = Dataset(root_dir="/path/to/data", dataset_name="my-dataset")
@@ -50,7 +50,7 @@ dataset.switch_branch("main")
 Low-level branch management (used internally by Dataset).
 
 ```python
-from gitdata.models import BranchManager
+from kirin.models import BranchManager
 
 # Create branch manager
 branch_manager = BranchManager(dataset_dir, filesystem)
@@ -68,7 +68,7 @@ branch_manager = BranchManager(dataset_dir, filesystem)
 
 ## Web UI
 
-The web UI provides a graphical interface for GitData operations.
+The web UI provides a graphical interface for Kirin operations.
 
 ### Routes
 
@@ -88,7 +88,7 @@ Access branch management through the web UI:
 
 ## Storage Format
 
-GitData uses a Git-like storage format:
+Kirin uses a Git-like storage format:
 
 ```text
 data/

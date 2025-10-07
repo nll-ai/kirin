@@ -77,7 +77,7 @@ def _():
     import time
     from pathlib import Path
 
-    from gitdata.dataset import Dataset
+    from kirin.dataset import Dataset
 
     # Use 3 random words for dataset name
     dataset_name = f"demo_linear_{int(time.time())}"

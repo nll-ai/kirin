@@ -2,7 +2,7 @@
 
 import pytest
 
-from gitdata.dataset import get_filesystem
+from kirin.dataset import get_filesystem
 
 
 def test_local_filesystem_absolute_path():

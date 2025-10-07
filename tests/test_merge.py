@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from gitdata.dataset import Dataset
+from kirin.dataset import Dataset
 
 
 def test_merge_no_conflicts():
@@ -274,7 +274,7 @@ def test_merge_detect_conflicts():
         source_commit_hash = dataset.get_branch_commit("feature")
         target_commit_hash = dataset.get_branch_commit("main")
 
-        from gitdata.dataset import DatasetCommit
+        from kirin.dataset import DatasetCommit
 
         source_commit = DatasetCommit.from_json(
             root_dir=dataset.root_dir,
@@ -325,7 +325,7 @@ def test_merge_resolve_conflicts():
         source_commit_hash = dataset.get_branch_commit("feature")
         target_commit_hash = dataset.get_branch_commit("main")
 
-        from gitdata.dataset import DatasetCommit
+        from kirin.dataset import DatasetCommit
 
         source_commit = DatasetCommit.from_json(
             root_dir=dataset.root_dir,

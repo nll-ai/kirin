@@ -1,4 +1,4 @@
-# gitdata
+# kirin
 
 Version controlled data storage with cloud support!
 
@@ -17,7 +17,7 @@ Made with ❤️ by Eric J. Ma (@ericmjl).
 ## Quick Start
 
 ```python
-from gitdata import Dataset
+from kirin import Dataset
 
 # Local storage
 ds = Dataset(root_dir="/path/to/data", dataset_name="my_dataset")
@@ -43,7 +43,7 @@ ds.commit("Add analysis script", add_files=["analyze.py"])
 If you get authentication errors, see the [Cloud Storage Authentication Guide](docs/cloud-storage-auth.md) or use helper functions:
 
 ```python
-from gitdata import Dataset, get_gcs_filesystem
+from kirin import Dataset, get_gcs_filesystem
 
 # GCS with service account
 fs = get_gcs_filesystem(token='/path/to/key.json')
@@ -52,14 +52,14 @@ ds = Dataset(root_dir="gs://my-bucket/datasets", dataset_name="my_dataset", fs=f
 
 ## Web UI
 
-GitData includes a web interface for easy dataset management:
+Kirin includes a web interface for easy dataset management:
 
 ```bash
 # Start the web UI
-pixi run gitdata ui
+pixi run kirin ui
 
 # Or with a pre-loaded dataset
-pixi run gitdata ui --url /path/to/data --name my-dataset
+pixi run kirin ui --url /path/to/data --name my-dataset
 ```
 
 ### Features

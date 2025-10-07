@@ -1,10 +1,10 @@
-# GitData - Agent Guidelines
+# Kirin - Agent Guidelines
 
-This document provides guidelines for AI agents working on the GitData project.
+This document provides guidelines for AI agents working on the Kirin project.
 
 ## Core Philosophy: Git for Data
 
-**GitData is "git" for data** - this application follows git conventions and
+**Kirin is "git" for data** - this application follows git conventions and
 workflows for data management. This means:
 
 - **Staging Changes**: All changes must be staged before committing (no direct
@@ -330,7 +330,7 @@ the pixi environment:
 - **Testing Commands**: Always use `pixi run python -m pytest` or
   `pixi run python script.py`
 - **Development Server**: Use `pixi run python -m gitdata.web_ui` to start the server
-- **GitData UI**: Use `pixi run gitdata ui` to run the GitData web interface
+- **Kirin UI**: Use `pixi run gitdata ui` to run the Kirin web interface
 - **CLI Commands**: Use `pixi run python -m gitdata.cli` for command-line operations
 - **Debug Scripts**: Use `pixi run python debug_script.py` for debugging
 
@@ -341,10 +341,10 @@ with all required dependencies.
 **Note**: Do not run the web UI server for the user - they will handle running
 the application themselves when needed.
 
-### The Notebook - GitData Capabilities Showcase
+### The Notebook - Kirin Capabilities Showcase
 
 The project includes a Marimo notebook at `notebooks/prototype.py` that serves
-as the primary showcase for GitData's capabilities. This notebook demonstrates:
+as the primary showcase for Kirin's capabilities. This notebook demonstrates:
 
 - **File Access Patterns**: How to work with remote files using the context
   manager
@@ -357,7 +357,7 @@ as the primary showcase for GitData's capabilities. This notebook demonstrates:
 
 - **Keep it updated** - Add new capabilities and examples to the notebook
 - **Use real examples** - Show actual use cases, not just toy examples
-- **Document patterns** - Include comments explaining the GitData patterns
+- **Document patterns** - Include comments explaining the Kirin patterns
 - **Test regularly** - Use `uvx marimo check notebooks/prototype.py` to validate
   the notebook
 - **Interactive demos** - Make it runnable and educational
@@ -514,7 +514,7 @@ All Marimo notebooks must include the following PEP723-style metadata at the top
 **Key Requirements**:
 
 - **Python Version**: Always specify `requires-python = ">=3.13"`
-- **GitData Dependency**: Include `gitdata==0.0.1` in dependencies
+- **Kirin Dependency**: Include `gitdata==0.0.1` in dependencies
 - **Editable Source**: Use `[tool.uv.sources]` with
   `gitdata = { path = "../", editable = true }`
 - **Additional Dependencies**: Include any other libraries the notebook needs

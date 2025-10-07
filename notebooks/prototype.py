@@ -32,8 +32,8 @@ def _():
 @app.cell
 def _():
     # Import GitData
-    import gitdata
-    from gitdata.dataset import Dataset
+    import kirin
+    from kirin.dataset import Dataset
 
     return (Dataset,)
 

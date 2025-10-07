@@ -64,7 +64,7 @@ include-package-data = true
 where = ["."]
 
 [project]
-name = "gitdata"
+name = "kirin"
 version = "0.0.1"
 dependencies = [
     "pyprojroot",
@@ -92,7 +92,7 @@ docs = [
 ]
 
 [project.scripts]
-gitdata = "gitdata.cli:app"
+kirin = "kirin.cli:app"
 
 
 [tool.coverage.run]
@@ -105,7 +105,7 @@ channels = ["conda-forge"]
 platforms = ["osx-arm64", "linux-64"]
 
 [tool.pixi.pypi-dependencies]
-gitdata = { path = ".", editable = true }
+kirin = { path = ".", editable = true }
 
 [tool.pixi.environments]
 default = { solve-group = "default" }

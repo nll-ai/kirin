@@ -2,8 +2,8 @@
 
 import pytest
 
-from gitdata.dataset import Dataset
-from gitdata.testing_utils import dummy_file
+from kirin.dataset import Dataset
+from kirin.testing_utils import dummy_file
 
 
 @pytest.fixture

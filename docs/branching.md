@@ -1,12 +1,12 @@
-# GitData Branching
+# Kirin Branching
 
-GitData supports Git-like branching functionality, allowing you to create parallel
+Kirin supports Git-like branching functionality, allowing you to create parallel
 development lines for your datasets. This enables collaborative data science
 workflows, experimental data processing, and safe data exploration.
 
 ## Overview
 
-Branches in GitData work exactly like Git branches:
+Branches in Kirin work exactly like Git branches:
 
 - **Branches are named references** to specific commit hashes
 - **Each branch tracks its own commit history**
@@ -19,7 +19,7 @@ Branches in GitData work exactly like Git branches:
 ### Basic Branch Operations
 
 ```python
-from gitdata import Dataset
+from kirin import Dataset
 
 # Load a dataset
 dataset = Dataset(root_dir="/path/to/data", dataset_name="my-dataset")
@@ -114,7 +114,7 @@ The web UI provides:
 
 ## Branch Storage
 
-GitData stores branches using Git's exact model:
+Kirin stores branches using Git's exact model:
 
 ```text
 datasets/my-dataset/
@@ -257,6 +257,7 @@ for branch in dataset.list_branches():
 ```
 
 ### Branch Comparison
+
 ```python
 # Compare files between branches
 main_files = set(dataset.file_dict.keys())
@@ -301,4 +302,6 @@ for branch in dataset.list_branches():
     print(f"{branch}: {commit[:8]}")
 ```
 
-This branching system provides Git-like functionality for data versioning, enabling sophisticated workflows for data science teams while maintaining the simplicity and power of Git's branching model.
+This branching system provides Git-like functionality for data versioning,
+enabling sophisticated workflows for data science teams while maintaining the
+simplicity and power of Git's branching model.

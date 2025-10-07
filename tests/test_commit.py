@@ -1,8 +1,9 @@
 """Tests for the DatasetCommit class."""
+
 import tempfile
 from pathlib import Path
 
-from gitdata.dataset import DatasetCommit
+from kirin.dataset import DatasetCommit
 
 
 def test_from_empty_commit(tmp_path):
