@@ -113,7 +113,7 @@
         <form hx-post="/merge/execute" hx-target="#merge-result" hx-indicator="#merge-executing">
             <input type="hidden" name="source_branch" value="{{ source_branch }}">
             <input type="hidden" name="target_branch" value="{{ target_branch }}">
-            <input type="hidden" name="strategy" value="auto">
+            <input type="hidden" name="strategy" value="{{ strategy }}">
 
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">

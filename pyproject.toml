@@ -75,7 +75,7 @@ dependencies = [
     "s3fs",  # For S3 support
     "gcsfs",  # For Google Cloud Storage support
     "fastapi",
-    "uvicorn[standard]",
+    "uvicorn",
     "jinja2",
     "python-multipart",
 ]
@@ -116,3 +116,4 @@ tests = { features = ["tests"], solve-group = "default" }
 
 [tool.pixi.dependencies]
 loguru = ">=0.7.3,<0.8"
+marimo = ">=0.16.5,<0.17"

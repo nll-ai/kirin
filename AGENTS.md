@@ -361,6 +361,150 @@ as the primary showcase for GitData's capabilities. This notebook demonstrates:
 - **Test regularly** - Use `uvx marimo check notebooks/prototype.py` to validate
   the notebook
 - **Interactive demos** - Make it runnable and educational
+- **MANDATORY: Inline Script Metadata** - All notebooks MUST contain PEP723-style
+  inline script metadata for dependency management
+- **CRITICAL: Always Run Marimo Check** - ALWAYS run `uvx marimo check` on any notebook
+  after editing it to ensure it's valid and has no cell conflicts
+
+**Marimo Notebook Best Practices**:
+
+When creating Marimo notebooks, follow these patterns for reliable execution:
+
+**Simple Cell Pattern (RECOMMENDED)**:
+```python
+# All cells use simple _() naming
+@app.cell
+def _():
+    """Setup dataset for workflow."""
+    # Create resources and return them
+    return dataset, temp_dir
+
+@app.cell
+def _(dataset):
+    """Process step with dataset."""
+    # Work with dataset directly
+    assert condition
+    print("✅ Step completed")
+    return
+
+@app.cell
+def _(dataset, temp_dir):
+    """Another step with multiple dependencies."""
+    # Use both variables
+    return
+```
+
+**Key Requirements**:
+- **Simple Cell Names** - Use `_()` for all cells to avoid complexity
+- **No Test Functions** - Execute workflow steps directly in cells
+- **No Fixtures** - Each cell does what it needs to do
+- **Clear Dependencies** - Use explicit parameter names to declare what variables each cell needs
+- **Return Variables** - Always return variables that subsequent cells need
+
+**CRITICAL: Marimo Cell Dependency Management**:
+
+Marimo requires explicit variable flow between cells. Common issues and solutions:
+
+**Variable Flow Requirements**:
+- **Always return variables** that subsequent cells need
+- **Use explicit parameter names** in function signatures to declare dependencies
+- **Avoid intermediate cells** that don't return required variables
+- **Test dependency chains** by running cells in order
+
+**Common Error Patterns**:
+```python
+# ❌ WRONG - Cell doesn't return dataset
+@app.cell
+def _(dataset):
+    dataset.get_commits()
+    return  # Missing dataset return!
+
+# ✅ CORRECT - Cell returns dataset for next cell
+@app.cell
+def _(dataset):
+    commits = dataset.get_commits()
+    return dataset,  # Explicitly return dataset
+```
+
+**Debugging Cell Dependencies**:
+- Add debug prints to verify variable state
+- Check that each cell returns required variables
+- Ensure parameter names match returned variables
+- Use `marimo check` to validate cell dependencies
+
+**Best Practices**:
+- **Minimize intermediate cells** - Only create cells that serve a purpose
+- **Explicit returns** - Always return variables that other cells need
+- **Clear dependencies** - Use descriptive parameter names
+- **Test incrementally** - Run cells one by one to verify variable flow
+- **Avoid test discovery complexity** - Use simple `_()` naming instead of `test_*` patterns
+
+**CRITICAL: Marimo Display Output**:
+
+Marimo requires explicit display of output objects. Common issues and solutions:
+
+**Display Requirements**:
+- **Always assign display objects to variables** - Don't call display functions directly
+- **Explicitly display the variable** - Use the variable name as the last line
+- **Conditional displays** - Handle both success and fallback cases
+
+**Common Error Patterns**:
+```python
+# ❌ WRONG - No output displayed
+@app.cell
+def _(dataset, mo):
+    """Visualize commit history as Mermaid diagram."""
+    viz_commits = dataset.get_commits()
+    if viz_commits:
+        mo.mermaid(dataset.commit_history_mermaid())  # No output!
+    else:
+        mo.md("No commits to visualize yet")  # No output!
+    return
+
+# ✅ CORRECT - Output properly displayed
+@app.cell
+def _(dataset, mo):
+    """Visualize commit history as Mermaid diagram."""
+    viz_commits = dataset.get_commits()
+    if viz_commits:
+        display_viz = mo.mermaid(dataset.commit_history_mermaid())
+    else:
+        display_viz = mo.md("No commits to visualize yet")
+    display_viz  # Explicitly display the result
+    return
+```
+
+**Display Best Practices**:
+- **Assign to variables** - Always assign display objects to variables first
+- **Display explicitly** - Use the variable name as the last line to show output
+- **Handle conditions** - Use if/else to handle different display scenarios
+- **Test displays** - Verify that output actually appears in the notebook
+
+**Required Inline Script Metadata Pattern**:
+
+All Marimo notebooks must include the following PEP723-style metadata at the top:
+
+```python
+# /// script
+# requires-python = ">=3.13"
+# dependencies = [
+#     "polars==1.34.0",
+#     "gitdata==0.0.1",
+#     "anthropic==0.69.0",
+#     "loguru==0.7.3",
+# ]
+#
+# [tool.uv.sources]
+# gitdata = { path = "../", editable = true }
+# ///
+```
+
+**Key Requirements**:
+- **Python Version**: Always specify `requires-python = ">=3.13"`
+- **GitData Dependency**: Include `gitdata==0.0.1` in dependencies
+- **Editable Source**: Use `[tool.uv.sources]` with `gitdata = { path = "../", editable = true }`
+- **Additional Dependencies**: Include any other libraries the notebook needs
+- **Metadata Block**: Must be at the very top of the file, before any imports
 
 **Notebook Validation**:
 

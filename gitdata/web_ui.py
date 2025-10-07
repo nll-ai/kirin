@@ -840,19 +840,36 @@ def get_all_commits(dataset: Dataset, use_cache: bool = True) -> list:
             logger.info(
                 f"DEBUG: Processing commit {current[:8]}: {commit_data.get('commit_message', '(initial)')}"
             )
+
+            # Handle both single parent and multiple parents (merge commits)
+            parent_hash = commit_data.get("parent_hash", "")
+            parent_hashes = commit_data.get("parent_hashes", [])
+
+            # For merge commits, use the first parent (main branch) for linear traversal
+            # This follows git convention where the first parent is the main branch
+            if parent_hashes:
+                current = parent_hashes[0]  # First parent is the main branch
+                logger.info(
+                    f"DEBUG: Merge commit detected, following first parent: {current[:8]}"
+                )
+            else:
+                current = parent_hash
+                logger.info(
+                    f"DEBUG: Regular commit, following parent: {current[:8] if current else 'None'}"
+                )
+
             ordered_commits.append(
                 {
                     "hash": current,
                     "short_hash": current[:8],
                     "message": commit_data.get("commit_message", "(initial)"),
-                    "parent_hash": commit_data.get("parent_hash", ""),
+                    "parent_hash": parent_hash,
+                    "parent_hashes": parent_hashes,
+                    "is_merge": len(parent_hashes) > 1,
                     "file_count": len(commit_data.get("file_hashes", [])),
                 }
             )
-            current = commit_data.get("parent_hash")
-            logger.info(
-                f"DEBUG: Next parent commit: {current[:8] if current else 'None'}"
-            )
+
             if not current:  # Empty string means no parent
                 break
 

@@ -1,0 +1,1 @@
+Deduplicate the contents of AGENTS.md so that there is no repetition of information.

@@ -420,6 +420,7 @@ class DatasetCommit:
             "version_hash": self.version_hash,
             "commit_message": self.commit_message,
             "parent_hash": self.parent_hash,
+            "parent_hashes": self.parent_hashes,
             "file_hashes": self.file_hashes,
         }
         return info
@@ -456,7 +457,8 @@ class DatasetCommit:
             version_hash=commit_dict["version_hash"],
             commit_message=commit_dict["commit_message"],
             file_hashes=commit_dict["file_hashes"],
-            parent_hash=commit_dict["parent_hash"],
+            parent_hash=commit_dict.get("parent_hash", ""),
+            parent_hashes=commit_dict.get("parent_hashes", []),
             fs=fs,
         )
 
@@ -971,14 +973,83 @@ class Dataset:
                 parent_id = f"commit_{parent_short}"
                 lines.append(f"    {parent_id} --> {node_id}")
 
-        # Highlight the current commit
+        # Color-code commits by branch
+        current_branch = self.get_current_branch()
+
+        # Get all branches and their commits
+        branch_commits = {}
+        for branch_name in self.branch_manager.list_branches():
+            branch_hash = self.branch_manager.get_branch_commit(branch_name)
+            if branch_hash and branch_hash in commits:
+                # Get all commits reachable from this branch
+                branch_commits[branch_name] = set()
+                to_visit = [branch_hash]
+                visited = set()
+
+                while to_visit:
+                    commit_hash = to_visit.pop(0)
+                    if commit_hash in visited or commit_hash not in commits:
+                        continue
+                    visited.add(commit_hash)
+                    branch_commits[branch_name].add(commit_hash)
+
+                    # Add parent commits
+                    commit_data = commits[commit_hash]
+                    parent_hash = commit_data.get("parent_hash", "")
+                    if parent_hash and parent_hash in commits:
+                        to_visit.append(parent_hash)
+
+        # Define colors for different branches
+        branch_colors = {
+            "main": "#90EE90",  # Light green for main
+            "master": "#90EE90",  # Light green for master (alias)
+        }
+
+        # Assign colors to other branches
+        other_branches = [
+            b for b in branch_commits.keys() if b not in ["main", "master"]
+        ]
+        other_colors = [
+            "#FFB6C1",
+            "#87CEEB",
+            "#DDA0DD",
+            "#F0E68C",
+            "#FFA07A",
+            "#98FB98",
+            "#F5DEB3",
+        ]
+
+        for i, branch in enumerate(other_branches):
+            if i < len(other_colors):
+                branch_colors[branch] = other_colors[i]
+            else:
+                # Cycle through colors if we have more branches than colors
+                branch_colors[branch] = other_colors[i % len(other_colors)]
+
+        # Apply colors to commits
+        for version_hash, commit_data in commits.items():
+            short_hash = version_hash[:short_hash_length]
+            node_id = f"commit_{short_hash}"
+
+            # Find which branch this commit belongs to (prefer main/master)
+            commit_branch = None
+            for branch_name, branch_commit_set in branch_commits.items():
+                if version_hash in branch_commit_set:
+                    if commit_branch is None or branch_name in ["main", "master"]:
+                        commit_branch = branch_name
+
+            if commit_branch and commit_branch in branch_colors:
+                color = branch_colors[commit_branch]
+                lines.append(
+                    f"    style {node_id} fill:{color},stroke:#333,stroke-width:2px"
+                )
+
+        # Highlight current commit with thicker border
         current_hash = self.current_version_hash()
         if current_hash:
             current_short = current_hash[:short_hash_length]
             current_id = f"commit_{current_short}"
-            lines.append(
-                f"    style {current_id} fill:#90EE90,stroke:#333,stroke-width:4px"
-            )
+            lines.append(f"    style {current_id} stroke:#FF0000,stroke-width:4px")
 
         return "\n".join(lines)
 
@@ -1202,8 +1273,23 @@ class Dataset:
             "strategy": strategy,
         }
 
-        # If there are conflicts and strategy is not manual, resolve them
-        if conflicts and strategy != "manual":
+        # Handle different merge strategies
+        if strategy == "rebase":
+            # Rebase strategy: replay source branch commits on top of target branch
+            result = self._rebase_merge(
+                source_commit, target_commit, source_branch, target_branch
+            )
+            result.update(
+                {
+                    "source_branch": source_branch,
+                    "target_branch": target_branch,
+                    "source_commit": source_commit_hash,
+                    "target_commit": target_commit_hash,
+                    "conflicts": conflicts,
+                    "strategy": strategy,
+                }
+            )
+        elif conflicts and strategy != "manual":
             resolved_files = self._resolve_conflicts(
                 conflicts, strategy, source_commit, target_commit
             )
@@ -1444,14 +1530,18 @@ class Dataset:
         hasher.update(hash_concat.encode("utf-8"))
         merge_version_hash = hasher.hexdigest()
 
-        # Create the merge commit object
+        # Create the merge commit object with both parents (proper git semantics)
         merge_commit = DatasetCommit(
             root_dir=self.root_dir,
             dataset_name=self.dataset_name,
             version_hash=merge_version_hash,
             commit_message=commit_message,
             file_hashes=merged_hashes,
-            parent_hash=target_commit.version_hash,
+            parent_hash="",  # Clear single parent
+            parent_hashes=[
+                target_commit.version_hash,
+                source_commit.version_hash,
+            ],  # Both parents
             fs=self.fs,
         )
 
@@ -1467,6 +1557,216 @@ class Dataset:
         logger.info(f"MERGE_PERF: Total merge time: {total_time:.2f}s")
 
         return merge_version_hash
+
+    def _rebase_merge(
+        self,
+        source_commit: DatasetCommit,
+        target_commit: DatasetCommit,
+        source_branch: str,
+        target_branch: str,
+    ) -> dict:
+        """Perform a rebase merge by replaying source branch commits on top of target branch.
+
+        This creates a linear history without merge commits by:
+        1. Getting all commits from source branch
+        2. Replaying them on top of target branch
+        3. Updating target branch to point to the new linear history
+
+        Args:
+            source_commit: The latest commit from source branch
+            target_commit: The latest commit from target branch
+            source_branch: Name of source branch
+            target_branch: Name of target branch
+
+        Returns:
+            Dictionary with rebase result information
+        """
+        logger.info(
+            f"REBASE: Starting rebase merge from '{source_branch}' into '{target_branch}'"
+        )
+        start_time = time.time()
+
+        # Get all commits from source branch (excluding the target branch commits)
+        source_commits = self._get_branch_commits(
+            source_commit.version_hash, target_commit.version_hash
+        )
+
+        if not source_commits:
+            logger.info("REBASE: No commits to rebase")
+            return {
+                "success": True,
+                "rebase_commits": [],
+                "final_commit": target_commit.version_hash,
+            }
+
+        logger.info(f"REBASE: Found {len(source_commits)} commits to rebase")
+
+        # Start from target branch
+        current_commit_hash = target_commit.version_hash
+
+        # Replay each source commit on top of the current state
+        rebased_commits = []
+        for i, commit_data in enumerate(source_commits):
+            logger.info(
+                f"REBASE: Replaying commit {i + 1}/{len(source_commits)}: {commit_data['message'][:50]}..."
+            )
+
+            # Create new commit with same content but new parent
+            new_commit_hash = self._replay_commit(commit_data, current_commit_hash)
+            rebased_commits.append(new_commit_hash)
+            current_commit_hash = new_commit_hash
+
+        # Update target branch to point to the final rebased commit
+        self.branch_manager.set_current_branch(target_branch)
+        self.branch_manager.update_branch(target_branch, current_commit_hash)
+
+        # Update current commit
+        self.current_commit = DatasetCommit.from_json(
+            root_dir=self.root_dir,
+            dataset_name=self.dataset_name,
+            version_hash=current_commit_hash,
+            fs=self.fs,
+        )
+
+        total_time = time.time() - start_time
+        logger.info(f"REBASE: Rebase completed in {total_time:.2f}s")
+        logger.info(f"REBASE: Created {len(rebased_commits)} rebased commits")
+
+        return {
+            "success": True,
+            "rebase_commits": rebased_commits,
+            "final_commit": current_commit_hash,
+        }
+
+    def _get_branch_commits(
+        self, source_commit_hash: str, target_commit_hash: str
+    ) -> list:
+        """Get all commits from source branch that are not in target branch.
+
+        Args:
+            source_commit_hash: Latest commit from source branch
+            target_commit_hash: Latest commit from target branch
+
+        Returns:
+            List of commit data dictionaries in chronological order
+        """
+        commits = []
+        current = source_commit_hash
+
+        # Traverse source branch commits until we reach target branch
+        while current and current != target_commit_hash:
+            try:
+                commit = DatasetCommit.from_json(
+                    root_dir=self.root_dir,
+                    dataset_name=self.dataset_name,
+                    version_hash=current,
+                    fs=self.fs,
+                )
+
+                commits.append(
+                    {
+                        "hash": current,
+                        "message": commit.commit_message,
+                        "file_hashes": commit.file_hashes,
+                    }
+                )
+
+                # Get parent (for single parent commits)
+                if commit.parent_hashes:
+                    current = commit.parent_hashes[
+                        0
+                    ]  # First parent for linear traversal
+                else:
+                    current = commit.parent_hash
+
+            except Exception as e:
+                logger.warning(f"REBASE: Could not load commit {current[:8]}: {e}")
+                break
+
+        # Reverse to get chronological order (oldest first)
+        commits.reverse()
+        return commits
+
+    def _replay_commit(self, commit_data: dict, new_parent_hash: str) -> str:
+        """Replay a commit with a new parent to create a rebased version.
+
+        Args:
+            commit_data: Original commit data
+            new_parent_hash: New parent commit hash
+
+        Returns:
+            Hash of the new rebased commit
+        """
+        # Create new commit with same content but new parent
+        hash_concat = (
+            "\n".join(commit_data["file_hashes"]) + "\n" + commit_data["message"] + "\n"
+        )
+        hash_concat = hash_concat + "\n" + str(datetime.now()) + "\n"
+        hasher = sha256()
+        hasher.update(hash_concat.encode("utf-8"))
+        new_commit_hash = hasher.hexdigest()
+
+        # Create the rebased commit object
+        rebased_commit = DatasetCommit(
+            root_dir=self.root_dir,
+            dataset_name=self.dataset_name,
+            version_hash=new_commit_hash,
+            commit_message=commit_data["message"],
+            file_hashes=commit_data["file_hashes"],
+            parent_hash=new_parent_hash,  # Single parent for linear history
+            parent_hashes=[],  # No multiple parents in rebase
+            fs=self.fs,
+        )
+
+        return new_commit_hash
+
+    def get_commits(self) -> list:
+        """Get all commits for the current branch in chronological order.
+
+        Returns:
+            List of commit dictionaries with hash, message, and other metadata
+        """
+        current_branch = self.get_current_branch()
+        current_commit_hash = self.get_branch_commit(current_branch)
+
+        # Get all commits data
+        commits_dict = self._get_commits_data()
+        if not commits_dict:
+            return []
+
+        # Build chronological order (from newest to oldest)
+        ordered_commits = []
+        current = current_commit_hash
+
+        while current and current in commits_dict:
+            commit_data = commits_dict[current]
+
+            # Handle both single parent and multiple parents (merge commits)
+            parent_hash = commit_data.get("parent_hash", "")
+            parent_hashes = commit_data.get("parent_hashes", [])
+
+            # For merge commits, use the first parent (main branch) for linear traversal
+            if parent_hashes:
+                current = parent_hashes[0]  # First parent is the main branch
+            else:
+                current = parent_hash
+
+            ordered_commits.append(
+                {
+                    "hash": current,
+                    "short_hash": current[:8],
+                    "message": commit_data.get("commit_message", "(initial)"),
+                    "parent_hash": parent_hash,
+                    "parent_hashes": parent_hashes,
+                    "is_merge": len(parent_hashes) > 1,
+                    "file_count": len(commit_data.get("file_hashes", [])),
+                }
+            )
+
+            if not current:  # Empty string means no parent
+                break
+
+        return ordered_commits
 
 
 class DatasetError(Exception):

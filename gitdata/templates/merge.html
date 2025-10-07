@@ -51,15 +51,16 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="strategy">Conflict Resolution Strategy:</label>
+                        <label for="strategy">Merge Strategy:</label>
                         <select name="strategy" id="strategy">
+                            <option value="rebase">Rebase (linear history)</option>
                             <option value="auto">Auto (prefer target branch)</option>
                             <option value="ours">Keep target branch version</option>
                             <option value="theirs">Keep source branch version</option>
                             <option value="manual">Manual resolution</option>
                         </select>
                         <small class="form-help">
-                            Choose how to handle conflicts when the same file exists in both branches with different content.
+                            Choose merge strategy. Rebase creates a linear history without merge commits.
                         </small>
                     </div>
 
