@@ -63,7 +63,7 @@ pixi run kirin ui
 pixi run kirin ui --url /path/to/data --name my-dataset
 ```
 
-### Features
+### Key Features
 
 - 📊 **Dataset visualization** - Browse commits and files
 - 🌿 **Branch management** - Create, switch, and delete branches

@@ -4,11 +4,14 @@
 
 ## 1. Introduction
 
-Kirin is a tool for version-controlling data using content-addressed storage. The primary goals are to enable file versioning and file set versioning in a way that is backend-agnostic, serverless, and supports the creation of data catalogs.
+Kirin is a tool for version-controlling data using content-addressed storage.
+The primary goals are to enable file versioning and file set versioning in a way
+that is backend-agnostic, serverless, and supports the creation of data catalogs.
 
 ### 1.1 Problem Statement
 
-Data versioning is a critical need in machine learning and data science workflows. Current solutions often:
+Data versioning is a critical need in machine learning and data science
+workflows. Current solutions often:
 
 - Are tied to specific storage backends
 - Lack the flexibility of Git's content-addressed model
@@ -16,18 +19,25 @@ Data versioning is a critical need in machine learning and data science workflow
 - Do not track data usage effectively
 - Are difficult to integrate with existing workflows and tools
 - Fail to maintain lineage between derived files and their sources
-- Inefficiently copy data when performing operations, leading to excessive memory usage and slow performance
+- Inefficiently copy data when performing operations, leading to excessive
+  memory usage and slow performance
 
 ### 1.2 Design Goals
 
 Kirin aims to provide a robust solution with the following properties:
 
-1. **Backend-agnostic storage**: Support any storage backend (local filesystem, S3, Dropbox, Google Drive, SharePoint, etc.)
-2. **Content-addressed storage**: Use hashing to ensure data integrity and deduplication
-3. **Data catalog support**: Enable building data catalogs on top of the versioning system
-4. **Serverless architecture**: No need for dedicated servers; all logic runs client-side
-5. **Usage tracking**: Record all data access in a structured format (SQLite database -- stick with server-free philosophy)
-6. **Data lineage**: Track the relationships between files, showing which files were derived from which source files
+1. **Backend-agnostic storage**: Support any storage backend (local filesystem,
+   S3, Dropbox, Google Drive, SharePoint, etc.)
+2. **Content-addressed storage**: Use hashing to ensure data integrity and
+   deduplication
+3. **Data catalog support**: Enable building data catalogs on top of the
+   versioning system
+4. **Serverless architecture**: No need for dedicated servers; all logic
+   runs client-side
+5. **Usage tracking**: Record all data access in a structured format
+   (SQLite database -- stick with server-free philosophy)
+6. **Data lineage**: Track the relationships between files, showing which
+   files were derived from which source files
 7. **Zero-copy operations**: Minimize data copying through memory mapping and streaming operations whenever possible
 8. **Clean API**: Provide both a programmatic API and CLI for easy integration
 
@@ -141,14 +151,14 @@ The table below maps Kirin features to the specific jobs they help users accompl
 
 | Kirin Feature | Primary Jobs Addressed | Key User Personas |
 |----------------|------------------------|-------------------|
-| **Content-Addressed Storage** | • Track Experiment Data<br>• Find and Use the Right Data Version<br>• Collaborate with Team Members<br>• Ensure Reproducibility<br>• Ensure Experimental Reproducibility | Data Scientist, ML Engineer, Team Lead, Laboratory Scientist |
-| **Automatic Lineage Tracking** | • Document Data Transformations<br>• Manage Data Pipelines<br>• Track Sample Lineage<br>• Manage Technical Debt | Data Scientist, Data Engineer, Laboratory Scientist |
-| **Backend-Agnostic Storage** | • Support Multiple Storage Solutions<br>• Optimize Storage Usage<br>• Manage Collaborative Research | Data Engineer, MLOps Engineer, Laboratory Scientist |
-| **Dataset Versioning** | • Deploy Models with Data Dependencies<br>• Roll Back Data When Needed<br>• Monitor Data Drift<br>• Ensure Experimental Reproducibility | MLOps Engineer, Data Engineer, Laboratory Scientist |
-| **Usage Tracking** | • Document Data Usage<br>• Ensure Data Governance<br>• Support Regulatory Compliance<br>• Document Methods and Parameters | Team Lead, Laboratory Scientist |
-| **Zero-Copy Operations** | • Optimize Storage Usage<br>• Handle Large Datasets | Data Engineer, MLOps Engineer |
-| **Data Catalog** | • Accelerate Onboarding<br>• Find the Right Data Version<br>• Manage Collaborative Research | Team Lead, Data Scientist, Laboratory Scientist |
-| **Path-Based API** | • Implement Data-Centric CI/CD<br>• Manage Data Pipelines | MLOps Engineer, Data Engineer |
+| **Content-Addressed Storage** | • Track Experiment Data<br/>• Find and Use the Right Data Version<br/>• Collaborate with Team Members<br/>• Ensure Reproducibility<br/>• Ensure Experimental Reproducibility | Data Scientist, ML Engineer, Team Lead, Laboratory Scientist |
+| **Automatic Lineage Tracking** | • Document Data Transformations<br/>• Manage Data Pipelines<br/>• Track Sample Lineage<br/>• Manage Technical Debt | Data Scientist, Data Engineer, Laboratory Scientist |
+| **Backend-Agnostic Storage** | • Support Multiple Storage Solutions<br/>• Optimize Storage Usage<br/>• Manage Collaborative Research | Data Engineer, MLOps Engineer, Laboratory Scientist |
+| **Dataset Versioning** | • Deploy Models with Data Dependencies<br/>• Roll Back Data When Needed<br/>• Monitor Data Drift<br/>• Ensure Experimental Reproducibility | MLOps Engineer, Data Engineer, Laboratory Scientist |
+| **Usage Tracking** | • Document Data Usage<br/>• Ensure Data Governance<br/>• Support Regulatory Compliance<br/>• Document Methods and Parameters | Team Lead, Laboratory Scientist |
+| **Zero-Copy Operations** | • Optimize Storage Usage<br/>• Handle Large Datasets | Data Engineer, MLOps Engineer |
+| **Data Catalog** | • Accelerate Onboarding<br/>• Find the Right Data Version<br/>• Manage Collaborative Research | Team Lead, Data Scientist, Laboratory Scientist |
+| **Path-Based API** | • Implement Data-Centric CI/CD<br/>• Manage Data Pipelines | MLOps Engineer, Data Engineer |
 
 ### 1.5 User Workflows
 
@@ -159,6 +169,7 @@ To illustrate how Kirin supports common workflows, here are examples of how diff
 A data scientist developing a new model:
 
 1. **Discover and Access Data**:
+
    ```python
    # Browse the catalog to find relevant datasets
    datasets = repo.list_datasets(tags=["customer", "transactions"])
@@ -168,6 +179,7 @@ A data scientist developing a new model:
    ```
 
 2. **Prepare and Transform Data**:
+
    ```python
    # All transformations are automatically tracked
    with repo.track_processing(description="Preprocess transactions"):
@@ -182,6 +194,7 @@ A data scientist developing a new model:
    ```
 
 3. **Train Model with Version Awareness**:
+
    ```python
    # Train using specific data versions, capturing exact data dependencies
    model = train_model(repo.Path("transactions/clean.csv"))
@@ -192,6 +205,7 @@ A data scientist developing a new model:
    ```
 
 4. **Document and Share Results**:
+
    ```python
    # Get full lineage information for reporting
    data_lineage = repo.get_file_ancestors("models/transaction_classifier.pkl")
@@ -205,6 +219,7 @@ A data scientist developing a new model:
 A data engineer building an ETL pipeline:
 
 1. **Set Up Extract Stage**:
+
    ```python
    # Extract from source and track provenance
    with repo.track_processing(description="Extract from OLTP"):
@@ -215,6 +230,7 @@ A data engineer building an ETL pipeline:
    ```
 
 2. **Implement Transform Stage**:
+
    ```python
    # Transform with full tracking
    with repo.track_processing(description="Transform daily data"):
@@ -226,6 +242,7 @@ A data engineer building an ETL pipeline:
    ```
 
 3. **Execute Load Stage**:
+
    ```python
    # Load with tracking
    with repo.track_processing(description="Load to data warehouse"):
@@ -236,6 +253,7 @@ A data engineer building an ETL pipeline:
    ```
 
 4. **Verify Pipeline Integrity**:
+
    ```python
    # Verify the complete lineage from source to destination
    lineage = repo.get_file_ancestors("transformed/daily.parquet")
@@ -250,6 +268,7 @@ A data engineer building an ETL pipeline:
 A laboratory scientist conducting experimental research:
 
 1. **Capture Experimental Data**:
+
    ```python
    # Create a dataset for the experiment with metadata
    experiment = repo.create_dataset(
@@ -274,6 +293,7 @@ A laboratory scientist conducting experimental research:
    ```
 
 2. **Process and Analyze Experimental Data**:
+
    ```python
    # All analysis steps are automatically tracked
    with repo.track_processing(
@@ -294,6 +314,7 @@ A laboratory scientist conducting experimental research:
    ```
 
 3. **Generate Publication-Ready Results**:
+
    ```python
    # Combine and analyze processed data
    with repo.track_processing(description="Binding kinetics analysis"):
@@ -315,6 +336,7 @@ A laboratory scientist conducting experimental research:
    ```
 
 4. **Document and Share Research**:
+
    ```python
    # Generate complete provenance for publication
    lineage = repo.get_file_ancestors("results/binding_kinetics.csv")
@@ -338,6 +360,7 @@ A laboratory scientist conducting experimental research:
 A laboratory scientist comparing results across multiple experiments:
 
 1. **Identify Relevant Experiments**:
+
    ```python
    # Find all experiments with a specific characteristic
    experiments = repo.search_datasets(
@@ -353,6 +376,7 @@ A laboratory scientist comparing results across multiple experiments:
    ```
 
 2. **Standardize and Compare Results**:
+
    ```python
    # Process data from multiple experiments with standard methods
    with repo.track_processing(description="Comparative analysis"):
@@ -376,6 +400,7 @@ A laboratory scientist comparing results across multiple experiments:
    ```
 
 3. **Validate Protocol Improvements**:
+
    ```python
    # Analyze protocol version impact
    protocol_impact = repo.analyze_metadata_impact(
@@ -408,6 +433,7 @@ The Storage Layer is responsible for abstracting away the details of different s
 - Memory-mapped access where supported
 
 **Key Abstractions:**
+
 ```python
 class StorageBackend(Protocol):
     """Protocol defining the interface for storage backends."""
@@ -425,6 +451,7 @@ class StorageBackend(Protocol):
 ```
 
 Built-in implementations:
+
 - LocalStorageBackend
 - S3StorageBackend
 - DropboxStorageBackend
@@ -602,7 +629,7 @@ class Catalog:
 
 The content store is organized as follows:
 
-```
+```text
 <root>/
   ├── objects/                  # Content-addressed storage
   │   ├── ab/                   # First two characters of hash

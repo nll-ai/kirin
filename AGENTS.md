@@ -423,25 +423,6 @@ def _(dataset, temp_dir):
 - **Display Output** - Always assign display objects to variables and
   explicitly display them
 
-**Required Inline Script Metadata Pattern**:
-
-All Marimo notebooks must include the following PEP723-style metadata at the top:
-
-```python
-# /// script
-# requires-python = ">=3.13"
-# dependencies = [
-#     "polars==1.34.0",
-#     "gitdata==0.0.1",
-#     "anthropic==0.69.0",
-#     "loguru==0.7.3",
-# ]
-#
-# [tool.uv.sources]
-# gitdata = { path = "../", editable = true }
-# ///
-```
-
 **Notebook Validation**:
 
 ```bash
@@ -511,6 +492,35 @@ class TestLocalStateManager:
   what each test demonstrates
 - **Real-world scenarios** - Write tests that reflect actual usage patterns and
   workflows
+
+## Design Document Reference
+
+### Code Changes and Design Alignment
+
+**CRITICAL**: When making changes to the codebase, always refer back to the design document (`docs/design.md`) and explicitly mention where in the design document the choice was made. This ensures:
+
+- **Design Consistency**: All implementation decisions align with the documented architecture
+- **Design Evolution**: Real usage patterns can inform design document updates
+- **Traceability**: Clear connection between design decisions and implementation
+- **Documentation Maintenance**: Design document stays current with actual usage
+
+**Required Process**:
+
+1. **Before Making Changes**: Review the relevant sections of `docs/design.md`
+2. **During Implementation**: Reference specific design document sections that justify the approach
+3. **After Changes**: Note any discrepancies between design and implementation that may require design document updates
+4. **Design Document Updates**: When real usage reveals design issues, update the design document accordingly
+
+**Example Reference Format**:
+
+```
+This implementation follows the design document's approach for [specific feature]
+as outlined in section [X.Y] of docs/design.md, which specifies [specific design
+decision]. However, real usage has revealed [specific issue], suggesting we may
+need to update the design document to reflect [proposed change].
+```
+
+This process ensures the design document remains a living document that accurately reflects both the intended architecture and the lessons learned from actual implementation and usage.
 
 ## Documentation Standards
 
