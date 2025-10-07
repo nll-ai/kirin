@@ -6,13 +6,18 @@
 
 ## Context
 
-GitData requires a robust content-addressed storage (CAS) system to support data versioning, deduplication, and multi-backend storage. During architecture evaluation, we considered integrating [HashFS](https://github.com/dgilland/hashfs), a Python library for content-addressable file management.
+GitData requires a robust content-addressed storage (CAS) system to support
+data versioning, deduplication, and multi-backend storage. During architecture
+evaluation, we considered integrating [HashFS](https://github.com/dgilland/hashfs),
+a Python library for content-addressable file management.
 
 ## Decision
 
 **We will NOT integrate HashFS into GitData.**
 
-Instead, we will enhance our existing custom content-addressed storage implementation with HashFS-inspired optimizations while maintaining our current fsspec-based architecture.
+Instead, we will enhance our existing custom content-addressed storage
+implementation with HashFS-inspired optimizations while maintaining our current
+fsspec-based architecture.
 
 ## Rationale
 
@@ -65,16 +70,19 @@ Instead, we will enhance our existing custom content-addressed storage implement
 ## Alternatives Considered
 
 ### Option 1: Full HashFS Integration
+
 - **Pros**: Proven CAS implementation, automatic deduplication
 - **Cons**: Complete architectural rewrite, loss of critical features
 - **Decision**: Rejected - too much risk and effort
 
 ### Option 2: Hybrid Architecture
+
 - **Pros**: Best of both worlds, local deduplication
 - **Cons**: Complex implementation, maintenance overhead
 - **Decision**: Rejected - unnecessary complexity
 
 ### Option 3: Enhance Current System ✅
+
 - **Pros**: Maintains all features, incremental improvement
 - **Cons**: Requires custom implementation
 - **Decision**: **Selected** - optimal balance of features and effort
@@ -82,6 +90,7 @@ Instead, we will enhance our existing custom content-addressed storage implement
 ## Implementation Plan
 
 ### Phase 1: Add Deduplication
+
 ```python
 def commit_with_dedup(self, files: List[str]) -> str:
     """Commit files with automatic deduplication."""
@@ -93,6 +102,7 @@ def commit_with_dedup(self, files: List[str]) -> str:
 ```
 
 ### Phase 2: Optimize Directory Structure
+
 ```python
 def _get_nested_path(self, hash_hex: str) -> str:
     """Get nested directory path for hash (HashFS-inspired)."""
@@ -100,6 +110,7 @@ def _get_nested_path(self, hash_hex: str) -> str:
 ```
 
 ### Phase 3: Add Repair Capabilities
+
 ```python
 def repair_storage(self) -> Dict[str, Any]:
     """Repair and validate storage integrity."""
@@ -109,17 +120,20 @@ def repair_storage(self) -> Dict[str, Any]:
 ## Consequences
 
 ### Positive
+
 - **Maintains architecture**: No disruption to existing features
 - **Adds optimizations**: Deduplication, directory nesting, repair
 - **Preserves capabilities**: Multi-backend, versioning, metadata
 - **Incremental improvement**: Low-risk enhancement
 
 ### Negative
+
 - **Custom implementation**: Requires development effort
 - **No community support**: HashFS has established patterns
 - **Maintenance burden**: Need to maintain custom CAS system
 
 ### Risks
+
 - **Performance**: Need to ensure optimizations don't impact performance
 - **Compatibility**: Must maintain fsspec compatibility
 - **Testing**: Need comprehensive testing of new features
@@ -127,6 +141,7 @@ def repair_storage(self) -> Dict[str, Any]:
 ## Monitoring
 
 We will monitor:
+
 - **Performance metrics**: File storage/retrieval times
 - **Storage efficiency**: Deduplication effectiveness
 - **User feedback**: Developer experience with new features

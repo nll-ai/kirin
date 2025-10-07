@@ -371,6 +371,7 @@ as the primary showcase for GitData's capabilities. This notebook demonstrates:
 When creating Marimo notebooks, follow these patterns for reliable execution:
 
 **Simple Cell Pattern (RECOMMENDED)**:
+
 ```python
 # All cells use simple _() naming
 @app.cell
@@ -395,10 +396,12 @@ def _(dataset, temp_dir):
 ```
 
 **Key Requirements**:
+
 - **Simple Cell Names** - Use `_()` for all cells to avoid complexity
 - **No Test Functions** - Execute workflow steps directly in cells
 - **No Fixtures** - Each cell does what it needs to do
-- **Clear Dependencies** - Use explicit parameter names to declare what variables each cell needs
+- **Clear Dependencies** - Use explicit parameter names to declare what
+  variables each cell needs
 - **Return Variables** - Always return variables that subsequent cells need
 
 **CRITICAL: Marimo Cell Dependency Management**:
@@ -406,12 +409,14 @@ def _(dataset, temp_dir):
 Marimo requires explicit variable flow between cells. Common issues and solutions:
 
 **Variable Flow Requirements**:
+
 - **Always return variables** that subsequent cells need
 - **Use explicit parameter names** in function signatures to declare dependencies
 - **Avoid intermediate cells** that don't return required variables
 - **Test dependency chains** by running cells in order
 
 **Common Error Patterns**:
+
 ```python
 # ❌ WRONG - Cell doesn't return dataset
 @app.cell
@@ -427,28 +432,34 @@ def _(dataset):
 ```
 
 **Debugging Cell Dependencies**:
+
 - Add debug prints to verify variable state
 - Check that each cell returns required variables
 - Ensure parameter names match returned variables
 - Use `marimo check` to validate cell dependencies
 
 **Best Practices**:
+
 - **Minimize intermediate cells** - Only create cells that serve a purpose
 - **Explicit returns** - Always return variables that other cells need
 - **Clear dependencies** - Use descriptive parameter names
 - **Test incrementally** - Run cells one by one to verify variable flow
-- **Avoid test discovery complexity** - Use simple `_()` naming instead of `test_*` patterns
+- **Avoid test discovery complexity** - Use simple `_()` naming instead of
+  `test_*` patterns
 
 **CRITICAL: Marimo Display Output**:
 
 Marimo requires explicit display of output objects. Common issues and solutions:
 
 **Display Requirements**:
-- **Always assign display objects to variables** - Don't call display functions directly
+
+- **Always assign display objects to variables** - Don't call display
+  functions directly
 - **Explicitly display the variable** - Use the variable name as the last line
 - **Conditional displays** - Handle both success and fallback cases
 
 **Common Error Patterns**:
+
 ```python
 # ❌ WRONG - No output displayed
 @app.cell
@@ -475,6 +486,7 @@ def _(dataset, mo):
 ```
 
 **Display Best Practices**:
+
 - **Assign to variables** - Always assign display objects to variables first
 - **Display explicitly** - Use the variable name as the last line to show output
 - **Handle conditions** - Use if/else to handle different display scenarios
@@ -500,9 +512,11 @@ All Marimo notebooks must include the following PEP723-style metadata at the top
 ```
 
 **Key Requirements**:
+
 - **Python Version**: Always specify `requires-python = ">=3.13"`
 - **GitData Dependency**: Include `gitdata==0.0.1` in dependencies
-- **Editable Source**: Use `[tool.uv.sources]` with `gitdata = { path = "../", editable = true }`
+- **Editable Source**: Use `[tool.uv.sources]` with
+  `gitdata = { path = "../", editable = true }`
 - **Additional Dependencies**: Include any other libraries the notebook needs
 - **Metadata Block**: Must be at the very top of the file, before any imports
 
@@ -625,6 +639,15 @@ markdownlint docs/design.md
 
 **Required Workflow**: Run markdownlint on any Markdown file that is created
 or edited before committing changes.
+
+**CRITICAL**: Always use markdownlint to lint any markdown files that are in
+the repo.
+
+**MANDATORY**: Run markdownlint on every markdown file that is edited.
+
+**REQUIRED**: Always fix any issues that are caught by markdownlint.
+
+**NOTE**: The user is using `fd` instead of `find` for file operations.
 
 **Common Issues to Avoid**:
 

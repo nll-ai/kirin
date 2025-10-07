@@ -20,7 +20,7 @@ dataset = Dataset(root_dir="/path/to/data", dataset_name="my-dataset")
 - `file_dict` - Dictionary of files in the current commit
 - `local_files()` - Context manager for accessing files as local paths
 
-#### Branch Management
+#### Branch Operations
 
 - `create_branch(name, commit_hash=None)` - Create a new branch
 - `list_branches()` - List all branches
@@ -90,7 +90,7 @@ Access branch management through the web UI:
 
 GitData uses a Git-like storage format:
 
-```
+```text
 data/
 ├── objects/              # Content-addressed file storage
 ├── datasets/
@@ -128,16 +128,19 @@ except ValueError as e:
 ## Best Practices
 
 ### Branch Naming
+
 - Use descriptive names: `feature/user-auth`, `experiment/ml-model`
 - Avoid generic names: `test`, `new`, `temp`
 
 ### Workflow Patterns
+
 - Create feature branches for new work
 - Use experimental branches for testing
 - Keep main branch stable
 - Delete branches when work is complete
 
 ### File Management
+
 - Use `local_files()` context manager for library compatibility
 - Check branch before file operations
 - Commit changes regularly
@@ -145,6 +148,7 @@ except ValueError as e:
 ## Advanced Features
 
 ### Context Managers
+
 ```python
 # Access files as local paths
 with dataset.local_files() as local_files:
@@ -153,6 +157,7 @@ with dataset.local_files() as local_files:
 ```
 
 ### Commit History
+
 ```python
 # Get commit history as Mermaid diagram
 mermaid = dataset.commit_history_mermaid()
@@ -160,6 +165,7 @@ print(mermaid)  # Can be rendered in Jupyter
 ```
 
 ### File Operations
+
 ```python
 # Add files to commit
 dataset.commit("Add new data", add_files=["new_data.csv"])

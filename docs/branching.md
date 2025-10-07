@@ -1,10 +1,13 @@
 # GitData Branching
 
-GitData supports Git-like branching functionality, allowing you to create parallel development lines for your datasets. This enables collaborative data science workflows, experimental data processing, and safe data exploration.
+GitData supports Git-like branching functionality, allowing you to create parallel
+development lines for your datasets. This enables collaborative data science
+workflows, experimental data processing, and safe data exploration.
 
 ## Overview
 
 Branches in GitData work exactly like Git branches:
+
 - **Branches are named references** to specific commit hashes
 - **Each branch tracks its own commit history**
 - **You can switch between branches** to work on different versions
@@ -113,7 +116,7 @@ The web UI provides:
 
 GitData stores branches using Git's exact model:
 
-```
+```text
 datasets/my-dataset/
 ├── refs/heads/           # Branch references
 │   ├── main             # Contains: commit_hash
@@ -146,6 +149,7 @@ dataset.create_branch("new")   # Not descriptive
 ### Workflow Patterns
 
 #### 1. Experimental Data Processing
+
 ```python
 # Create experimental branch
 dataset.create_branch("experiment/new-algorithm")
@@ -159,6 +163,7 @@ dataset.commit("Try new ML algorithm", add_files=["new_model.py"])
 ```
 
 #### 2. Collaborative Development
+
 ```python
 # Developer A creates feature branch
 dataset.create_branch("feature/user-dashboard")
@@ -171,6 +176,7 @@ dataset.switch_branch("feature/user-dashboard")
 ```
 
 #### 3. Data Versioning
+
 ```python
 # Create version branches for different data states
 dataset.create_branch("v1.0-clean-data")
@@ -222,16 +228,19 @@ print(f"Working on branch: {current}")
 ## Integration with Existing Features
 
 ### Commit History
+
 - **Each branch maintains its own commit history**
 - **Branch switching updates the current commit**
 - **Commit operations update the current branch**
 
 ### File Access
+
 - **`dataset.file_dict`** returns files from the current branch
 - **`dataset.local_files()`** context manager works with current branch
 - **File operations** (add/remove) affect the current branch
 
 ### Web UI Integration
+
 - **Branch information** displayed in dataset view
 - **Commit history** shows commits for current branch
 - **File operations** work within the current branch context
@@ -239,6 +248,7 @@ print(f"Working on branch: {current}")
 ## Advanced Usage
 
 ### Branch Inspection
+
 ```python
 # Get detailed branch information
 for branch in dataset.list_branches():
