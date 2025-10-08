@@ -88,9 +88,31 @@ pixi run kirin ui --url /path/to/data --name my-dataset
 To get started:
 
 ```bash
-git clone git@github.com:ericmjl/gitdata
-cd gitdata
-mamba env update -f environment.yml
-conda activate gitdata
-python -m pip install -e .
+git clone git@github.com:ericmjl/kirin
+cd kirin
+pixi install
+```
+
+### Development Commands
+
+Once installed, you can use these common development commands:
+
+```bash
+# Run the web UI
+pixi run kirin ui
+
+# Run the web UI with a pre-loaded dataset
+pixi run kirin ui --url /path/to/data --name my-dataset
+
+# Run tests
+pixi run -e tests pytest
+
+# Run tests for a specific file
+pixi run -e tests pytest tests/test_filename.py
+
+# Run the development server directly
+pixi run python -m kirin.web_ui
+
+# Run CLI commands
+pixi run python -m kirin.cli
 ```

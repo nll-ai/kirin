@@ -317,7 +317,8 @@ the pixi environment:
 - **Development Server**: Use `pixi run python -m gitdata.web_ui` to start the server
 - **Kirin UI**: Use `pixi run gitdata ui` to run the Kirin web interface
 - **CLI Commands**: Use `pixi run python -m gitdata.cli` for command-line operations
-- **Debug Scripts**: Use `pixi run python debug_script.py` for debugging
+
+**Note**: The Kirin project does not use debugging scripts like `debug_script.py`.
 
 **Critical**: Never run Python commands directly without the `pixi run` prefix,
 as this will use the system Python instead of the project's managed environment

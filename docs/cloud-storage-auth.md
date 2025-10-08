@@ -1,6 +1,6 @@
 # Cloud Storage Authentication Guide
 
-When using `gitdata` with cloud storage backends (S3, GCS, Azure, etc.), you need
+When using `kirin` with cloud storage backends (S3, GCS, Azure, etc.), you need
 to provide authentication credentials. This guide shows you how to authenticate
 with different cloud providers.
 
@@ -25,7 +25,7 @@ Use `gcloud` CLI to set up credentials:
 gcloud auth application-default login
 ```
 
-Then use gitdata normally:
+Then use kirin normally:
 
 ```python
 from kirin.dataset import Dataset

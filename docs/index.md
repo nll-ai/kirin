@@ -8,7 +8,7 @@ for data versioning that provides Git-like workflows for datasets.
 ### Install from source
 
 ```bash
-pip install git@github.com:ericmjl/gitdata
+pip install git@github.com:ericmjl/kirin
 ```
 
 ### Build and preview docs

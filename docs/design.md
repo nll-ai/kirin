@@ -1080,47 +1080,47 @@ The command-line interface will mirror Git's familiar commands but with some str
 
 ```bash
 # Initialize
-gitdata init --backend=s3 --config=s3://bucket/config.json
+kirin init --backend=s3 --config=s3://bucket/config.json
 
 # Create dataset
-gitdata dataset create my_dataset "Description of my dataset"
+kirin dataset create my_dataset "Description of my dataset"
 
 # Add files and commit in a single command
-gitdata commit my_dataset -a file1.csv file2.json -m "Initial commit"
+kirin commit my_dataset -a file1.csv file2.json -m "Initial commit"
 
 # Add and remove files in a single commit
-gitdata commit my_dataset -a new_file.csv -r old_file.csv -m "Replace old file with new"
+kirin commit my_dataset -a new_file.csv -r old_file.csv -m "Replace old file with new"
 
 # To remove files only
-gitdata commit my_dataset -r obsolete_file.csv -m "Remove obsolete file"
+kirin commit my_dataset -r obsolete_file.csv -m "Remove obsolete file"
 
 # List datasets
-gitdata list-datasets
+kirin list-datasets
 
 # Show dataset info
-gitdata show my_dataset
+kirin show my_dataset
 
 # Checkout version
-gitdata checkout my_dataset <commit-hash>
+kirin checkout my_dataset <commit-hash>
 
 # Get file (records access)
-gitdata get my_dataset/file1.csv --purpose="data analysis"
+kirin get my_dataset/file1.csv --purpose="data analysis"
 
 # Show history
-gitdata log my_dataset
+kirin log my_dataset
 
 # Show usage
-gitdata usage my_dataset/file1.csv
+kirin usage my_dataset/file1.csv
 
 # Execute transformation scripts with lineage tracking
-gitdata run transform.py -m "Transform data" --params '{"method": "normalize"}'
+kirin run transform.py -m "Transform data" --params '{"method": "normalize"}'
 
 # Query lineage
-gitdata lineage ancestors processed/result.csv
-gitdata lineage descendants raw/data.csv
+kirin lineage ancestors processed/result.csv
+kirin lineage descendants raw/data.csv
 
 # Visualize lineage (outputs a DOT file or renders directly if graphviz is installed)
-gitdata lineage visualize processed/result.csv --depth 3 --output lineage.svg
+kirin lineage visualize processed/result.csv --depth 3 --output lineage.svg
 ```
 
 ## 5. Backend Support
