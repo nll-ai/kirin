@@ -1421,7 +1421,7 @@ packages:
 - pypi: ./
   name: kirin
   version: 0.0.1
-  sha256: 87710ec95d8cbd3e380b883572f79499a9a0724e7145b3f4eee9df1aae2df133
+  sha256: 38f039ec6b17039726ba17d2d57b79a408a6e410f04f84bcdff40adeabf23e4b
   requires_dist:
   - pyprojroot
   - python-dotenv

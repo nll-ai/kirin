@@ -113,7 +113,7 @@ docs = { features = ["docs"], solve-group = "default" }
 tests = { features = ["tests"], solve-group = "default" }
 
 [tool.pixi.feature.tests.tasks]
-test = "pytest"
+test = "pytest --durations=10 --tb=short -v"
 
 [tool.pixi.feature.tests.dependencies]
 pytest = ">=8.4.2,<9"

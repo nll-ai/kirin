@@ -9,11 +9,11 @@ import pytest
 from kirin import Dataset
 
 
-@pytest.fixture(autouse=False)
+@pytest.fixture(autouse=True)
 def cleanup_local_state():
-    """Automatically clean up local state before each test."""
+    """Automatically clean up local state before and after each test."""
     # Clean up all local state directories
-    local_state_base = Path.home() / ".gitdata"
+    local_state_base = Path.home() / ".kirin"
     if local_state_base.exists():
         for item in local_state_base.iterdir():
             if item.is_dir():
