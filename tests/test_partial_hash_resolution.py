@@ -19,7 +19,7 @@ class TestPartialHashResolution:
             "file_hashes": [],
         }
 
-        with patch("gitdata.dataset.Dataset") as mock_dataset_class:
+        with patch("kirin.dataset.Dataset") as mock_dataset_class:
             # Create a real Dataset instance but mock the filesystem
             dataset = Dataset.__new__(Dataset)
             dataset.root_dir = "gs://test-bucket"
@@ -48,7 +48,7 @@ class TestPartialHashResolution:
 
     def test_resolve_commit_hash_no_matches(self):
         """Test error when no commits match the partial hash."""
-        with patch("gitdata.dataset.Dataset") as mock_dataset_class:
+        with patch("kirin.dataset.Dataset") as mock_dataset_class:
             dataset = Dataset.__new__(Dataset)
             dataset.root_dir = "gs://test-bucket"
             dataset.dataset_name = "test"
@@ -81,7 +81,7 @@ class TestPartialHashResolution:
 
     def test_resolve_commit_hash_multiple_matches(self):
         """Test error when multiple commits match the partial hash."""
-        with patch("gitdata.dataset.Dataset") as mock_dataset_class:
+        with patch("kirin.dataset.Dataset") as mock_dataset_class:
             dataset = Dataset.__new__(Dataset)
             dataset.root_dir = "gs://test-bucket"
             dataset.dataset_name = "test"
@@ -126,7 +126,7 @@ class TestPartialHashResolution:
 
     def test_resolve_commit_hash_empty_input(self):
         """Test error when partial hash is empty."""
-        with patch("gitdata.dataset.Dataset") as mock_dataset_class:
+        with patch("kirin.dataset.Dataset") as mock_dataset_class:
             dataset = Dataset.__new__(Dataset)
             dataset.root_dir = "gs://test-bucket"
             dataset.dataset_name = "test"
@@ -138,7 +138,7 @@ class TestPartialHashResolution:
 
     def test_resolve_commit_hash_no_commits(self):
         """Test error when no commits exist in dataset."""
-        with patch("gitdata.dataset.Dataset") as mock_dataset_class:
+        with patch("kirin.dataset.Dataset") as mock_dataset_class:
             dataset = Dataset.__new__(Dataset)
             dataset.root_dir = "gs://test-bucket"
             dataset.dataset_name = "test"
@@ -153,7 +153,7 @@ class TestPartialHashResolution:
 
     def test_checkout_with_partial_hash(self):
         """Test that checkout method uses hash resolution for partial hashes."""
-        with patch("gitdata.dataset.Dataset") as mock_dataset_class:
+        with patch("kirin.dataset.Dataset") as mock_dataset_class:
             dataset = Dataset.__new__(Dataset)
             dataset.root_dir = "gs://test-bucket"
             dataset.dataset_name = "test"
@@ -164,7 +164,7 @@ class TestPartialHashResolution:
             dataset.resolve_commit_hash = Mock(return_value="full_hash_123")
 
             # Mock DatasetCommit.from_json
-            with patch("gitdata.dataset.DatasetCommit.from_json") as mock_from_json:
+            with patch("kirin.dataset.DatasetCommit.from_json") as mock_from_json:
                 mock_commit = Mock()
                 mock_from_json.return_value = mock_commit
 
@@ -187,7 +187,7 @@ class TestPartialHashResolution:
 
     def test_checkout_with_full_hash(self):
         """Test that checkout method works with full hashes without resolution."""
-        with patch("gitdata.dataset.Dataset") as mock_dataset_class:
+        with patch("kirin.dataset.Dataset") as mock_dataset_class:
             dataset = Dataset.__new__(Dataset)
             dataset.root_dir = "gs://test-bucket"
             dataset.dataset_name = "test"
@@ -200,7 +200,7 @@ class TestPartialHashResolution:
             )
 
             # Mock DatasetCommit.from_json
-            with patch("gitdata.dataset.DatasetCommit.from_json") as mock_from_json:
+            with patch("kirin.dataset.DatasetCommit.from_json") as mock_from_json:
                 mock_commit = Mock()
                 mock_from_json.return_value = mock_commit
 

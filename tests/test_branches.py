@@ -2,12 +2,18 @@
 
 import os
 import tempfile
+import uuid
 from pathlib import Path
 
 import pytest
 
 from kirin.dataset import Dataset
 from kirin.models import BranchManager
+
+
+def get_unique_dataset_name():
+    """Generate a unique dataset name for testing."""
+    return f"test_dataset_{uuid.uuid4().hex[:8]}"
 
 
 def test_branch_manager_initialization():
@@ -21,7 +27,7 @@ def test_branch_manager_initialization():
 
         fs = fsspec.filesystem("file")
 
-        branch_manager = BranchManager(dataset_dir, fs)
+        branch_manager = BranchManager(dataset_dir, fs, "test_dataset")
 
         # Check that refs directory was created
         assert fs.exists(f"{dataset_dir}/refs/heads")
@@ -39,7 +45,9 @@ def test_create_branch():
         import fsspec
 
         fs = fsspec.filesystem("file")
-        branch_manager = BranchManager(dataset_dir, fs)
+        # Use unique dataset name to avoid state collision
+        unique_dataset_name = get_unique_dataset_name()
+        branch_manager = BranchManager(dataset_dir, fs, unique_dataset_name)
 
         # Create a branch
         commit_hash = "abc123def456"
@@ -59,7 +67,8 @@ def test_create_branch_already_exists():
         import fsspec
 
         fs = fsspec.filesystem("file")
-        branch_manager = BranchManager(dataset_dir, fs)
+        unique_dataset_name = get_unique_dataset_name()
+        branch_manager = BranchManager(dataset_dir, fs, unique_dataset_name)
 
         # Create a branch
         commit_hash = "abc123def456"
@@ -79,13 +88,14 @@ def test_create_main_branch():
         import fsspec
 
         fs = fsspec.filesystem("file")
-        branch_manager = BranchManager(dataset_dir, fs)
+        unique_dataset_name = get_unique_dataset_name()
+        branch_manager = BranchManager(dataset_dir, fs, unique_dataset_name)
 
         # First create the main branch (this should work)
         branch_manager.create_branch("main", "abc123def456")
 
         # Now try to create it again (this should fail)
-        with pytest.raises(ValueError, match="Cannot create a branch named 'main'"):
+        with pytest.raises(ValueError, match="Branch 'main' already exists"):
             branch_manager.create_branch("main", "def456ghi789")
 
 
@@ -98,7 +108,8 @@ def test_update_branch():
         import fsspec
 
         fs = fsspec.filesystem("file")
-        branch_manager = BranchManager(dataset_dir, fs)
+        unique_dataset_name = get_unique_dataset_name()
+        branch_manager = BranchManager(dataset_dir, fs, unique_dataset_name)
 
         # Create a branch
         commit_hash1 = "abc123def456"
@@ -121,7 +132,8 @@ def test_delete_branch():
         import fsspec
 
         fs = fsspec.filesystem("file")
-        branch_manager = BranchManager(dataset_dir, fs)
+        unique_dataset_name = get_unique_dataset_name()
+        branch_manager = BranchManager(dataset_dir, fs, unique_dataset_name)
 
         # Create a branch
         commit_hash = "abc123def456"
@@ -145,7 +157,8 @@ def test_delete_main_branch():
         import fsspec
 
         fs = fsspec.filesystem("file")
-        branch_manager = BranchManager(dataset_dir, fs)
+        unique_dataset_name = get_unique_dataset_name()
+        branch_manager = BranchManager(dataset_dir, fs, unique_dataset_name)
 
         with pytest.raises(ValueError, match="Cannot delete the main branch"):
             branch_manager.delete_branch("main")
@@ -160,7 +173,8 @@ def test_set_current_branch():
         import fsspec
 
         fs = fsspec.filesystem("file")
-        branch_manager = BranchManager(dataset_dir, fs)
+        unique_dataset_name = get_unique_dataset_name()
+        branch_manager = BranchManager(dataset_dir, fs, unique_dataset_name)
 
         # Create a branch
         commit_hash = "abc123def456"

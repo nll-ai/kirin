@@ -1,4 +1,4 @@
-"""Tests for the gitdata.dataset.Dataset class."""
+"""Tests for the kirin.dataset.Dataset class."""
 
 import pytest
 
@@ -14,7 +14,6 @@ def empty_dataset(tmp_path) -> Dataset:
     :return: The empty dataset.
     """
     ds = Dataset(root_dir=tmp_path, dataset_name="test_create_dataset")
-    ds.checkout()
     return ds
 
 
@@ -25,6 +24,7 @@ def dataset_one_commit(empty_dataset) -> Dataset:
     :param empty_dataset: An empty dataset.
     :return: The dataset with one commit.
     """
+    # Create the first commit
     empty_dataset.commit(commit_message="test create dataset", add_files=[dummy_file()])
     return empty_dataset
 

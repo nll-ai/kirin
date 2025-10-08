@@ -13,7 +13,7 @@ def test_merge_no_conflicts():
     """Test merging branches with no conflicts."""
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a dataset
-        dataset = Dataset(root_dir=temp_dir, dataset_name="test_dataset")
+        dataset = Dataset(root_dir=temp_dir, dataset_name="test_merge_detect_conflicts")
 
         # Add initial files to main branch
         main_file = Path(temp_dir) / "main.txt"
@@ -55,7 +55,7 @@ def test_merge_with_conflicts():
     """Test merging branches with file conflicts."""
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a dataset
-        dataset = Dataset(root_dir=temp_dir, dataset_name="test_dataset")
+        dataset = Dataset(root_dir=temp_dir, dataset_name="test_merge_with_conflicts")
 
         # Add a file to main branch
         shared_file = Path(temp_dir) / "shared.txt"
@@ -95,7 +95,7 @@ def test_merge_strategy_ours():
     """Test merge with 'ours' strategy (keep target branch version)."""
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a dataset
-        dataset = Dataset(root_dir=temp_dir, dataset_name="test_dataset")
+        dataset = Dataset(root_dir=temp_dir, dataset_name="test_merge_strategy_ours")
 
         # Add a file to main branch
         shared_file = Path(temp_dir) / "shared.txt"
@@ -135,7 +135,7 @@ def test_merge_strategy_theirs():
     """Test merge with 'theirs' strategy (keep source branch version)."""
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a dataset
-        dataset = Dataset(root_dir=temp_dir, dataset_name="test_dataset")
+        dataset = Dataset(root_dir=temp_dir, dataset_name="test_merge_strategy_theirs")
 
         # Add a file to main branch
         shared_file = Path(temp_dir) / "shared.txt"
@@ -175,7 +175,7 @@ def test_merge_manual_strategy():
     """Test merge with 'manual' strategy (requires manual resolution)."""
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a dataset
-        dataset = Dataset(root_dir=temp_dir, dataset_name="test_dataset")
+        dataset = Dataset(root_dir=temp_dir, dataset_name="test_merge_manual_strategy")
 
         # Add a file to main branch
         shared_file = Path(temp_dir) / "shared.txt"
@@ -208,7 +208,7 @@ def test_merge_nonexistent_branches():
     """Test merge with non-existent branches."""
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a dataset
-        dataset = Dataset(root_dir=temp_dir, dataset_name="test_dataset")
+        dataset = Dataset(root_dir=temp_dir, dataset_name="test_merge_detect_conflicts")
 
         # Add initial commit
         main_file = Path(temp_dir) / "main.txt"
@@ -232,7 +232,7 @@ def test_merge_same_branch():
     """Test merging a branch into itself."""
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a dataset
-        dataset = Dataset(root_dir=temp_dir, dataset_name="test_dataset")
+        dataset = Dataset(root_dir=temp_dir, dataset_name="test_merge_detect_conflicts")
 
         # Add initial commit
         main_file = Path(temp_dir) / "main.txt"
@@ -249,9 +249,17 @@ def test_merge_same_branch():
 
 def test_merge_detect_conflicts():
     """Test conflict detection between two commits."""
+    # Clean up any existing local state
+    import shutil
+    from pathlib import Path
+
+    local_state_dir = Path.home() / ".gitdata" / "test_merge_detect_conflicts"
+    if local_state_dir.exists():
+        shutil.rmtree(local_state_dir)
+
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a dataset
-        dataset = Dataset(root_dir=temp_dir, dataset_name="test_dataset")
+        dataset = Dataset(root_dir=temp_dir, dataset_name="test_merge_detect_conflicts")
 
         # Add a file to main branch
         shared_file = Path(temp_dir) / "shared.txt"
@@ -302,7 +310,9 @@ def test_merge_resolve_conflicts():
     """Test conflict resolution with different strategies."""
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a dataset
-        dataset = Dataset(root_dir=temp_dir, dataset_name="test_dataset")
+        dataset = Dataset(
+            root_dir=temp_dir, dataset_name="test_merge_resolve_conflicts"
+        )
 
         # Add a file to main branch
         shared_file = Path(temp_dir) / "shared.txt"
@@ -362,7 +372,7 @@ def test_merge_complex_scenario():
     """Test a complex merge scenario with multiple files and conflicts."""
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a dataset
-        dataset = Dataset(root_dir=temp_dir, dataset_name="test_dataset")
+        dataset = Dataset(root_dir=temp_dir, dataset_name="test_merge_complex_scenario")
 
         # Add multiple files to main branch
         main_file1 = Path(temp_dir) / "main1.txt"
@@ -417,7 +427,9 @@ def test_merge_default_target_branch():
     """Test merge with default target branch (current branch)."""
     with tempfile.TemporaryDirectory() as temp_dir:
         # Create a dataset
-        dataset = Dataset(root_dir=temp_dir, dataset_name="test_dataset")
+        dataset = Dataset(
+            root_dir=temp_dir, dataset_name="test_merge_default_target_branch"
+        )
 
         # Add initial commit
         main_file = Path(temp_dir) / "main.txt"
