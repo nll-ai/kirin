@@ -1178,27 +1178,6 @@ packages:
   - markdown ; extra == 'dev'
   - flake8 ; extra == 'dev'
   - wheel ; extra == 'dev'
-- pypi: ./
-  name: gitdata
-  version: 0.0.1
-  sha256: 9b873f86159dd0e698e42226827324d06e31c737cca24d44b94939c4c6224597
-  requires_dist:
-  - pyprojroot
-  - python-dotenv
-  - typer
-  - json5
-  - fsspec
-  - s3fs
-  - gcsfs
-  - fastapi
-  - uvicorn
-  - jinja2
-  - python-multipart
-  - pytest ; extra == 'tests'
-  - pytest-cov ; extra == 'tests'
-  - mkdocs-material ; extra == 'docs'
-  - mkdocs ; extra == 'docs'
-  editable: true
 - pypi: https://files.pythonhosted.org/packages/c8/d8/894716a5423933f5c8d2d5f04b16f052a515f78e815dab0c2c6f1fd105dc/google_api_core-2.25.2-py3-none-any.whl
   name: google-api-core
   version: 2.25.2
@@ -1423,6 +1402,27 @@ packages:
   - twine==5.1.1 ; extra == 'dev'
   - uv==0.5.1 ; extra == 'dev'
   requires_python: '>=3.8.0'
+- pypi: ./
+  name: kirin
+  version: 0.0.1
+  sha256: ae2174d8e41772d3f688e3591f27841de71b8ee94b60ca65913024b59af6ba4e
+  requires_dist:
+  - pyprojroot
+  - python-dotenv
+  - typer
+  - json5
+  - fsspec
+  - s3fs
+  - gcsfs
+  - fastapi
+  - uvicorn
+  - jinja2
+  - python-multipart
+  - pytest ; extra == 'tests'
+  - pytest-cov ; extra == 'tests'
+  - mkdocs-material ; extra == 'docs'
+  - mkdocs ; extra == 'docs'
+  editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.43-h712a8e2_4.conda
   sha256: db73f38155d901a610b2320525b9dd3b31e4949215c870685fd92ea61b5ce472
   md5: 01f8d123c96816249efd255a31ad7712
