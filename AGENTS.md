@@ -605,3 +605,63 @@ def example_function():
 def example_function():
     return "Hello, World!"
 ```
+
+## Script Execution Standards
+
+### Script Location and Execution Pattern
+
+**CRITICAL**: All Python scripts in the Kirin project follow a specific execution pattern:
+
+- **Script Location**: All scripts are placed in the `scripts/` directory
+- **Execution Method**: Scripts are run using `uv run` from the scripts directory
+- **Execution Pattern**: `cd scripts && uv run script_name.py`
+
+### Ephemeral Scripts for Problem Solving
+
+**ACCEPTABLE**: It's acceptable to create ephemeral scripts for problem solving as long as they are cleaned up once the problem is solved. This allows for quick debugging and testing without cluttering the codebase.
+
+**Guidelines for Ephemeral Scripts**:
+- **Temporary Nature**: Scripts should be created for specific debugging/testing purposes
+- **Clean Up**: Always delete ephemeral scripts once the problem is solved
+- **Naming**: Use descriptive names like `debug_commit_history.py` or `test_git_semantics.py`
+- **Location**: Place in `scripts/` directory for consistency
+- **Metadata**: Include PEP723 metadata for proper dependency management
+
+**Required Pattern**:
+
+```bash
+# Navigate to scripts directory
+cd scripts
+
+# Run any script using uv run
+uv run create_dummy_dataset.py
+uv run other_script.py
+```
+
+**Key Requirements**:
+
+- **Always use `uv run`** - Never use `python` directly
+- **Always run from scripts directory** - Change to `scripts/` directory first
+- **Script naming** - Use descriptive names with underscores (e.g., `create_dummy_dataset.py`)
+- **PEP723 metadata** - All scripts must include inline script metadata for dependency management
+
+**Benefits of this pattern**:
+
+- **Consistent execution environment** - All scripts use the same dependency resolution
+- **Proper dependency management** - `uv run` handles script dependencies automatically
+- **Isolated execution** - Scripts don't interfere with the main project environment
+- **Easy maintenance** - All utility scripts are organized in one location
+
+**Examples**:
+
+```bash
+# ✅ CORRECT - Standard script execution
+cd scripts
+uv run create_dummy_dataset.py
+
+# ❌ WRONG - Don't run from project root
+uv run scripts/create_dummy_dataset.py
+
+# ❌ WRONG - Don't use python directly
+python scripts/create_dummy_dataset.py
+```

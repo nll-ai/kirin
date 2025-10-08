@@ -583,7 +583,7 @@ class Dataset:
         logger.info(f"PERF: Initializing branch manager for {self.dataset_dir}")
         start_time = time.time()
         self.branch_manager = BranchManager(
-            self.dataset_dir, self.fs, self.dataset_name
+            self.dataset_dir, self.fs, self.dataset_name, remote_url=self.root_dir
         )
         end_time = time.time()
         logger.info(
@@ -1311,9 +1311,7 @@ class Dataset:
                 f"{target_branch}_backup", target_commit_hash
             )
             self.branch_manager.set_current_branch(target_branch)
-            branch_file = self.branch_manager._get_branch_file(target_branch)
-            with self.fs.open(strip_protocol(branch_file), "w") as f:
-                f.write(merge_commit_hash)
+            self.branch_manager.update_branch(target_branch, merge_commit_hash)
 
             result["success"] = True
         elif conflicts and strategy == "manual":
@@ -1641,7 +1639,10 @@ class Dataset:
     def _get_branch_commits(
         self, source_commit_hash: str, target_commit_hash: str
     ) -> list:
-        """Get all commits from source branch that are not in target branch.
+        """Get commits from source branch that are not in target branch.
+
+        This finds the merge base (common ancestor) and only returns commits
+        that are unique to the source branch, not already in the target branch.
 
         Args:
             source_commit_hash: Latest commit from source branch
@@ -1650,11 +1651,69 @@ class Dataset:
         Returns:
             List of commit data dictionaries in chronological order
         """
+        # Find the merge base (common ancestor)
+        merge_base = self._find_merge_base(source_commit_hash, target_commit_hash)
+
+        if not merge_base:
+            logger.warning("REBASE: No common ancestor found, rebasing all commits")
+            # Fallback to old behavior if no common ancestor
+            return self._get_all_source_commits(source_commit_hash)
+
+        logger.info(f"REBASE: Found merge base: {merge_base[:8]}")
+
+        # Get commits from source branch that are not in target branch
         commits = []
         current = source_commit_hash
+        visited = set()
 
-        # Traverse source branch commits until we reach target branch
-        while current and current != target_commit_hash:
+        # Traverse source branch commits until we reach the merge base
+        while current and current != merge_base and current not in visited:
+            visited.add(current)
+
+            try:
+                commit = DatasetCommit.from_json(
+                    root_dir=self.root_dir,
+                    dataset_name=self.dataset_name,
+                    version_hash=current,
+                    fs=self.fs,
+                )
+
+                # Only include commits that are not already in the target branch
+                if not self._is_commit_in_branch(current, target_commit_hash):
+                    commits.append(
+                        {
+                            "hash": current,
+                            "message": commit.commit_message,
+                            "file_hashes": commit.file_hashes,
+                        }
+                    )
+
+                # Get parent (for single parent commits)
+                if commit.parent_hashes:
+                    current = commit.parent_hashes[
+                        0
+                    ]  # First parent for linear traversal
+                else:
+                    current = commit.parent_hash
+
+            except Exception as e:
+                logger.warning(f"REBASE: Could not load commit {current[:8]}: {e}")
+                break
+
+        # Reverse to get chronological order (oldest first)
+        commits.reverse()
+        logger.info(f"REBASE: Found {len(commits)} unique commits to rebase")
+        return commits
+
+    def _get_all_source_commits(self, source_commit_hash: str) -> list:
+        """Get all commits from source branch (fallback method)."""
+        commits = []
+        current = source_commit_hash
+        visited = set()
+
+        while current and current not in visited:
+            visited.add(current)
+
             try:
                 commit = DatasetCommit.from_json(
                     root_dir=self.root_dir,
@@ -1673,9 +1732,7 @@ class Dataset:
 
                 # Get parent (for single parent commits)
                 if commit.parent_hashes:
-                    current = commit.parent_hashes[
-                        0
-                    ]  # First parent for linear traversal
+                    current = commit.parent_hashes[0]
                 else:
                     current = commit.parent_hash
 
@@ -1686,6 +1743,99 @@ class Dataset:
         # Reverse to get chronological order (oldest first)
         commits.reverse()
         return commits
+
+    def _find_merge_base(self, commit1: str, commit2: str) -> str:
+        """Find the common ancestor (merge base) of two commits."""
+        # Get all ancestors of commit1
+        ancestors1 = self._get_commit_ancestors(commit1)
+
+        # Get all ancestors of commit2
+        ancestors2 = self._get_commit_ancestors(commit2)
+
+        # Find common ancestors
+        common_ancestors = ancestors1.intersection(ancestors2)
+
+        if not common_ancestors:
+            return None
+
+        # Find the most recent common ancestor by checking which one is furthest from the root
+        # We'll use a simple heuristic: the commit with the longest path from root
+        best_ancestor = None
+        max_depth = -1
+
+        for ancestor in common_ancestors:
+            # Calculate depth by counting ancestors
+            depth = len(self._get_commit_ancestors(ancestor))
+            if depth > max_depth:
+                max_depth = depth
+                best_ancestor = ancestor
+
+        return best_ancestor
+
+    def _get_commit_ancestors(self, commit_hash: str) -> set:
+        """Get all ancestors of a commit."""
+        ancestors = set()
+        visited = set()
+
+        def traverse(current: str):
+            if current in visited or not current:
+                return
+
+            visited.add(current)
+            ancestors.add(current)
+
+            try:
+                commit = DatasetCommit.from_json(
+                    root_dir=self.root_dir,
+                    dataset_name=self.dataset_name,
+                    version_hash=current,
+                    fs=self.fs,
+                )
+
+                # Add parents to ancestors
+                if commit.parent_hashes:
+                    for parent in commit.parent_hashes:
+                        ancestors.add(parent)
+                        traverse(parent)
+                elif commit.parent_hash:
+                    ancestors.add(commit.parent_hash)
+                    traverse(commit.parent_hash)
+
+            except Exception as e:
+                logger.warning(f"REBASE: Could not load commit {current[:8]}: {e}")
+
+        traverse(commit_hash)
+        return ancestors
+
+    def _is_commit_in_branch(self, commit_hash: str, branch_head: str) -> bool:
+        """Check if a commit is already in the target branch."""
+        current = branch_head
+        visited = set()
+
+        while current and current not in visited:
+            visited.add(current)
+            if current == commit_hash:
+                return True
+
+            try:
+                commit = DatasetCommit.from_json(
+                    root_dir=self.root_dir,
+                    dataset_name=self.dataset_name,
+                    version_hash=current,
+                    fs=self.fs,
+                )
+
+                # Get parent (for single parent commits)
+                if commit.parent_hashes:
+                    current = commit.parent_hashes[0]
+                else:
+                    current = commit.parent_hash
+
+            except Exception as e:
+                logger.warning(f"REBASE: Could not load commit {current[:8]}: {e}")
+                break
+
+        return False
 
     def _replay_commit(self, commit_data: dict, new_parent_hash: str) -> str:
         """Replay a commit with a new parent to create a rebased version.
@@ -1736,10 +1886,13 @@ class Dataset:
 
         # Build chronological order (from newest to oldest)
         ordered_commits = []
+        visited = set()  # Prevent duplicate commits
         current = current_commit_hash
 
-        while current and current in commits_dict:
+        while current and current in commits_dict and current not in visited:
+            visited.add(current)
             commit_data = commits_dict[current]
+            commit_hash = current  # Store the current commit hash before updating
 
             # Handle both single parent and multiple parents (merge commits)
             parent_hash = commit_data.get("parent_hash", "")
@@ -1753,8 +1906,8 @@ class Dataset:
 
             ordered_commits.append(
                 {
-                    "hash": current,
-                    "short_hash": current[:8],
+                    "hash": commit_hash,  # Use the stored commit hash
+                    "short_hash": commit_hash[:8],
                     "message": commit_data.get("commit_message", "(initial)"),
                     "parent_hash": parent_hash,
                     "parent_hashes": parent_hashes,

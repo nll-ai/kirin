@@ -21,19 +21,35 @@ class LocalStateManager:
     and commit data remain on remote storage, but the state is local.
     """
 
-    def __init__(self, dataset_name: str, local_state_dir: Optional[str] = None):
+    def __init__(
+        self,
+        dataset_name: str,
+        local_state_dir: Optional[str] = None,
+        remote_url: Optional[str] = None,
+    ):
         """Initialize local state manager.
 
         Args:
             dataset_name: Name of the dataset
-            local_state_dir: Directory to store local state (defaults to ~/.gitdata)
+            local_state_dir: Directory to store local state (defaults to ~/.kirin)
+            remote_url: Remote URL for this dataset (used to create unique local state)
         """
         self.dataset_name = dataset_name
 
-        # Default to ~/.gitdata/{dataset_name}/ for local state
+        # Default to ~/.kirin/{remote_url_hash}/{dataset_name}/ for local state
         if local_state_dir is None:
             home_dir = Path.home()
-            self.local_state_dir = home_dir / ".gitdata" / dataset_name
+            if remote_url:
+                # Create unique directory based on remote URL hash
+                import hashlib
+
+                remote_url_hash = hashlib.sha256(remote_url.encode()).hexdigest()[:16]
+                self.local_state_dir = (
+                    home_dir / ".kirin" / remote_url_hash / dataset_name
+                )
+            else:
+                # Fallback to old behavior for backward compatibility
+                self.local_state_dir = home_dir / ".kirin" / dataset_name
         else:
             self.local_state_dir = Path(local_state_dir)
 

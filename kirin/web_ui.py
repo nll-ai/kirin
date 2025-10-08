@@ -17,7 +17,6 @@ from loguru import logger
 
 from kirin.dataset import (
     Dataset,
-    DatasetNoCommitsError,
     strip_protocol,
 )
 
@@ -73,13 +72,7 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 # Global state to store the current dataset
 current_dataset: Optional[Dataset] = None
 
-# Commit history cache: {(dataset_name, root_dir): (commits_list, timestamp)}
-commit_cache = {}
-CACHE_TTL = 1800  # 30 minutes cache (increased from 5 minutes)
-
-# File dictionary cache: {(dataset_name, root_dir, commit_hash): (file_dict, timestamp)}
-file_dict_cache = {}
-FILE_CACHE_TTL = 600  # 10 minutes cache
+# Caching disabled for fresh data
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -91,7 +84,7 @@ async def index(request: Request):
         {
             "request": request,
             "dataset_loaded": current_dataset is not None,
-            "dataset_url": current_dataset.root_dir if current_dataset else "",
+            "root_dir": current_dataset.root_dir if current_dataset else "",
             "dataset_name": current_dataset.dataset_name if current_dataset else "",
         },
     )
@@ -103,30 +96,32 @@ async def load_dataset(request: Request):
     global current_dataset
 
     form = await request.form()
-    dataset_url = form.get("dataset_url")
+    root_dir = form.get("root_dir")
     dataset_name = form.get("dataset_name")
 
-    logger.info(f"Loading dataset: name='{dataset_name}', url='{dataset_url}'")
+    logger.info(f"Loading dataset: name='{dataset_name}', root_dir='{root_dir}'")
 
-    if not dataset_url or not dataset_name:
-        logger.warning("Dataset URL and name are required but not provided")
-        raise HTTPException(status_code=400, detail="Dataset URL and name are required")
+    if not root_dir or not dataset_name:
+        logger.warning("Dataset root directory and name are required but not provided")
+        raise HTTPException(
+            status_code=400, detail="Dataset root directory and name are required"
+        )
 
     try:
         logger.info(f"Initializing Dataset object for '{dataset_name}'")
         with perf_timer(f"Dataset initialization for '{dataset_name}'"):
-            current_dataset = Dataset(root_dir=dataset_url, dataset_name=dataset_name)
+            current_dataset = Dataset(root_dir=root_dir, dataset_name=dataset_name)
         logger.info(f"Successfully loaded dataset '{dataset_name}'")
 
         # Redirect to the direct dataset URL for bookmarkability
         from urllib.parse import quote
 
-        redirect_url = f"/d/{quote(dataset_name)}?url={quote(dataset_url)}"
+        redirect_url = f"/d/{quote(dataset_name)}?root_dir={quote(root_dir)}"
         content = f'<script>window.location.href = "{redirect_url}";</script>'
         return HTMLResponse(content=content, status_code=200)
     except Exception as e:
         logger.error(
-            f"Error loading dataset '{dataset_name}' from '{dataset_url}': {e}",
+            f"Error loading dataset '{dataset_name}' from '{root_dir}': {e}",
             exc_info=True,
         )
         error_msg = (
@@ -138,17 +133,19 @@ async def load_dataset(request: Request):
 
 @app.get("/d/{dataset_name}", response_class=HTMLResponse)
 async def dataset_direct(
-    request: Request, dataset_name: str, url: str = None, commit: str = None
+    request: Request, dataset_name: str, root_dir: str = None, commit: str = None
 ):
     """Direct access to a dataset via URL.
 
-    Usage: /d/my-dataset?url=/path/to/data&commit=abc123
+    Usage: /d/my-dataset?root_dir=/path/to/data&commit=abc123
     """
     global current_dataset
 
-    logger.info(f"Direct dataset access: {dataset_name}, url={url}, commit={commit}")
+    logger.info(
+        f"Direct dataset access: {dataset_name}, root_dir={root_dir}, commit={commit}"
+    )
 
-    if url is None:
+    if root_dir is None:
         # Try to use current dataset if name matches
         if current_dataset and current_dataset.dataset_name == dataset_name:
             logger.info(f"Using already loaded dataset: {dataset_name}")
@@ -160,7 +157,7 @@ async def dataset_direct(
         else:
             raise HTTPException(
                 status_code=400,
-                detail="Dataset URL required. Use: /d/{name}?url=/path/to/data",
+                detail="Dataset root directory required. Use: /d/{name}?root_dir=/path/to/data",
             )
 
     try:
@@ -168,14 +165,16 @@ async def dataset_direct(
         if (
             current_dataset
             and current_dataset.dataset_name == dataset_name
-            and current_dataset.root_dir == url
+            and current_dataset.root_dir == root_dir
         ):
             logger.info(f"Reusing already loaded dataset: {dataset_name}")
         else:
             # Load the dataset
-            logger.info(f"Loading dataset via direct URL: {dataset_name} from {url}")
-            with perf_timer(f"Dataset loading for '{dataset_name}' from {url}"):
-                current_dataset = Dataset(root_dir=url, dataset_name=dataset_name)
+            logger.info(
+                f"Loading dataset via direct URL: {dataset_name} from {root_dir}"
+            )
+            with perf_timer(f"Dataset loading for '{dataset_name}' from {root_dir}"):
+                current_dataset = Dataset(root_dir=root_dir, dataset_name=dataset_name)
             logger.info(f"Dataset '{dataset_name}' loaded successfully")
 
         # If commit specified, checkout that commit
@@ -187,7 +186,7 @@ async def dataset_direct(
         return await dataset_view(request)
     except Exception as e:
         logger.error(
-            f"Error loading dataset '{dataset_name}' from '{url}': {e}",
+            f"Error loading dataset '{dataset_name}' from '{root_dir}': {e}",
             exc_info=True,
         )
         raise HTTPException(
@@ -261,7 +260,7 @@ async def dataset_view(request: Request):
             {
                 "request": request,
                 "dataset_name": current_dataset.dataset_name,
-                "dataset_url": current_dataset.root_dir,
+                "root_dir": current_dataset.root_dir,
                 "current_commit_hash": current_dataset.current_version_hash()[:8],
                 "current_branch": current_dataset.get_current_branch(),
                 "commits": initial_commits,
@@ -281,14 +280,24 @@ async def dataset_view(request: Request):
 
 
 @app.get("/commits", response_class=HTMLResponse)
-async def get_commits(request: Request, offset: int = 0, limit: int = 10):
-    """Get paginated list of commits (for HTMX infinite scroll)."""
+async def get_commits(
+    request: Request, offset: int = 0, limit: int = 10, branch: str = None
+):
+    """Get paginated list of commits (for HTMX infinite scroll) with optional branch filtering."""
     if current_dataset is None:
         raise HTTPException(status_code=400, detail="No dataset loaded")
 
     try:
-        logger.info(f"Loading commits: offset={offset}, limit={limit}")
-        all_commits = get_all_commits(current_dataset)
+        logger.info(f"Loading commits: offset={offset}, limit={limit}, branch={branch}")
+
+        if branch:
+            # Get commits for specific branch using Git semantics
+            from .git_semantics import get_branch_aware_commits
+
+            all_commits = get_branch_aware_commits(current_dataset, branch)
+        else:
+            # Get commits for current branch
+            all_commits = get_all_commits(current_dataset)
 
         # Paginate
         paginated_commits = all_commits[offset : offset + limit]
@@ -304,11 +313,132 @@ async def get_commits(request: Request, offset: int = 0, limit: int = 10):
                 "current_commit_hash": current_dataset.current_version_hash(),
                 "offset": offset + limit,
                 "has_more": has_more,
+                "branch": branch,
             },
         )
     except Exception as e:
         logger.error(f"Error loading commits: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error loading commits: {str(e)}")
+
+
+@app.get("/commits-tree", response_class=HTMLResponse)
+async def get_commits_tree(
+    request: Request, offset: int = 0, limit: int = 20, branch: str = None
+):
+    """Get commit tree visualization with pagination and lazy loading."""
+    if current_dataset is None:
+        raise HTTPException(status_code=400, detail="No dataset loaded")
+
+    try:
+        logger.info(
+            f"Loading commit tree: offset={offset}, limit={limit}, branch={branch}"
+        )
+
+        if branch:
+            # Get commits for specific branch using Git semantics
+            from .git_semantics import get_branch_aware_commits
+
+            all_commits = get_branch_aware_commits(current_dataset, branch)
+        else:
+            # Get commits for current branch
+            all_commits = get_all_commits(current_dataset)
+
+        # Paginate
+        paginated_commits = all_commits[offset : offset + limit]
+        has_more = (offset + limit) < len(all_commits)
+
+        logger.info(
+            f"Returning {len(paginated_commits)} commits for tree, has_more={has_more}"
+        )
+
+        return templates.TemplateResponse(
+            "commits_tree.html",
+            {
+                "request": request,
+                "commits": paginated_commits,
+                "current_commit_hash": current_dataset.current_version_hash(),
+                "offset": offset + limit,
+                "has_more": has_more,
+                "branch": branch,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error loading commit tree: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Error loading commit tree: {str(e)}"
+        )
+
+
+@app.get("/commits/branch/{branch_name}", response_class=HTMLResponse)
+async def get_branch_commits(
+    request: Request, branch_name: str, offset: int = 0, limit: int = 10
+):
+    """Get commits for a specific branch with proper Git semantics."""
+    if current_dataset is None:
+        raise HTTPException(status_code=400, detail="No dataset loaded")
+
+    try:
+        logger.info(f"Loading commits for branch: {branch_name}")
+
+        from .git_semantics import get_branch_aware_commits
+
+        all_commits = get_branch_aware_commits(current_dataset, branch_name)
+
+        # Paginate
+        paginated_commits = all_commits[offset : offset + limit]
+        has_more = (offset + limit) < len(all_commits)
+
+        logger.info(
+            f"Returning {len(paginated_commits)} commits for branch {branch_name}"
+        )
+
+        return templates.TemplateResponse(
+            "commits_pagination.html",
+            {
+                "request": request,
+                "commits": paginated_commits,
+                "current_commit_hash": current_dataset.current_version_hash(),
+                "offset": offset + limit,
+                "has_more": has_more,
+                "branch": branch_name,
+            },
+        )
+    except Exception as e:
+        logger.error(
+            f"Error loading commits for branch {branch_name}: {e}", exc_info=True
+        )
+        raise HTTPException(
+            status_code=500, detail=f"Error loading commits for branch: {str(e)}"
+        )
+
+
+@app.get("/commits/dag", response_class=HTMLResponse)
+async def get_dag_visualization(request: Request):
+    """Get a visualization of the Git DAG structure."""
+    if current_dataset is None:
+        raise HTTPException(status_code=400, detail="No dataset loaded")
+
+    try:
+        from .git_semantics import GitDAG
+
+        dag = GitDAG(current_dataset)
+        dag_visualization = dag.visualize_dag()
+
+        return templates.TemplateResponse(
+            "dag_visualization.html",
+            {
+                "request": request,
+                "dag_visualization": dag_visualization,
+                "branches": list(dag.branches.keys()),
+                "merge_commits": dag.get_merge_commits(),
+                "rebase_commits": dag.get_rebase_commits(),
+            },
+        )
+    except Exception as e:
+        logger.error(f"Error loading DAG visualization: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500, detail=f"Error loading DAG visualization: {str(e)}"
+        )
 
 
 @app.get("/commit/{commit_hash}/files", response_class=HTMLResponse)
@@ -527,14 +657,7 @@ async def commit_files(
                     remove_files=remove_files if remove_files else None,
                 )
 
-                # Clear commit cache after successful commit
-                cache_key = (current_dataset.dataset_name, current_dataset.root_dir)
-                if cache_key in commit_cache:
-                    del commit_cache[cache_key]
-                    logger.info(
-                        f"Cleared commit cache for dataset: "
-                        f"{current_dataset.dataset_name}"
-                    )
+                # Cache disabled - no need to clear
             finally:
                 # Clean up temporary directory
                 if temp_dir and os.path.exists(temp_dir):
@@ -551,13 +674,7 @@ async def commit_files(
                 remove_files=remove_files if remove_files else None,
             )
 
-            # Clear commit cache after successful commit
-            cache_key = (current_dataset.dataset_name, current_dataset.root_dir)
-            if cache_key in commit_cache:
-                del commit_cache[cache_key]
-                logger.info(
-                    f"Cleared commit cache for dataset: {current_dataset.dataset_name}"
-                )
+            # Cache disabled - no need to clear
 
         action_summary = []
         if temp_paths:
@@ -567,35 +684,7 @@ async def commit_files(
 
         logger.info(f"Successfully committed changes: {', '.join(action_summary)}")
 
-        # Clear caches after successful commit
-        cache_key = (current_dataset.dataset_name, current_dataset.root_dir)
-        if cache_key in commit_cache:
-            del commit_cache[cache_key]
-            logger.info(
-                f"Cleared commit cache for dataset: {current_dataset.dataset_name}"
-            )
-
-        # Clear file dict cache for this dataset
-        keys_to_remove = [key for key in file_dict_cache.keys() if key[:2] == cache_key]
-        for key in keys_to_remove:
-            del file_dict_cache[key]
-        if keys_to_remove:
-            logger.info(
-                f"Cleared {len(keys_to_remove)} file dict cache entries "
-                f"for dataset: {current_dataset.dataset_name}"
-            )
-
-        # Clear dataset's internal caches
-        if hasattr(current_dataset, "_commits_data_cache"):
-            current_dataset._commits_data_cache = None
-            logger.info(
-                f"Cleared commits data cache for dataset: {current_dataset.dataset_name}"
-            )
-        if hasattr(current_dataset, "_latest_version_hash_cache"):
-            current_dataset._latest_version_hash_cache = None
-            logger.info(
-                f"Cleared latest version hash cache for dataset: {current_dataset.dataset_name}"
-            )
+        # Cache disabled - no need to clear
 
         # Return success message
         success_html = f"""
@@ -704,13 +793,7 @@ async def remove_file(
             remove_files=[filename],
         )
 
-        # Clear commit cache after successful commit
-        cache_key = (current_dataset.dataset_name, current_dataset.root_dir)
-        if cache_key in commit_cache:
-            del commit_cache[cache_key]
-            logger.info(
-                f"Cleared commit cache for dataset: {current_dataset.dataset_name}"
-            )
+        # Cache disabled - no need to clear
 
         logger.info(f"Successfully removed file '{filename}'")
 
@@ -775,124 +858,37 @@ async def remove_file(
 
 
 def get_all_commits(dataset: Dataset, use_cache: bool = True) -> list:
-    """Get all commits for the current branch in chronological order.
+    """Get all commits for the current branch in chronological order with proper Git semantics.
 
-    Uses caching to avoid re-reading commit files on every request.
+    Caching disabled for fresh data.
     """
+    from .git_semantics import get_branch_aware_commits
+
     current_branch = dataset.get_current_branch()
     logger.info(f"DEBUG: get_all_commits called for branch: {current_branch}")
-    cache_key = (dataset.dataset_name, dataset.root_dir, current_branch)
 
-    # Check cache first
-    if use_cache and cache_key in commit_cache:
-        cached_commits, timestamp = commit_cache[cache_key]
-        age = time.time() - timestamp
-        if age < CACHE_TTL:
-            logger.debug(
-                f"Using cached commits for {dataset.dataset_name} (age: {age:.1f}s)"
-            )
-            return cached_commits
-        else:
-            logger.debug(f"Cache expired for {dataset.dataset_name}")
+    logger.debug(
+        f"Retrieving commits for dataset: {dataset.dataset_name} with Git semantics"
+    )
 
-    logger.debug(f"Retrieving commits for dataset: {dataset.dataset_name}")
-    try:
-        dataset_path = strip_protocol(dataset.dataset_dir)
-        logger.debug(f"Searching for commit.json files in: {dataset_path}")
+    # Use the Git semantics-aware function (this now uses the smart method)
+    ordered_commits = get_branch_aware_commits(dataset, current_branch)
 
-        # Use cached commits data to avoid duplicate file reads
-        logger.info(f"PERF: Getting cached commits data for {dataset.dataset_name}")
-        start_time = time.time()
-        commits_dict = dataset._get_commits_data()
-        end_time = time.time()
+    logger.info(
+        f"DEBUG: Found {len(ordered_commits)} commits for branch {current_branch} with Git semantics"
+    )
+    for commit in ordered_commits:
+        merge_indicator = " (merge)" if commit.get("is_merge", False) else ""
+        rebase_indicator = " (rebase)" if commit.get("is_rebase", False) else ""
         logger.info(
-            f"PERF: Getting cached commits data took {end_time - start_time:.3f}s"
+            f"DEBUG: Commit {commit['short_hash']}: {commit['message']}{merge_indicator}{rebase_indicator}"
         )
 
-        if not commits_dict:
-            logger.info("No commits found in dataset")
-            return []
-
-        logger.info(f"DEBUG: Found {len(commits_dict)} total commits in dataset")
-        for commit_hash, commit_data in commits_dict.items():
-            logger.info(
-                f"DEBUG: Available commit {commit_hash[:8]}: {commit_data.get('commit_message', '(initial)')} (parent: {commit_data.get('parent_hash', 'None')[:8] if commit_data.get('parent_hash') else 'None'})"
-            )
-
-        # Build chronological order (from newest to oldest) for current branch
-        ordered_commits = []
-
-        # Start from the current branch's commit (not the commit we're checked out to)
-        current_commit_hash = dataset.get_branch_commit(current_branch)
-        logger.info(
-            f"DEBUG: Starting from current branch commit: {current_commit_hash[:8]}"
-        )
-        logger.info(f"DEBUG: Current branch: {current_branch}")
-        logger.info(
-            f"DEBUG: Dataset is checked out to: {dataset.current_version_hash()[:8]}"
-        )
-
-        # Traverse from current commit backwards through parent chain
-        current = current_commit_hash
-        logger.info(f"DEBUG: Starting commit traversal from: {current[:8]}")
-        while current and current in commits_dict:
-            commit_data = commits_dict[current]
-            logger.info(
-                f"DEBUG: Processing commit {current[:8]}: {commit_data.get('commit_message', '(initial)')}"
-            )
-
-            # Handle both single parent and multiple parents (merge commits)
-            parent_hash = commit_data.get("parent_hash", "")
-            parent_hashes = commit_data.get("parent_hashes", [])
-
-            # For merge commits, use the first parent (main branch) for linear traversal
-            # This follows git convention where the first parent is the main branch
-            if parent_hashes:
-                current = parent_hashes[0]  # First parent is the main branch
-                logger.info(
-                    f"DEBUG: Merge commit detected, following first parent: {current[:8]}"
-                )
-            else:
-                current = parent_hash
-                logger.info(
-                    f"DEBUG: Regular commit, following parent: {current[:8] if current else 'None'}"
-                )
-
-            ordered_commits.append(
-                {
-                    "hash": current,
-                    "short_hash": current[:8],
-                    "message": commit_data.get("commit_message", "(initial)"),
-                    "parent_hash": parent_hash,
-                    "parent_hashes": parent_hashes,
-                    "is_merge": len(parent_hashes) > 1,
-                    "file_count": len(commit_data.get("file_hashes", [])),
-                }
-            )
-
-            if not current:  # Empty string means no parent
-                break
-
-        logger.info(
-            f"DEBUG: Found {len(ordered_commits)} commits for branch {current_branch}"
-        )
-        for commit in ordered_commits:
-            logger.info(f"DEBUG: Commit {commit['short_hash']}: {commit['message']}")
-
-        # Cache the results
-        commit_cache[cache_key] = (ordered_commits, time.time())
-        logger.debug(
-            f"Cached {len(ordered_commits)} commits for {dataset.dataset_name}"
-        )
-
-        return ordered_commits
-    except DatasetNoCommitsError:
-        logger.info("Dataset has no commits yet")
-        return []
+    return ordered_commits
 
 
 def get_cached_file_dict(dataset: Dataset, commit_hash: str = None) -> dict:
-    """Get file dictionary with caching to improve performance.
+    """Get file dictionary without caching for fresh data.
 
     :param dataset: The dataset to get files from
     :param commit_hash: Optional commit hash to get files from specific commit
@@ -900,21 +896,6 @@ def get_cached_file_dict(dataset: Dataset, commit_hash: str = None) -> dict:
     """
     if commit_hash is None:
         commit_hash = dataset.current_version_hash()
-
-    cache_key = (dataset.dataset_name, dataset.root_dir, commit_hash)
-
-    # Check cache first
-    if cache_key in file_dict_cache:
-        cached_dict, timestamp = file_dict_cache[cache_key]
-        age = time.time() - timestamp
-        if age < FILE_CACHE_TTL:
-            logger.debug(
-                f"Using cached file dict for {dataset.dataset_name} "
-                f"commit {commit_hash[:8]} (age: {age:.1f}s)"
-            )
-            return cached_dict
-        else:
-            logger.debug(f"File dict cache expired for {dataset.dataset_name}")
 
     logger.debug(
         f"Building file dict for {dataset.dataset_name} commit {commit_hash[:8]}"
@@ -936,10 +917,6 @@ def get_cached_file_dict(dataset: Dataset, commit_hash: str = None) -> dict:
 
         end_time = time.time()
         logger.info(f"PERF: File dict building took {end_time - start_time:.3f}s")
-
-        # Cache the results
-        file_dict_cache[cache_key] = (file_dict, time.time())
-        logger.debug(f"Cached file dict with {len(file_dict)} files")
 
         return file_dict
     except Exception as e:
@@ -1003,19 +980,7 @@ async def create_branch(request: Request):
         # Switch to the newly created branch
         current_dataset.switch_branch(branch_name)
 
-        # Clear commit cache since we switched branches
-        # Clear cache for all branches of this dataset to ensure fresh data
-        keys_to_remove = [
-            key
-            for key in commit_cache.keys()
-            if key[:2] == (current_dataset.dataset_name, current_dataset.root_dir)
-        ]
-        for key in keys_to_remove:
-            del commit_cache[key]
-        if keys_to_remove:
-            logger.info(
-                f"Cleared {len(keys_to_remove)} commit cache entries for dataset: {current_dataset.dataset_name}"
-            )
+        # Cache disabled - no need to clear
 
         # Return success message and redirect to dataset view
         success_html = f"""
@@ -1056,19 +1021,7 @@ async def switch_branch(request: Request):
     try:
         current_dataset.switch_branch(branch_name)
 
-        # Clear commit cache since we switched branches
-        # Clear cache for all branches of this dataset to ensure fresh data
-        keys_to_remove = [
-            key
-            for key in commit_cache.keys()
-            if key[:2] == (current_dataset.dataset_name, current_dataset.root_dir)
-        ]
-        for key in keys_to_remove:
-            del commit_cache[key]
-        if keys_to_remove:
-            logger.info(
-                f"Cleared {len(keys_to_remove)} commit cache entries for dataset: {current_dataset.dataset_name}"
-            )
+        # Cache disabled - no need to clear
 
         # Return success message and redirect to dataset view
         success_html = f"""
@@ -1260,33 +1213,8 @@ async def execute_merge(request: Request):
         logger.info(f"MERGE: Result: {result}")
 
         if result["success"]:
-            logger.info(f"MERGE: Merge successful, clearing caches")
-            # Clear commit cache since we created a new commit
-            # Clear cache for all branches of this dataset to ensure fresh data
-            keys_to_remove = [
-                key
-                for key in commit_cache.keys()
-                if key[:2] == (current_dataset.dataset_name, current_dataset.root_dir)
-            ]
-            for key in keys_to_remove:
-                del commit_cache[key]
-            if keys_to_remove:
-                logger.info(
-                    f"MERGE: Cleared {len(keys_to_remove)} commit cache entries for dataset: {current_dataset.dataset_name}"
-                )
-
-            # Clear file dict cache for this dataset
-            file_keys_to_remove = [
-                key
-                for key in file_dict_cache.keys()
-                if key[:2] == (current_dataset.dataset_name, current_dataset.root_dir)
-            ]
-            for key in file_keys_to_remove:
-                del file_dict_cache[key]
-            if file_keys_to_remove:
-                logger.info(
-                    f"MERGE: Cleared {len(file_keys_to_remove)} file dict cache entries for dataset: {current_dataset.dataset_name}"
-                )
+            logger.info(f"MERGE: Merge successful")
+            # Cache disabled - no need to clear
 
             success_html = f"""
             <div class="alert alert-success">
@@ -1374,7 +1302,7 @@ def run_server(
         print(dataset_info)
 
     uvicorn.run(
-        "gitdata.web_ui:app",
+        "kirin.web_ui:app",
         host="0.0.0.0",
         port=port,
         reload=auto_reload,

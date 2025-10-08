@@ -24,13 +24,14 @@ class BranchManager:
         fs: fsspec.AbstractFileSystem,
         dataset_name: str,
         local_state_dir: Optional[str] = None,
+        remote_url: Optional[str] = None,
     ):
         self.dataset_dir = dataset_dir
         self.fs = fs
         self.dataset_name = dataset_name
 
-        # Initialize local state manager
-        self.local_state = LocalStateManager(dataset_name, local_state_dir)
+        # Initialize local state manager with remote URL for unique state directories
+        self.local_state = LocalStateManager(dataset_name, local_state_dir, remote_url)
 
         # Remote paths for reference (but we don't store state there anymore)
         self.remote_refs_dir = f"{dataset_dir}/refs/heads"
