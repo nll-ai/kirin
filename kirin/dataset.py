@@ -651,6 +651,8 @@ class Dataset:
                 )
                 # Create main branch with the initial commit
                 self.branch_manager.create_branch("main", initial_hash)
+                # Add root commit to consolidated index
+                self._update_consolidated_index(self._current_commit)
 
         return self._current_commit
 
@@ -716,8 +718,29 @@ class Dataset:
         return result
 
     def _get_commits_data(self) -> dict:
-        """Get commit data by scanning the filesystem."""
-        logger.info(f"PERF: Loading commits data for {self.dataset_name}")
+        """Get commit data using consolidated index for fast access.
+
+        This method now uses the consolidated index for O(1) access instead of
+        filesystem scanning. Falls back to the old method if index doesn't exist.
+        """
+        # Try fast method first
+        try:
+            return self._get_commits_data_fast()
+        except Exception as e:
+            logger.warning(
+                f"Fast method failed, falling back to filesystem scanning: {e}"
+            )
+            return self._get_commits_data_legacy()
+
+    def _get_commits_data_legacy(self) -> dict:
+        """Get commit data by scanning the filesystem (legacy method).
+
+        This is the original method that scans filesystem for commit JSON files.
+        Used as fallback when consolidated index is not available.
+        """
+        logger.info(
+            f"PERF: Loading commits data for {self.dataset_name} (legacy method)"
+        )
         start_time = time.time()
 
         jsons = self.fs.glob(f"{strip_protocol(self.dataset_dir)}/*/commit.json")
@@ -804,6 +827,9 @@ class Dataset:
 
         # Update the current branch to point to the new commit
         self.branch_manager.update_current_branch(new_commit.version_hash)
+
+        # Update consolidated index with new commit
+        self._update_consolidated_index(new_commit)
 
         return new_commit.version_hash
 
@@ -1301,6 +1327,15 @@ class Dataset:
             self.branch_manager.set_current_branch(target_branch)
             self.branch_manager.update_branch(target_branch, merge_commit_hash)
 
+            # Update consolidated index with merge commit
+            merge_commit = DatasetCommit.from_json(
+                root_dir=self.root_dir,
+                dataset_name=self.dataset_name,
+                version_hash=merge_commit_hash,
+                fs=self.fs,
+            )
+            self._update_consolidated_index(merge_commit)
+
             result["success"] = True
         elif conflicts and strategy == "manual":
             result["success"] = False
@@ -1311,6 +1346,16 @@ class Dataset:
                 source_commit, target_commit, {}, [], source_branch, target_branch
             )
             result["merge_commit"] = merge_commit_hash
+
+            # Update consolidated index with merge commit
+            merge_commit = DatasetCommit.from_json(
+                root_dir=self.root_dir,
+                dataset_name=self.dataset_name,
+                version_hash=merge_commit_hash,
+                fs=self.fs,
+            )
+            self._update_consolidated_index(merge_commit)
+
             result["success"] = True
 
         return result
@@ -1614,6 +1659,9 @@ class Dataset:
             fs=self.fs,
         )
 
+        # Update consolidated index with the final rebased commit
+        self._update_consolidated_index(self.current_commit)
+
         total_time = time.time() - start_time
         logger.info(f"REBASE: Rebase completed in {total_time:.2f}s")
         logger.info(f"REBASE: Created {len(rebased_commits)} rebased commits")
@@ -1908,6 +1956,116 @@ class Dataset:
                 break
 
         return ordered_commits
+
+    def _update_consolidated_index(self, commit: "DatasetCommit") -> None:
+        """Update the consolidated index with a new commit.
+
+        This method maintains the consolidated index (.kirin-index) that provides
+        fast access to commit metadata without filesystem scanning.
+        """
+        index_file_path = f"{self.dataset_dir}/.kirin-index"
+
+        # Load existing index or create new one
+        if self.fs.exists(index_file_path):
+            with self.fs.open(index_file_path, "r") as f:
+                index_data = json.load(f)
+        else:
+            index_data = {"commits": {}, "branches": {}, "tags": {}}
+
+        # Add commit to index
+        index_data["commits"][commit.version_hash] = {
+            "message": commit.commit_message,
+            "parent": commit.parent_hash,
+            "parents": commit.parent_hashes
+            if commit.parent_hashes
+            else [commit.parent_hash]
+            if commit.parent_hash
+            else [],
+            "timestamp": getattr(commit, "timestamp", time.time()),
+            "files": commit.file_hashes,
+        }
+
+        # Update current branch reference
+        current_branch = self.get_current_branch()
+        index_data["branches"][current_branch] = commit.version_hash
+
+        # Write updated index
+        with self.fs.open(index_file_path, "w") as f:
+            json.dump(index_data, f, indent=2)
+
+    def _get_commits_data_fast(self) -> dict:
+        """Get commit data using consolidated index for fast access.
+
+        This method provides O(1) access to commit metadata without filesystem scanning.
+        Falls back to the legacy method if index doesn't exist.
+        """
+        index_file_path = f"{self.dataset_dir}/.kirin-index"
+
+        if not self.fs.exists(index_file_path):
+            # Fall back to legacy method if index doesn't exist
+            return self._get_commits_data_legacy()
+
+        # Load from consolidated index
+        with self.fs.open(index_file_path, "r") as f:
+            index_data = json.load(f)
+
+        # Convert index format to expected format
+        commits_data = {}
+        for commit_hash, commit_info in index_data["commits"].items():
+            commits_data[commit_hash] = {
+                "version_hash": commit_hash,
+                "commit_message": commit_info["message"],
+                "parent_hash": commit_info["parent"],
+                "parent_hashes": commit_info["parents"],
+                "file_hashes": commit_info["files"],
+                "timestamp": commit_info.get("timestamp", time.time()),
+            }
+
+        return commits_data
+
+    def _rebuild_index_from_commits(self) -> None:
+        """Rebuild consolidated index from existing commit JSON files.
+
+        This method is used for recovery when the index is corrupted or missing.
+        """
+        logger.info("Rebuilding consolidated index from commit JSON files")
+
+        # Get all commits using the legacy method directly
+        commits_data = self._get_commits_data_legacy()
+
+        if not commits_data:
+            logger.info("No commits found, skipping index rebuild")
+            return
+
+        # Create new index
+        index_data = {"commits": {}, "branches": {}, "tags": {}}
+
+        # Add all commits to index
+        for commit_hash, commit_info in commits_data.items():
+            index_data["commits"][commit_hash] = {
+                "message": commit_info.get("commit_message", ""),
+                "parent": commit_info.get("parent_hash", ""),
+                "parents": commit_info.get("parent_hashes", []),
+                "timestamp": commit_info.get("timestamp", time.time()),
+                "files": commit_info.get("file_hashes", []),
+            }
+
+        # Add branch references
+        try:
+            branches = self.branch_manager.list_branches()
+            for branch in branches:
+                branch_commit = self.branch_manager.get_branch_commit(branch)
+                if branch_commit:
+                    index_data["branches"][branch] = branch_commit
+        except Exception as e:
+            logger.warning(f"Could not get branch information: {e}")
+
+        # Write rebuilt index
+        index_file_path = f"{self.dataset_dir}/.kirin-index"
+        with self.fs.open(index_file_path, "w") as f:
+            json.dump(index_data, f, indent=2)
+
+        logger.info(f"Rebuilt index with {len(index_data['commits'])} commits")
 
 
 class DatasetError(Exception):
