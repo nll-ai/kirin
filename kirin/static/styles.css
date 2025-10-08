@@ -649,3 +649,89 @@ pre code {
         padding: 1rem 1.25rem;
     }
 }
+
+/* Commit tree specific styles */
+.commit-tree-container {
+    position: relative;
+    min-height: 200px;
+}
+
+.commit-tree-graph {
+    width: 100%;
+    min-height: 200px;
+    background: hsl(var(--card));
+    border-radius: calc(var(--radius) - 2px);
+    padding: 1rem;
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+.commit-tree-graph .mermaid {
+    background: transparent;
+}
+
+.commit-tree-graph svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.commit-tree-details {
+    display: none;
+}
+
+/* View toggle buttons */
+.view-toggle {
+    transition: all 0.2s ease;
+}
+
+.view-toggle.active {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+}
+
+.view-toggle:not(.active) {
+    background-color: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+}
+
+.view-toggle:not(.active):hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+}
+
+/* Loading states for tree */
+.commit-tree-container.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.commit-tree-container.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid hsl(var(--muted-foreground));
+    border-top: 2px solid hsl(var(--primary));
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Responsive design for tree view */
+@media (max-width: 768px) {
+    .commit-tree-graph {
+        padding: 0.5rem;
+    }
+
+    .view-toggle {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+}

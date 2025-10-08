@@ -12,19 +12,19 @@
     <div class="card">
         <div class="card-header">
             <h2 class="card-title">Load Dataset</h2>
-            <p class="card-description">Enter the dataset URL and name to view its commit history and files</p>
+            <p class="card-description">Enter the dataset root directory and name to view its commit history and files</p>
         </div>
 
         <form hx-post="/load-dataset" hx-target="#result" hx-indicator="#loading">
             <div class="form-group">
-                <label class="label" for="dataset_url">Dataset URL</label>
+                <label class="label" for="root_dir">Dataset Root Directory</label>
                 <input
                     type="text"
                     class="input"
-                    id="dataset_url"
-                    name="dataset_url"
+                    id="root_dir"
+                    name="root_dir"
                     placeholder="e.g., /path/to/data or s3://bucket/path or gs://bucket/path"
-                    value="{{ dataset_url }}"
+                    value="{{ root_dir }}"
                     required
                 />
                 <p class="text-muted text-sm mt-4">
@@ -58,7 +58,7 @@
     <div class="card">
         <div class="card-header">
             <h2 class="card-title">Current Dataset</h2>
-            <p class="card-description">{{ dataset_name }} - {{ dataset_url }}</p>
+            <p class="card-description">{{ dataset_name }} - {{ root_dir }}</p>
         </div>
         <a href="/dataset-view" class="btn btn-secondary">View Dataset</a>
     </div>

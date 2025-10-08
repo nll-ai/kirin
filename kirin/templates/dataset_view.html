@@ -36,6 +36,84 @@
             commitElement.classList.remove('loading');
         }, { once: true });
     }
+
+    // View switching functionality
+    let currentView = 'list'; // 'list' or 'tree'
+
+    function switchToListView() {
+        if (currentView === 'list') return;
+
+        currentView = 'list';
+        updateViewToggleButtons();
+        updateViewUrl();
+
+        // Reset tree initialization flag
+        window.treeInitialized = false;
+
+        // Load list view
+        htmx.ajax('GET', '/commits', {
+            target: '#commits-list',
+            swap: 'innerHTML'
+        });
+    }
+
+    function switchToTreeView() {
+        if (currentView === 'tree') return;
+
+        currentView = 'tree';
+        updateViewToggleButtons();
+        updateViewUrl();
+
+        // Reset tree initialization flag
+        window.treeInitialized = false;
+
+        // Load tree view
+        htmx.ajax('GET', '/commits-tree', {
+            target: '#commits-list',
+            swap: 'innerHTML'
+        });
+    }
+
+    function updateViewToggleButtons() {
+        const listBtn = document.getElementById('view-toggle-list');
+        const treeBtn = document.getElementById('view-toggle-tree');
+
+        if (currentView === 'list') {
+            listBtn.classList.add('active');
+            treeBtn.classList.remove('active');
+        } else {
+            listBtn.classList.remove('active');
+            treeBtn.classList.add('active');
+        }
+    }
+
+    // Initialize view from URL parameters
+    function initializeView() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const view = urlParams.get('view');
+
+        if (view === 'tree') {
+            switchToTreeView();
+        } else {
+            switchToListView();
+        }
+    }
+
+    // Update URL when view changes
+    function updateViewUrl() {
+        const url = new URL(window.location);
+        if (currentView === 'tree') {
+            url.searchParams.set('view', 'tree');
+        } else {
+            url.searchParams.delete('view');
+        }
+        window.history.pushState({}, '', url);
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeView();
+    });
 </script>
 {% endblock %}
 
@@ -57,7 +135,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <h1>{{ dataset_name }}</h1>
-                <p class="text-muted font-mono text-sm">{{ dataset_url }}</p>
+                <p class="text-muted font-mono text-sm">{{ root_dir }}</p>
             </div>
             <div class="flex gap-2">
                 <a href="/branches" class="btn btn-secondary">
@@ -80,7 +158,31 @@
         <!-- Commits Panel (Left) -->
         <div class="panel">
             <div class="panel-header">
-                <h2 class="panel-title">Commits</h2>
+                <div class="flex items-center justify-between">
+                    <h2 class="panel-title">Commits</h2>
+                    <div class="flex gap-2">
+                        <button
+                            id="view-toggle-list"
+                            class="btn btn-sm btn-secondary view-toggle active"
+                            onclick="switchToListView()"
+                        >
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                            </svg>
+                            List
+                        </button>
+                        <button
+                            id="view-toggle-tree"
+                            class="btn btn-sm btn-secondary view-toggle"
+                            onclick="switchToTreeView()"
+                        >
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
+                            </svg>
+                            Tree
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="panel-content" id="commits-list">
                 {% include "commits_list.html" %}
@@ -96,6 +198,12 @@
                 <div class="panel-content" id="files-list">
                     {% include "files_list.html" %}
                 </div>
+            </div>
+
+            <!-- Loading indicator for files -->
+            <div id="loading-files" style="display: none; text-align: center; padding: 2rem;">
+                <div class="spinner" style="margin: 0 auto 1rem;"></div>
+                <p>Loading files...</p>
             </div>
 
             <!-- File Preview -->
