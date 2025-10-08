@@ -594,9 +594,6 @@ class Dataset:
         self._current_commit = None
         self._file_dict = {}
         self._latest_version_hash_cache = None
-        self._commits_data_cache = (
-            None  # Cache for commit data to avoid duplicate reads
-        )
 
     @property
     def current_commit(self) -> "DatasetCommit":
@@ -719,17 +716,12 @@ class Dataset:
         return result
 
     def _get_commits_data(self) -> dict:
-        """Get commit data with caching to avoid duplicate file reads."""
-        if self._commits_data_cache is not None:
-            logger.info(f"PERF: Using cached commits data for {self.dataset_name}")
-            return self._commits_data_cache
-
+        """Get commit data by scanning the filesystem."""
         logger.info(f"PERF: Loading commits data for {self.dataset_name}")
         start_time = time.time()
 
         jsons = self.fs.glob(f"{strip_protocol(self.dataset_dir)}/*/commit.json")
         if not jsons:
-            self._commits_data_cache = {}
             return {}
 
         commits_data = {}
@@ -745,8 +737,6 @@ class Dataset:
         end_time = time.time()
         logger.info(f"PERF: Loading commits data took {end_time - start_time:.3f}s")
 
-        # Cache the results
-        self._commits_data_cache = commits_data
         return commits_data
 
     def resolve_commit_hash(self, partial_hash: str) -> str:
@@ -845,8 +835,6 @@ class Dataset:
 
         # Clear latest version hash cache
         self._latest_version_hash_cache = None
-        # Clear commits data cache
-        self._commits_data_cache = None
 
         self.current_commit = DatasetCommit.from_json(
             root_dir=self.root_dir,
