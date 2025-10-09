@@ -75,7 +75,6 @@ dependencies = [
     "s3fs",  # For S3 support
     "gcsfs",  # For Google Cloud Storage support
     "fastapi",
-    "uvicorn",
     "jinja2",
     "python-multipart",
 ]
