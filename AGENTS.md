@@ -573,6 +573,9 @@ markdownlint docs/design.md
 **Required Workflow**: Run markdownlint on any Markdown file that is created
 or edited before committing changes.
 
+**CRITICAL**: Always run markdownlint on any markdown file edits to ensure
+consistency and quality. This is mandatory for all markdown file changes.
+
 **Common Issues to Avoid**:
 
 - ❌ Inconsistent heading levels (skipping from H1 to H3)
@@ -615,6 +618,7 @@ def example_function():
 - **Script Location**: All scripts are placed in the `scripts/` directory
 - **Execution Method**: Scripts are run using `uv run` from the scripts directory
 - **Execution Pattern**: `cd scripts && uv run script_name.py`
+- **PEP723 Metadata**: All scripts must include inline script metadata for dependency management
 
 ### Ephemeral Scripts for Problem Solving
 
@@ -625,7 +629,6 @@ def example_function():
 - **Clean Up**: Always delete ephemeral scripts once the problem is solved
 - **Naming**: Use descriptive names like `debug_commit_history.py` or `test_git_semantics.py`
 - **Location**: Place in `scripts/` directory for consistency
-- **Metadata**: Include PEP723 metadata for proper dependency management
 
 **Required Pattern**:
 
@@ -643,7 +646,6 @@ uv run other_script.py
 - **Always use `uv run`** - Never use `python` directly
 - **Always run from scripts directory** - Change to `scripts/` directory first
 - **Script naming** - Use descriptive names with underscores (e.g., `create_dummy_dataset.py`)
-- **PEP723 metadata** - All scripts must include inline script metadata for dependency management
 
 **Benefits of this pattern**:
 
@@ -664,4 +666,31 @@ uv run scripts/create_dummy_dataset.py
 
 # ❌ WRONG - Don't use python directly
 python scripts/create_dummy_dataset.py
+```
+
+## Solution Design Approach
+
+### Propose Solutions First, Then Discuss
+
+**CRITICAL**: When working on building solutions, the user prefers that you propose a solution in chat first for critique, rather than asking questions. This approach:
+
+- **Saves time** - Avoids back-and-forth question sessions
+- **Shows initiative** - Demonstrates understanding of the problem
+- **Enables critique** - User can point out flaws and improvements
+- **Faster iteration** - More efficient problem-solving process
+
+**Required Pattern**:
+1. **Analyze the problem** - Understand what needs to be solved
+2. **Propose a solution** - Present a concrete approach with details
+3. **Wait for critique** - Let the user identify issues and improvements
+4. **Refine based on feedback** - Iterate on the solution
+5. **Implement** - Only after the solution is agreed upon
+
+**Example**:
+```
+User: "Let's design the file metadata structure"
+Assistant: "Here's my proposed approach: [detailed solution]"
+User: "I see issues with X, Y, Z. What about this alternative?"
+Assistant: "Good points! Here's the revised approach: [updated solution]"
+```
 ```
