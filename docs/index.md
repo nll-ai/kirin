@@ -1,7 +1,8 @@
 # Kirin Documentation
 
-Welcome to the Kirin documentation! Kirin is a content-addressed storage system
-for data versioning that provides Git-like workflows for datasets.
+Welcome to the Kirin documentation! Kirin is a simplified content-addressed storage
+system
+for data versioning that provides linear commit history for datasets.
 
 ## Quickstart
 
@@ -23,7 +24,6 @@ mkdocs serve
 
 - [Design Document](./design.md) - Overall system architecture and design goals
 - [API Documentation](./api.md) - Programmatic API reference
-- [Branching Guide](./branching.md) - Git-like branching and merging workflows
 
 ### Technical Decisions
 
@@ -42,18 +42,18 @@ mkdocs serve
 
 Kirin addresses critical needs in machine learning and data science workflows:
 
-- **Data Versioning**: Track changes to datasets with Git-like commits and branches
+- **Linear Data Versioning**: Track changes to datasets with simple, linear commits
 - **Content-Addressed Storage**: Ensure data integrity and enable deduplication
 - **Multi-Backend Support**: Work with S3, GCS, Azure, local filesystem, and more
 - **Serverless Architecture**: No dedicated servers required
-- **Usage Tracking**: Monitor data access and lineage
-- **Clean API**: Both programmatic and CLI interfaces
+- **Ergonomic Python API**: Focus on ease of use and developer experience
+- **File Versioning**: Track changes to individual files over time
 
 ## Key Benefits
 
-- **Git-like workflows for data**: Familiar version control concepts for datasets
+- **Simplified workflows**: Linear commit history without branching complexity
 - **Backend-agnostic**: Works with any storage backend via fsspec
 - **Automatic deduplication**: Identical files stored once, saving space
-- **Metadata tracking**: Complete audit trail of data usage and changes
+- **Content integrity**: Files stored by content hash for data integrity
 - **Performance optimized**: Streaming operations for large files
 - **Extensible**: Easy to add new backends and features
