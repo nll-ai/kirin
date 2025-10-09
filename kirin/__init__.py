@@ -2,7 +2,7 @@
 
 This is the file from which you can do:
 
-    from kirin import some_function
+    from kirin import Dataset, File, Commit
 
 Use it to control the top-level API of your Python data science project.
 """
@@ -14,12 +14,15 @@ from kirin.cloud_auth import (
     get_s3_compatible_filesystem,
     get_s3_filesystem,
 )
-from kirin.dataset import Dataset, DatasetCommit
+from kirin.dataset import Dataset
+from kirin.file import File
+from kirin.commit import Commit
 
 __all__ = [
     "Catalog",
     "Dataset",
-    "DatasetCommit",
+    "File",
+    "Commit",
     "get_s3_filesystem",
     "get_gcs_filesystem",
     "get_azure_filesystem",

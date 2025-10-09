@@ -6,36 +6,46 @@ Made with ❤️ by Eric J. Ma (@ericmjl).
 
 ## Features
 
-- 📦 Git-like versioning for datasets
-- 🌿 **Branching support** - Create, switch, and manage branches just like Git
-- ☁️ Cloud storage support (S3, GCS, Azure, Minio, Backblaze B2, etc.)
-- 🔄 Automatic filesystem detection from URIs
-- 🔐 Easy authentication helpers
-- 🚀 Simple, intuitive API
-- 🌐 Web UI with branch management
+- 📦 **Linear versioning for datasets** - Simple, Git-like commits without branching
+  complexity
+- 🔗 **Content-addressed storage** - Files stored by content hash for integrity and
+  deduplication
+- ☁️ **Cloud storage support** - S3, GCS, Azure, Minio, Backblaze B2, etc.
+- 🔄 **Automatic filesystem detection** from URIs
+- 🔐 **Easy authentication helpers**
+- 🚀 **Simple, intuitive API** - Focus on ergonomic Python interface
+- 📊 **File versioning** - Track changes to individual files over time
 
 ## Quick Start
 
 ```python
-from kirin import Dataset
+from kirin import Dataset, File, Commit
 
 # Local storage
-ds = Dataset(root_dir="/path/to/data", dataset_name="my_dataset")
+ds = Dataset(root_dir="/path/to/data", name="my_dataset")
 
 # Cloud storage (auto-detects from URI!)
-ds = Dataset(root_dir="s3://my-bucket/datasets", dataset_name="my_dataset")
-ds = Dataset(root_dir="gs://my-bucket/datasets", dataset_name="my_dataset")
+ds = Dataset(root_dir="s3://my-bucket/datasets", name="my_dataset")
+ds = Dataset(root_dir="gs://my-bucket/datasets", name="my_dataset")
 
 # Commit files
-ds.commit(commit_message="Initial commit", add_files=["file1.csv"])
+commit_hash = ds.commit(message="Initial commit", add_files=["file1.csv"])
 
-# Access files
-files = ds.file_dict
+# Access files from current commit
+files = ds.files
+print(f"Files in current commit: {list(files.keys())}")
 
-# Branching (NEW!)
-ds.create_branch("feature/new-analysis")
-ds.switch_branch("feature/new-analysis")
-ds.commit("Add analysis script", add_files=["analyze.py"])
+# Read a file
+content = ds.read_file("file1.csv", mode="r")  # text mode
+binary_content = ds.read_file("file1.csv", mode="rb")  # binary mode
+
+# Checkout a specific commit
+ds.checkout(commit_hash)
+
+# Get commit history
+history = ds.history(limit=10)
+for commit in history:
+    print(f"{commit.short_hash}: {commit.message}")
 ```
 
 ### Cloud Authentication
@@ -48,39 +58,58 @@ from kirin import Dataset, get_gcs_filesystem
 
 # GCS with service account
 fs = get_gcs_filesystem(token='/path/to/key.json')
-ds = Dataset(root_dir="gs://my-bucket/datasets", dataset_name="my_dataset", fs=fs)
+ds = Dataset(root_dir="gs://my-bucket/datasets", name="my_dataset", fs=fs)
 ```
 
-## Web UI
+## Advanced Usage
 
-Kirin includes a web interface for easy dataset management:
+### Working with Files
 
-```bash
-# Start the web UI
-pixi run kirin ui
+```python
+# Get a specific file
+file_obj = ds.get_file("data.csv")
+if file_obj:
+    print(f"File size: {file_obj.size} bytes")
+    print(f"Content hash: {file_obj.short_hash}")
 
-# Or with a pre-loaded dataset
-pixi run kirin ui --url /path/to/data --name my-dataset
+    # Read file content
+    content = file_obj.read_text()
+
+    # Download to local path
+    file_obj.download_to("/tmp/data.csv")
+
+    # Open as file handle
+    with file_obj.open("r") as f:
+        data = f.read()
 ```
 
-### Key Features
+### Working with Commits
 
-- 📊 **Dataset visualization** - Browse commits and files
-- 🌿 **Branch management** - Create, switch, and delete branches
-- 📝 **Commit interface** - Add/remove files with commit messages
-- 🔄 **Real-time updates** - See changes instantly
+```python
+# Get specific commit
+commit = ds.get_commit(commit_hash)
+if commit:
+    print(f"Commit: {commit.short_hash}")
+    print(f"Message: {commit.message}")
+    print(f"Files: {commit.list_files()}")
+    print(f"Total size: {commit.get_total_size()} bytes")
+```
 
-### Branch Management
+### Local File Access
 
-1. Load a dataset in the web UI
-2. Click the "Branches" button
-3. Create new branches, switch between them, or delete branches
-4. Each branch maintains its own commit history
+```python
+# Download all files to temporary directory
+with ds.local_files() as local_files:
+    for filename, local_path in local_files.items():
+        print(f"{filename} -> {local_path}")
+        # Process files locally
+        df = pd.read_csv(local_path)
+```
 
 ## Documentation
 
 - [API Reference](docs/api.md) - Complete API documentation
-- [Branching Guide](docs/branching.md) - Detailed branching documentation
+- [Design Document](docs/design.md) - System architecture and design goals
 - [Cloud Storage Auth](docs/cloud-storage-auth.md) - Authentication setup
 
 ## Get started for development
@@ -98,21 +127,15 @@ pixi install
 Once installed, you can use these common development commands:
 
 ```bash
-# Run the web UI
-pixi run kirin ui
-
-# Run the web UI with a pre-loaded dataset
-pixi run kirin ui --url /path/to/data --name my-dataset
-
 # Run tests
 pixi run -e tests pytest
 
 # Run tests for a specific file
 pixi run -e tests pytest tests/test_filename.py
 
-# Run the development server directly
-pixi run python -m kirin.web_ui
+# Run all tests with verbose output
+pixi run -e tests pytest -v
 
-# Run CLI commands
-pixi run python -m kirin.cli
+# Run tests without coverage
+pixi run -e tests pytest --no-cov
 ```
