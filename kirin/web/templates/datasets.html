@@ -39,11 +39,21 @@
     <div id="tab-content" class="tab-content">
         <!-- Datasets Tab -->
         <div id="datasets-tab" class="space-y-6">
+            <!-- Search -->
+            <div class="panel">
+                <div class="panel-content">
+                    <div class="form-group">
+                        <label for="search-input" class="form-label">Search Datasets</label>
+                        <input type="text" id="search-input" class="input" placeholder="Search by name or description...">
+                    </div>
+                </div>
+            </div>
+
             <!-- Dataset Cards -->
             {% if datasets %}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {% for dataset in datasets %}
-        <div class="card">
+        <div class="card" data-dataset-name="{{ dataset.name }}" data-dataset-description="{{ dataset.description or '' }}">
             <div class="card-header">
                 <div class="flex items-center gap-2">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -184,11 +194,39 @@ function showCreateForm() {
     document.getElementById('name').focus();
 }
 
+// Search functionality
+function filterDatasets() {
+    const searchInput = document.getElementById('search-input');
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    const datasetCards = document.querySelectorAll('.card[data-dataset-name]');
+
+    datasetCards.forEach(card => {
+        const datasetName = card.getAttribute('data-dataset-name').toLowerCase();
+        const datasetDescription = card.getAttribute('data-dataset-description').toLowerCase();
+
+        const matchesSearch = searchTerm === '' ||
+                             datasetName.includes(searchTerm) ||
+                             datasetDescription.includes(searchTerm);
+
+        if (matchesSearch) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
 // Show create form if there's an error
 document.addEventListener('DOMContentLoaded', function() {
     {% if error and existing_dataset_name %}
     showCreateForm();
     {% endif %}
+
+    // Add search event listener
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', filterDatasets);
+    }
 });
 </script>
 {% endblock %}
