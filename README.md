@@ -112,6 +112,56 @@ with ds.local_files() as local_files:
 - [Design Document](docs/design.md) - System architecture and design goals
 - [Cloud Storage Auth](docs/cloud-storage-auth.md) - Authentication setup
 
+## Installation
+
+### Option 1: Pixi (Recommended for Development)
+
+```bash
+# Clone and install
+git clone git@github.com:ericmjl/kirin
+cd kirin
+pixi install
+
+# Set up SSL certificates for cloud storage (one-time setup)
+pixi run setup-ssl
+
+# Start the web UI
+pixi run python -m kirin.web.app
+```
+
+### Option 2: UV Tool (Recommended for Production)
+
+```bash
+# Install with uv
+uv tool install gitdata
+
+# Set up SSL certificates (one-time setup)
+uv run python -m kirin.setup_ssl
+
+# Start the web UI
+uv run gitdata ui
+```
+
+### Option 3: UVX (One-time Use)
+
+```bash
+# Run directly with uvx
+uvx gitdata ui
+
+# If SSL issues occur, set up certificates
+uvx python -m kirin.setup_ssl
+```
+
+### Option 4: System Python
+
+```bash
+# Install with pip
+pip install gitdata
+
+# No SSL setup needed - uses system certificates
+gitdata ui
+```
+
 ## Get started for development
 
 To get started:
@@ -138,4 +188,7 @@ pixi run -e tests pytest -v
 
 # Run tests without coverage
 pixi run -e tests pytest --no-cov
+
+# Set up SSL certificates (if needed)
+pixi run setup-ssl
 ```

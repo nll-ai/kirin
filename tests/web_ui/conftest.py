@@ -1,7 +1,7 @@
 """Pytest configuration for web UI tests."""
 
 import pytest
-from kirin.web.app import catalog_manager, dataset_cache
+from kirin.web.app import catalog_manager
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -17,15 +17,3 @@ def reset_catalog_manager():
 
     # Restore original catalogs after all tests
     catalog_manager._save_catalogs(original_catalogs)
-
-
-@pytest.fixture(autouse=True)
-def clear_dataset_cache():
-    """Clear dataset cache between tests for isolation."""
-    # Clear dataset cache before each test
-    dataset_cache.clear()
-
-    yield
-
-    # Clear dataset cache after each test
-    dataset_cache.clear()

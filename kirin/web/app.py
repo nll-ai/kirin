@@ -50,39 +50,7 @@ def get_catalog_manager() -> CatalogManager:
     return catalog_manager
 
 
-# Cache for dataset instances to avoid re-initializing
-dataset_cache: Dict[tuple, Dataset] = {}
-
-
-def get_dataset(catalog_id: str, dataset_name: str) -> Dataset:
-    """Get or create a dataset instance.
-
-    Args:
-        catalog_id: Catalog ID
-        dataset_name: Dataset name
-
-    Returns:
-        Dataset instance
-    """
-    cache_key = (catalog_id, dataset_name)
-
-    if cache_key in dataset_cache:
-        return dataset_cache[cache_key]
-
-    # Get catalog config
-    catalog = catalog_manager.get_catalog(catalog_id)
-    if not catalog:
-        raise HTTPException(status_code=404, detail="Catalog not found")
-
-    # Create filesystem
-    fs = catalog_manager.create_filesystem(catalog)
-
-    # Create dataset
-    dataset = Dataset(root_dir=catalog.root_dir, name=dataset_name, fs=fs)
-
-    # Cache dataset
-    dataset_cache[cache_key] = dataset
-    return dataset
+# No more caching - direct creation like notebook
 
 
 # Route handlers
@@ -93,27 +61,16 @@ async def list_catalogs(
     """List all configured catalogs."""
     catalogs = catalog_mgr.list_catalogs()
 
-    # Get dataset counts for each catalog
+    # Simple catalog info - no connection testing, just like notebook
     catalog_infos = []
     for catalog in catalogs:
-        try:
-            # Test connection and get dataset count
-            catalog_mgr.create_filesystem(catalog)
-            kirin_catalog = Catalog(catalog.root_dir)
-            dataset_count = len(kirin_catalog.datasets())
-            status = "connected"
-        except Exception as e:
-            logger.warning(f"Failed to connect to catalog {catalog.id}: {e}")
-            dataset_count = 0
-            status = "error"
-
         catalog_infos.append(
             {
                 "id": catalog.id,
                 "name": catalog.name,
                 "root_dir": catalog.root_dir,
-                "status": status,
-                "dataset_count": dataset_count,
+                "status": "ready",  # Always ready, like notebook
+                "dataset_count": "?",  # Will be shown when user clicks
             }
         )
 
@@ -198,124 +155,78 @@ async def list_datasets(
     catalog_id: str,
     catalog_mgr: CatalogManager = Depends(get_catalog_manager),
 ):
-    """List datasets in a catalog."""
-    logger.info(f"=== Starting list_datasets for catalog {catalog_id} ===")
-    overall_start = time.time()
+    """List datasets in a catalog - fast like notebook."""
+    catalog = catalog_mgr.get_catalog(catalog_id)
+    if not catalog:
+        raise HTTPException(status_code=404, detail="Catalog not found")
 
+    # Completely lazy - don't try to connect to cloud storage at all
+    # Just show the catalog info and let users click to explore
+    datasets = []  # Empty list - will be populated when user clicks "View Datasets"
+
+    return templates.TemplateResponse(
+        "datasets.html",
+        {
+            "request": request,
+            "catalog": catalog,
+            "datasets": datasets,
+            "lazy_loading": True,  # Signal to template that we're lazy loading
+        },
+    )
+
+
+@app.get("/catalog/{catalog_id}/datasets/load", response_class=HTMLResponse)
+async def load_datasets(
+    request: Request,
+    catalog_id: str,
+    catalog_mgr: CatalogManager = Depends(get_catalog_manager),
+):
+    """Load datasets in a catalog - only when user actually wants to see them."""
     catalog = catalog_mgr.get_catalog(catalog_id)
     if not catalog:
         raise HTTPException(status_code=404, detail="Catalog not found")
 
     try:
-        # Get filesystem and catalog
-        logger.info(f"Step 1: Creating filesystem for catalog {catalog_id}")
-        start_time = time.time()
-        catalog_mgr.create_filesystem(catalog)
-        logger.info(f"Step 1 completed in {time.time() - start_time:.2f}s")
-
-        logger.info(f"Step 2: Creating catalog for {catalog.root_dir}")
-        start_time = time.time()
+        # Now we can actually try to connect - SSL certificates are fixed!
         kirin_catalog = Catalog(catalog.root_dir)
-        logger.info(f"Step 2 completed in {time.time() - start_time:.2f}s")
+        dataset_names = kirin_catalog.datasets()
 
-        # Get dataset information
+        # Simple dataset info - no expensive operations
         datasets = []
-        logger.info(f"Step 3: Listing datasets")
-        start_time = time.time()
-        try:
-            dataset_names = kirin_catalog.datasets()
-            logger.info(
-                f"Step 3 completed in {time.time() - start_time:.2f}s - found {len(dataset_names)} datasets"
+        for dataset_name in dataset_names:
+            datasets.append(
+                {
+                    "name": dataset_name,
+                    "description": "",  # Will load when viewing
+                    "commit_count": 0,  # Will load when viewing
+                    "current_commit": None,  # Will load when viewing
+                    "total_size": 0,  # Will load when viewing
+                    "last_updated": None,  # Will load when viewing
+                }
             )
-        except (FileNotFoundError, OSError) as e:
-            # Handle case where datasets directory doesn't exist yet
-            logger.info(
-                f"Step 3 completed in {time.time() - start_time:.2f}s - No datasets directory found: {e}"
-            )
-            dataset_names = []
-        except Exception as e:
-            # Handle SSL and other connection errors gracefully
-            logger.warning(
-                f"Step 3 failed after {time.time() - start_time:.2f}s due to connection error: {e}"
-            )
-            logger.warning(f"Error type: {type(e).__name__}")
-            # Return empty list instead of crashing
-            dataset_names = []
 
-        logger.info(f"Step 4: Processing {len(dataset_names)} datasets")
-        start_time = time.time()
-        for i, dataset_name in enumerate(dataset_names):
-            try:
-                logger.info(f"Step 4.{i + 1}: Processing dataset '{dataset_name}'")
-                dataset_start = time.time()
-
-                dataset = get_dataset(catalog_id, dataset_name)
-                logger.info(
-                    f"Step 4.{i + 1}a: get_dataset completed in {time.time() - dataset_start:.2f}s"
-                )
-
-                info_start = time.time()
-                info = dataset.get_info()
-                logger.info(
-                    f"Step 4.{i + 1}b: get_info completed in {time.time() - info_start:.2f}s"
-                )
-
-                # Calculate total size
-                size_start = time.time()
-                total_size = 0
-                if dataset.current_commit:
-                    for file_obj in dataset.files.values():
-                        total_size += file_obj.size
-                logger.info(
-                    f"Step 4.{i + 1}c: size calculation completed in {time.time() - size_start:.2f}s"
-                )
-
-                datasets.append(
-                    {
-                        "name": dataset_name,
-                        "description": info.get("description", ""),
-                        "commit_count": info.get("commit_count", 0),
-                        "current_commit": info.get("current_commit"),
-                        "total_size": total_size,
-                        "last_updated": info.get("last_updated"),
-                    }
-                )
-                logger.info(
-                    f"Step 4.{i + 1}: Dataset '{dataset_name}' processed in {time.time() - dataset_start:.2f}s"
-                )
-            except Exception as e:
-                logger.warning(
-                    f"Step 4.{i + 1}: Failed to get info for dataset {dataset_name} after {time.time() - dataset_start:.2f}s: {e}"
-                )
-                datasets.append(
-                    {
-                        "name": dataset_name,
-                        "description": "Error loading dataset",
-                        "commit_count": 0,
-                        "current_commit": None,
-                        "total_size": 0,
-                        "last_updated": None,
-                    }
-                )
-
-        logger.info(
-            f"Step 4 completed in {time.time() - start_time:.2f}s - processed {len(datasets)} datasets"
-        )
-
-        logger.info(
-            f"=== list_datasets completed in {time.time() - overall_start:.2f}s ==="
-        )
         return templates.TemplateResponse(
             "datasets.html",
-            {"request": request, "catalog": catalog, "datasets": datasets},
+            {
+                "request": request,
+                "catalog": catalog,
+                "datasets": datasets,
+                "lazy_loading": False,  # We actually loaded the data
+            },
         )
 
     except Exception as e:
-        logger.error(
-            f"=== list_datasets failed after {time.time() - overall_start:.2f}s: {e} ==="
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to list datasets: {str(e)}"
+        logger.error(f"Failed to load datasets: {e}")
+        # Return error page instead of crashing
+        return templates.TemplateResponse(
+            "datasets.html",
+            {
+                "request": request,
+                "catalog": catalog,
+                "datasets": [],
+                "error": f"Failed to connect to catalog: {str(e)}",
+                "lazy_loading": False,
+            },
         )
 
 
@@ -327,46 +238,37 @@ async def create_dataset(
     description: str = Form(""),
     catalog_mgr: CatalogManager = Depends(get_catalog_manager),
 ):
-    """Create a new dataset."""
+    """Create a new dataset - fast like notebook."""
     catalog = catalog_mgr.get_catalog(catalog_id)
     if not catalog:
         raise HTTPException(status_code=404, detail="Catalog not found")
 
     try:
-        # Create filesystem and catalog
-        catalog_mgr.create_filesystem(catalog)
+        # Direct catalog creation like notebook
         kirin_catalog = Catalog(catalog.root_dir)
 
-        # Check if dataset already exists
+        # Check if dataset exists like notebook
         existing_datasets = kirin_catalog.datasets()
         if name in existing_datasets:
-            logger.warning(f"Dataset '{name}' already exists in catalog {catalog_id}")
             return templates.TemplateResponse(
                 "datasets.html",
                 {
                     "request": request,
                     "catalog": catalog,
-                    "datasets": [],  # Will be reloaded
+                    "datasets": [],
                     "error": f"Dataset '{name}' already exists. You can view it or choose a different name.",
-                    "existing_dataset_name": name,
                 },
             )
 
-        # Create dataset
+        # Create dataset like notebook
         kirin_catalog.create_dataset(name, description)
 
-        # Clear cache for this catalog
-        keys_to_remove = [k for k in dataset_cache.keys() if k[0] == catalog_id]
-        for key in keys_to_remove:
-            del dataset_cache[key]
-
-        # Redirect to dataset view
         return templates.TemplateResponse(
             "datasets.html",
             {
                 "request": request,
                 "catalog": catalog,
-                "datasets": [],  # Will be reloaded
+                "datasets": [],
                 "success": f"Dataset '{name}' created successfully",
             },
         )
@@ -439,12 +341,7 @@ async def update_catalog(
             # Catalog ID didn't change, just update
             catalog_mgr.update_catalog(updated_catalog)
 
-        # Clear dataset cache for both old and new catalog IDs
-        keys_to_remove = [
-            k for k in dataset_cache.keys() if k[0] in [catalog_id, new_catalog_id]
-        ]
-        for key in keys_to_remove:
-            del dataset_cache[key]
+        # No more caching - direct creation like notebook
 
         # Redirect to catalog list
         return templates.TemplateResponse(
@@ -481,7 +378,6 @@ async def delete_catalog_confirmation(
 
     # Get dataset count for this catalog
     try:
-        catalog_mgr.create_filesystem(catalog)
         kirin_catalog = Catalog(catalog.root_dir)
         dataset_count = len(kirin_catalog.datasets())
     except Exception as e:
@@ -512,7 +408,6 @@ async def delete_catalog(
 
         # Check if catalog has datasets
         try:
-            catalog_mgr.create_filesystem(catalog)
             kirin_catalog = Catalog(catalog.root_dir)
             datasets = kirin_catalog.datasets()
             if datasets:
@@ -530,10 +425,7 @@ async def delete_catalog(
         # Delete catalog
         catalog_mgr.delete_catalog(catalog_id)
 
-        # Clear dataset cache for this catalog
-        keys_to_remove = [k for k in dataset_cache.keys() if k[0] == catalog_id]
-        for key in keys_to_remove:
-            del dataset_cache[key]
+        # No more caching - direct creation like notebook
 
         # Redirect to catalog list
         return templates.TemplateResponse(
@@ -558,14 +450,19 @@ async def delete_catalog(
 async def view_dataset(
     request: Request, catalog_id: str, dataset_name: str, tab: str = "files"
 ):
-    """View a dataset (files tab by default)."""
+    """View a dataset - fast like notebook."""
     try:
-        dataset = get_dataset(catalog_id, dataset_name)
-        info = dataset.get_info()
+        # Get catalog config
+        catalog = catalog_manager.get_catalog(catalog_id)
+        if not catalog:
+            raise HTTPException(status_code=404, detail="Catalog not found")
 
-        # Get files from current commit
+        # Direct catalog and dataset creation like notebook
+        kirin_catalog = Catalog(catalog.root_dir)
+        dataset = kirin_catalog.get_dataset(dataset_name)
+
+        # Get files like notebook: dataset.list_files()
         files = []
-        total_size = 0
         if dataset.current_commit:
             for name, file_obj in dataset.files.items():
                 files.append(
@@ -577,10 +474,19 @@ async def view_dataset(
                         "short_hash": file_obj.short_hash,
                     }
                 )
-                total_size += file_obj.size
 
-        # Add total_size to info
-        info["total_size"] = total_size
+        # Simple info
+        info = {
+            "description": dataset.description or "",
+            "commit_count": len(dataset.history()),
+            "current_commit": dataset.current_commit.hash
+            if dataset.current_commit
+            else None,
+            "total_size": sum(f["size"] for f in files),
+            "last_updated": dataset.current_commit.timestamp.isoformat()
+            if dataset.current_commit
+            else None,
+        }
 
         return templates.TemplateResponse(
             "dataset_view.html",
@@ -601,11 +507,14 @@ async def view_dataset(
 
 @app.get("/catalog/{catalog_id}/{dataset_name}/files", response_class=HTMLResponse)
 async def dataset_files_tab(request: Request, catalog_id: str, dataset_name: str):
-    """HTMX partial for files tab."""
+    """HTMX partial for files tab - fast like notebook."""
     try:
-        dataset = get_dataset(catalog_id, dataset_name)
+        # Direct catalog and dataset creation like notebook
+        catalog = catalog_manager.get_catalog(catalog_id)
+        kirin_catalog = Catalog(catalog.root_dir)
+        dataset = kirin_catalog.get_dataset(dataset_name)
 
-        # Get files from current commit
+        # Get files like notebook: dataset.list_files()
         files = []
         if dataset.current_commit:
             for name, file_obj in dataset.files.items():
@@ -645,11 +554,14 @@ async def dataset_files_tab(request: Request, catalog_id: str, dataset_name: str
 
 @app.get("/catalog/{catalog_id}/{dataset_name}/history", response_class=HTMLResponse)
 async def dataset_history_tab(request: Request, catalog_id: str, dataset_name: str):
-    """HTMX partial for history tab."""
+    """HTMX partial for history tab - fast like notebook."""
     try:
-        dataset = get_dataset(catalog_id, dataset_name)
+        # Direct catalog and dataset creation like notebook
+        catalog = catalog_manager.get_catalog(catalog_id)
+        kirin_catalog = Catalog(catalog.root_dir)
+        dataset = kirin_catalog.get_dataset(dataset_name)
 
-        # Get commit history
+        # Get commit history like notebook: dataset.history()
         commits = []
         for commit in dataset.history(limit=50):
             commits.append(
@@ -690,9 +602,12 @@ async def dataset_history_tab(request: Request, catalog_id: str, dataset_name: s
 
 @app.get("/catalog/{catalog_id}/{dataset_name}/commit", response_class=HTMLResponse)
 async def commit_form(request: Request, catalog_id: str, dataset_name: str):
-    """Show commit form (staging area)."""
+    """Show commit form - fast like notebook."""
     try:
-        dataset = get_dataset(catalog_id, dataset_name)
+        # Direct catalog and dataset creation like notebook
+        catalog = catalog_manager.get_catalog(catalog_id)
+        kirin_catalog = Catalog(catalog.root_dir)
+        dataset = kirin_catalog.get_dataset(dataset_name)
 
         # Get current files for removal selection
         files = []
@@ -732,9 +647,12 @@ async def create_commit(
     remove_files: List[str] = Form([]),
     files: List[UploadFile] = File([]),
 ):
-    """Create a new commit."""
+    """Create a new commit - fast like notebook."""
     try:
-        dataset = get_dataset(catalog_id, dataset_name)
+        # Direct catalog and dataset creation like notebook
+        catalog = catalog_manager.get_catalog(catalog_id)
+        kirin_catalog = Catalog(catalog.root_dir)
+        dataset = kirin_catalog.get_dataset(dataset_name)
 
         # Handle file uploads
         temp_files = []
@@ -755,7 +673,7 @@ async def create_commit(
                             f.write(content)
                         add_files.append(temp_path)
 
-                # Create commit
+                # Create commit like notebook
                 commit_hash = dataset.commit(
                     message=message, add_files=add_files, remove_files=remove_files
                 )
@@ -773,16 +691,25 @@ async def create_commit(
                 raise HTTPException(status_code=400, detail="No changes specified")
 
             commit_hash = dataset.commit(message=message, remove_files=remove_files)
-
             logger.info(f"Created commit {commit_hash} for dataset {dataset_name}")
 
-        # Get updated dataset info and calculate total_size
-        info = dataset.get_info()
+        # Simple info calculation
         total_size = 0
         if dataset.current_commit:
             for file_obj in dataset.files.values():
                 total_size += file_obj.size
-        info["total_size"] = total_size
+
+        info = {
+            "description": dataset.description or "",
+            "commit_count": len(dataset.history()),
+            "current_commit": dataset.current_commit.hash
+            if dataset.current_commit
+            else None,
+            "total_size": total_size,
+            "last_updated": dataset.current_commit.timestamp.isoformat()
+            if dataset.current_commit
+            else None,
+        }
 
         # Redirect back to dataset view
         return templates.TemplateResponse(
