@@ -3,11 +3,11 @@
 
 import tempfile
 from pathlib import Path
-from fastapi.testclient import TestClient
+
 import pytest
+from fastapi.testclient import TestClient
 
 from kirin.web.app import app
-from kirin.web.config import CatalogManager
 
 
 @pytest.fixture
@@ -72,9 +72,11 @@ def test_create_catalog_and_dataset_workflow(client, temp_catalog):
         "description": "A test dataset for integration testing",
     }
     response = client.post(f"/catalog/{catalog_id}/datasets/create", data=dataset_data)
+    # The endpoint redirects to the dataset view page after successful creation
     assert response.status_code == 200
     assert "test-dataset" in response.text
-    assert "created successfully" in response.text
+    # Check that we're on the dataset view page (not a success message)
+    assert "No commits" in response.text  # Empty dataset shows "No commits"
 
     # Step 4: Navigate to dataset view
     response = client.get(f"/catalog/{catalog_id}/test-dataset")
@@ -150,7 +152,8 @@ def test_catalog_delete_workflow(client, temp_catalog):
     response = client.post(f"/catalog/{catalog_id}/delete")
     assert response.status_code == 200
     assert "deleted successfully" in response.text
-    # The catalog name appears in the success message, but should not appear in the catalog list
+    # The catalog name appears in the success message, but should not appear
+    # in the catalog list
     assert (
         "No data catalogs configured" in response.text
         or catalog_id not in response.text
