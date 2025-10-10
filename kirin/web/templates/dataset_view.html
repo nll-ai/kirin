@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}{{ dataset_name }} - {{ backend_id }} - Kirin{% endblock %}
+
+{% block breadcrumb %}
+<span class="breadcrumb-separator">></span>
+<a href="/backend/{{ backend_id }}">{{ backend_id }}</a>
+<span class="breadcrumb-separator">></span>
+<span>{{ dataset_name }}</span>
+{% endblock %}
+
+{% block header_title %}{{ dataset_name }}{% endblock %}
+{% block header_description %}
+    {{ dataset_info.description or "No description" }}<br>
+    {{ dataset_info.commit_count }} commits •
+    {% if dataset_info.total_size > 0 %}
+    {{ "%.1f"|format(dataset_info.total_size / (1024*1024)) }} MB •
+    {% endif %}
+    {% if dataset_info.current_commit %}
+    <span class="badge badge-primary">{{ dataset_info.current_commit[:8] }}</span> HEAD
+    {% else %}
+    No commits
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- Checkout Warning -->
+{% if checkout_commit %}
+<div class="alert alert-warning">
+    <strong>⚠️ Viewing historical commit [{{ checkout_commit[:8] }}] from {{ checkout_timestamp }}</strong><br>
+    This is a read-only view. <a href="/backend/{{ backend_id }}/{{ dataset_name }}" class="underline">Return to HEAD →</a>
+</div>
+{% endif %}
+
+<div class="space-y-6">
+    <!-- Tabs -->
+    <div class="tabs">
+        <div class="tab-list">
+            <button class="tab {% if active_tab == 'files' %}active{% endif %}"
+                    hx-get="/backend/{{ backend_id }}/{{ dataset_name }}/files"
+                    hx-target="#tab-content"
+                    hx-indicator="#loading">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14,2 14,8 20,8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10,9 9,9 8,9"></polyline>
+                </svg>
+                Files
+            </button>
+            <button class="tab {% if active_tab == 'history' %}active{% endif %}"
+                    hx-get="/backend/{{ backend_id }}/{{ dataset_name }}/history"
+                    hx-target="#tab-content"
+                    hx-indicator="#loading">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3v18h18"></path>
+                    <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
+                </svg>
+                History
+            </button>
+            {% if not checkout_commit %}
+            <button class="tab {% if active_tab == 'commit' %}active{% endif %}"
+                    hx-get="/backend/{{ backend_id }}/{{ dataset_name }}/commit"
+                    hx-target="#tab-content"
+                    hx-indicator="#loading">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 12l2 2 4-4"></path>
+                    <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
+                    <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
+                    <path d="M12 3c0 1-1 3-3 3s-3-2-3-3 1-3 3-3 3 2 3 3"></path>
+                    <path d="M12 21c0-1 1-3 3-3s3 2 3 3-1 3-3 3-3-2-3-3"></path>
+                </svg>
+                Commit
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div id="tab-content" class="tab-content">
+        {% if active_tab == 'files' %}
+            {% include 'files_tab.html' %}
+        {% elif active_tab == 'history' %}
+            {% include 'history_tab.html' %}
+        {% elif active_tab == 'commit' %}
+            {% include 'commit_form.html' %}
+        {% endif %}
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loading" class="htmx-indicator text-center py-8">
+        <div class="spinner mx-auto"></div>
+        <p class="text-muted-foreground mt-2">Loading...</p>
+    </div>
+</div>
+
+<script>
+// Initialize tab content on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const activeTab = '{{ active_tab }}';
+    if (activeTab === 'files') {
+        htmx.trigger('#tab-content', 'htmx:load');
+    }
+});
+
+// Handle tab switching
+document.addEventListener('htmx:beforeRequest', function(event) {
+    // Remove active class from all tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+    });
+
+    // Add active class to clicked tab
+    event.target.classList.add('active');
+});
+
+document.addEventListener('htmx:afterRequest', function(event) {
+    // Hide loading indicator
+    document.getElementById('loading').style.display = 'none';
+});
+</script>
+
+<!-- File Preview Modal -->
+<div id="preview-modal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="closePreview()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="preview-title" class="modal-title">File Preview</h3>
+            <button onclick="closePreview()" class="btn btn-ghost btn-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="preview-content">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closePreview()" class="btn btn-secondary">Close</button>
+            <a id="preview-download" href="#" class="btn btn-primary">Download</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function openPreview(fileName) {
+    const modal = document.getElementById('preview-modal');
+    const title = document.getElementById('preview-title');
+    const content = document.getElementById('preview-content');
+    const downloadLink = document.getElementById('preview-download');
+
+    // Set title and download link
+    title.textContent = fileName;
+    downloadLink.href = `/backend/{{ backend_id }}/{{ dataset_name }}/file/${fileName}/download`;
+
+    // Show loading state
+    content.innerHTML = `
+        <div class="text-center py-8">
+            <div class="spinner mx-auto"></div>
+            <p class="text-muted-foreground mt-2">Loading preview...</p>
+        </div>
+    `;
+
+    // Show modal
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+
+    // Load preview content
+    fetch(`/backend/{{ backend_id }}/{{ dataset_name }}/file/${fileName}/preview`)
+        .then(response => response.text())
+        .then(html => {
+            // Extract just the content from the response
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const previewContent = doc.querySelector('.panel-content');
+
+            if (previewContent) {
+                content.innerHTML = previewContent.innerHTML;
+            } else {
+                content.innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-muted-foreground">Preview not available</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading preview:', error);
+            content.innerHTML = `
+                <div class="text-center py-8">
+                    <p class="text-destructive">Error loading preview</p>
+                </div>
+            `;
+        });
+}
+
+function closePreview() {
+    const modal = document.getElementById('preview-modal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closePreview();
+    }
+});
+</script>
+{% endblock %}

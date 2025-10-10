@@ -84,6 +84,7 @@ readme = "README.md"
 tests = [
     "pytest",
     "pytest-cov",
+    "httpx",
 ]
 docs = [
     "mkdocs-material",
@@ -92,6 +93,7 @@ docs = [
 
 [project.scripts]
 kirin = "kirin.cli:app"
+
 
 
 [tool.coverage.run]
@@ -113,9 +115,6 @@ tests = { features = ["tests"], solve-group = "default" }
 
 [tool.pixi.feature.tests.tasks]
 test = "pytest --durations=10 --tb=short -v"
-
-[tool.pixi.feature.tests.dependencies]
-pytest = ">=8.4.2,<9"
 
 [tool.pixi.dependencies]
 loguru = ">=0.7.3,<0.8"

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}{{ backend.name }} - Kirin{% endblock %}
+
+{% block breadcrumb %}
+<span class="breadcrumb-separator">></span>
+<span>{{ backend.name }}</span>
+{% endblock %}
+
+{% block header_title %}{{ backend.name }}{% endblock %}
+{% block header_description %}Datasets in {{ backend.name }} ({{ backend.root_dir }}){% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Add Dataset Button -->
+    <div class="flex justify-end">
+        <button onclick="showCreateForm()" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            New Dataset
+        </button>
+    </div>
+
+    <!-- Create Dataset Form (hidden by default) -->
+    <div id="create-form" class="panel hidden">
+        <div class="panel-header">
+            <h2 class="panel-title">Create New Dataset</h2>
+        </div>
+        <div class="panel-content">
+            <!-- Error Alert for Dataset Creation -->
+            {% if error and existing_dataset_name %}
+            <div class="alert alert-error mb-4">
+                <strong>⚠️ {{ error }}</strong>
+                <div class="mt-2">
+                    <a href="/backend/{{ backend.id }}/{{ existing_dataset_name }}" class="btn btn-primary btn-sm">
+                        View Existing Dataset →
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/backend/{{ backend.id }}/datasets/create" class="space-y-4">
+                <div class="form-group">
+                    <label for="name" class="form-label required">Dataset Name</label>
+                    <input type="text" id="name" name="name" class="input" placeholder="my-dataset" required>
+                    <p class="text-sm text-muted-foreground mt-1">Use lowercase letters, numbers, and hyphens only</p>
+                </div>
+
+                <div class="form-group">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea id="description" name="description" class="textarea" placeholder="Brief description of this dataset..."></textarea>
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="button" onclick="hideCreateForm()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Dataset</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dataset Cards -->
+    {% if datasets %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for dataset in datasets %}
+        <div class="card">
+            <div class="card-header">
+                <div class="flex items-center gap-2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14,2 14,8 20,8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10,9 9,9 8,9"></polyline>
+                    </svg>
+                    <h3 class="card-title">{{ dataset.name }}</h3>
+                </div>
+                <p class="card-description">{{ dataset.description or "No description" }}</p>
+            </div>
+
+            <div class="card-content">
+                <div class="space-y-2">
+                    <div class="flex items-center gap-2">
+                        <span class="badge">{{ dataset.commit_count }} commit{{ 's' if dataset.commit_count != 1 else '' }}</span>
+                        {% if dataset.current_commit %}
+                        <span class="badge badge-primary">{{ dataset.current_commit[:8] }}</span>
+                        {% endif %}
+                    </div>
+
+                    {% if dataset.total_size > 0 %}
+                    <div class="text-sm text-muted-foreground">
+                        Size: {{ "%.1f"|format(dataset.total_size / (1024*1024)) }} MB
+                    </div>
+                    {% endif %}
+
+                    {% if dataset.last_updated %}
+                    <div class="text-sm text-muted-foreground">
+                        Updated: {{ dataset.last_updated }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <a href="/backend/{{ backend.id }}/{{ dataset.name }}" class="btn btn-primary btn-sm">
+                    View Dataset
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-12">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-4 text-muted-foreground">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14,2 14,8 20,8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10,9 9,9 8,9"></polyline>
+        </svg>
+        <h3 class="text-lg font-semibold mb-2">No datasets found</h3>
+        <p class="text-muted-foreground mb-4">
+            This backend is ready to use. Create your first dataset to start versioning your data.
+        </p>
+        <button onclick="showCreateForm()" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Create Your First Dataset
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function showCreateForm() {
+    document.getElementById('create-form').classList.remove('hidden');
+    document.getElementById('name').focus();
+}
+
+function hideCreateForm() {
+    document.getElementById('create-form').classList.add('hidden');
+    document.getElementById('name').value = '';
+    document.getElementById('description').value = '';
+}
+
+// Show create form if there's an error
+document.addEventListener('DOMContentLoaded', function() {
+    {% if error and existing_dataset_name %}
+    showCreateForm();
+    {% endif %}
+});
+</script>
+{% endblock %}
