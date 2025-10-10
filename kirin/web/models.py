@@ -5,38 +5,11 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 
 
-class BackendForm(BaseModel):
-    """Form model for adding/editing backends."""
+class CatalogForm(BaseModel):
+    """Form model for adding/editing catalogs."""
 
-    name: str = Field(..., min_length=1, max_length=100, description="Backend name")
-    type: str = Field(..., description="Backend type")
-    auth_mode: str = Field("system", description="Authentication mode")
-
-    # Common fields
-    root_dir: Optional[str] = Field(None, description="Root directory path")
-
-    # S3 fields
-    bucket: Optional[str] = Field(None, description="S3 bucket name")
-    prefix: Optional[str] = Field(None, description="S3 prefix")
-    region: Optional[str] = Field(None, description="AWS region")
-    key: Optional[str] = Field(None, description="Access key ID")
-    secret: Optional[str] = Field(None, description="Secret access key")
-
-    # GCS fields
-    project: Optional[str] = Field(None, description="GCP project ID")
-    token: Optional[str] = Field(None, description="Service account token")
-
-    # Azure fields
-    container: Optional[str] = Field(None, description="Azure container name")
-    account_name: Optional[str] = Field(None, description="Azure storage account name")
-    account_key: Optional[str] = Field(None, description="Azure storage account key")
-    connection_string: Optional[str] = Field(
-        None, description="Azure connection string"
-    )
-
-    # S3-compatible fields
-    service: Optional[str] = Field(None, description="S3-compatible service")
-    endpoint_url: Optional[str] = Field(None, description="Custom endpoint URL")
+    name: str = Field(..., min_length=1, max_length=100, description="Catalog name")
+    root_dir: str = Field(..., description="Root directory path (local or cloud URL)")
 
 
 class DatasetForm(BaseModel):
@@ -55,14 +28,13 @@ class CommitForm(BaseModel):
     remove_files: List[str] = Field(default=[], description="Files to remove")
 
 
-class BackendInfo(BaseModel):
-    """Information about a backend."""
+class CatalogInfo(BaseModel):
+    """Information about a catalog."""
 
     id: str
     name: str
-    type: str
     root_dir: str
-    status: str  # connected, error, testing
+    status: str  # connected, error
     dataset_count: int = 0
 
 
@@ -100,15 +72,15 @@ class CommitInfo(BaseModel):
     total_size: int = 0
 
 
-class BackendTypeInfo(BaseModel):
-    """Information about a backend type."""
+class CatalogTypeInfo(BaseModel):
+    """Information about a catalog type."""
 
     value: str
     label: str
     description: str
 
 
-class BackendFieldInfo(BaseModel):
+class CatalogFieldInfo(BaseModel):
     """Information about a form field."""
 
     name: str
