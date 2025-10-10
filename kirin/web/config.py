@@ -17,6 +17,7 @@ class CatalogConfig:
     id: str
     name: str
     root_dir: str
+    aws_profile: Optional[str] = None
 
 
 class CatalogManager:
@@ -135,10 +136,12 @@ class CatalogManager:
         """
         logger.info(f"Creating filesystem for catalog: {catalog.id}")
         logger.info(f"Root dir: {catalog.root_dir}")
+        if catalog.aws_profile:
+            logger.info(f"Using AWS profile: {catalog.aws_profile}")
 
         try:
             # Use Kirin's get_filesystem utility which handles all the complexity
-            fs = get_filesystem(catalog.root_dir)
+            fs = get_filesystem(catalog.root_dir, aws_profile=catalog.aws_profile)
             logger.info(f"Filesystem created successfully: {type(fs)}")
             return fs
         except Exception as e:

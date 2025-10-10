@@ -56,8 +56,8 @@ class CommitStore:
         self.dataset_dir = f"{self.root_dir}/datasets/{dataset_name}"
         self.commits_file = f"{self.dataset_dir}/commits.json"
 
-        # Ensure dataset directory exists
-        self.fs.makedirs(strip_protocol(self.dataset_dir), exist_ok=True)
+        # Note: We don't create directories here for S3 compatibility
+        # Directories will be created when the first commit is saved
 
         # Load existing commits
         self._commits_cache: Dict[str, Commit] = {}
@@ -217,6 +217,10 @@ class CommitStore:
     def _save_commits(self) -> None:
         """Save commits to the JSON file."""
         try:
+            # Ensure dataset directory exists before writing commits file
+            # This is where we actually create directories for S3 compatibility
+            self.fs.makedirs(strip_protocol(self.dataset_dir), exist_ok=True)
+
             # Convert commits to dictionary format
             commits_data = []
             for commit in self._commits_cache.values():

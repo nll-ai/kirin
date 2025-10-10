@@ -50,29 +50,7 @@
             </div>
 
             <!-- Dataset Cards -->
-            {% if lazy_loading %}
-            <!-- Lazy Loading State -->
-            <div class="text-center py-12">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-4 text-muted-foreground">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14,2 14,8 20,8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10,9 9,9 8,9"></polyline>
-                </svg>
-                <h3 class="text-lg font-semibold mb-2">Ready to explore datasets</h3>
-                <p class="text-muted-foreground mb-4">
-                    Click the button below to load datasets from this catalog.
-                </p>
-                <button onclick="loadDatasets()" class="btn btn-primary">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                    Load Datasets
-                </button>
-            </div>
-            {% elif datasets %}
+            {% if datasets %}
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {% for dataset in datasets %}
         <div class="card" data-dataset-name="{{ dataset.name }}" data-dataset-description="{{ dataset.description or '' }}">
@@ -192,9 +170,9 @@
                     <line x1="16" y1="17" x2="8" y2="17"></line>
                     <polyline points="10,9 9,9 8,9"></polyline>
                 </svg>
-                <h3 class="text-lg font-semibold mb-2">Unable to list datasets</h3>
+                <h3 class="text-lg font-semibold mb-2">No datasets yet</h3>
                 <p class="text-muted-foreground mb-4">
-                    Due to connection issues, we cannot list existing datasets. You can still create new datasets.
+                    This catalog doesn't have any datasets yet. Create your first dataset to get started.
                 </p>
                 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
                     <div class="flex items-start gap-3">
@@ -311,17 +289,6 @@ function filterDatasets() {
     });
 }
 
-// Load datasets function for lazy loading
-function loadDatasets() {
-    // Show loading state
-    const button = event.target;
-    const originalText = button.innerHTML;
-    button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="animate-spin"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg> Loading...';
-    button.disabled = true;
-
-    // Navigate to the load datasets endpoint
-    window.location.href = '/catalog/{{ catalog.id }}/datasets/load';
-}
 
 // Show create form if there's an error
 document.addEventListener('DOMContentLoaded', function() {

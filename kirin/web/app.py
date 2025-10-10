@@ -3,24 +3,73 @@
 import os
 import shutil
 import tempfile
-import time
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Dict, List
+from typing import List
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.responses import JSONResponse
 from loguru import logger
 from slugify import slugify
 
-from .. import Catalog, Dataset
+from .. import Catalog
 from .config import CatalogConfig, CatalogManager
 
 
 # Global catalog manager
 catalog_manager = CatalogManager()
+
+
+def get_aws_profiles():
+    """Get available AWS profiles from config files."""
+    import configparser
+    import os
+
+    profiles = []
+
+    # Check AWS config file locations
+    aws_config_paths = [
+        os.path.expanduser("~/.aws/config"),
+        os.path.expanduser("~/.aws/credentials"),
+    ]
+
+    for config_path in aws_config_paths:
+        if os.path.exists(config_path):
+            try:
+                config = configparser.ConfigParser()
+                config.read(config_path)
+
+                # Extract profile names from sections
+                for section_name in config.sections():
+                    if section_name.startswith("profile "):
+                        profile_name = section_name.replace("profile ", "")
+                        if profile_name not in profiles:
+                            profiles.append(profile_name)
+                    elif section_name == "default":
+                        if "default" not in profiles:
+                            profiles.append("default")
+                    elif (
+                        not section_name.startswith("profile ")
+                        and section_name != "default"
+                    ):
+                        # This might be a profile name without "profile " prefix
+                        if section_name not in profiles:
+                            profiles.append(section_name)
+            except Exception as e:
+                logger.warning(f"Failed to parse AWS config at {config_path}: {e}")
+                continue
+
+    # Always include 'default' if no profiles found
+    if not profiles:
+        profiles = ["default"]
+
+    # Sort profiles with 'default' first
+    profiles = sorted(profiles, key=lambda x: (x != "default", x))
+
+    return profiles
 
 
 @asynccontextmanager
@@ -54,12 +103,23 @@ def get_catalog_manager() -> CatalogManager:
 
 
 # Route handlers
+@app.get("/api/aws-profiles", response_class=JSONResponse)
+async def get_aws_profiles_endpoint():
+    """Get available AWS profiles."""
+    try:
+        profiles = get_aws_profiles()
+        return {"profiles": profiles}
+    except Exception as e:
+        logger.error(f"Failed to get AWS profiles: {e}")
+        return {"profiles": ["default"]}
+
+
 @app.get("/", response_class=HTMLResponse)
 async def list_catalogs(
-    request: Request, catalog_mgr: CatalogManager = Depends(get_catalog_manager)
+    request: Request, catalog_manager: CatalogManager = Depends(get_catalog_manager)
 ):
     """List all configured catalogs."""
-    catalogs = catalog_mgr.list_catalogs()
+    catalogs = catalog_manager.list_catalogs()
 
     # Simple catalog info - no connection testing, just like notebook
     catalog_infos = []
@@ -81,18 +141,28 @@ async def list_catalogs(
 
 @app.get("/catalogs/add", response_class=HTMLResponse)
 async def add_catalog_form(
-    request: Request, catalog_mgr: CatalogManager = Depends(get_catalog_manager)
+    request: Request, catalog_manager: CatalogManager = Depends(get_catalog_manager)
 ):
     """Show add catalog form."""
-    return templates.TemplateResponse("add_catalog.html", {"request": request})
+    return templates.TemplateResponse(
+        "catalog_form.html",
+        {
+            "request": request,
+            "page_title": "Add Data Catalog",
+            "page_description": "Configure a new data catalog for your datasets",
+            "form_action": "/catalogs/add",
+            "submit_button_text": "Create Catalog",
+        },
+    )
 
 
 @app.post("/catalogs/add", response_class=HTMLResponse)
 async def add_catalog(
     request: Request,
-    catalog_mgr: CatalogManager = Depends(get_catalog_manager),
+    catalog_manager: CatalogManager = Depends(get_catalog_manager),
     name: str = Form(..., min_length=1, max_length=100),
     root_dir: str = Form(..., min_length=1),
+    aws_profile: str = Form(""),
 ):
     """Add a new catalog."""
     try:
@@ -108,17 +178,18 @@ async def add_catalog(
             id=catalog_id,
             name=name,
             root_dir=root_dir,
+            aws_profile=aws_profile if aws_profile else None,
         )
 
         # Add catalog
-        catalog_mgr.add_catalog(catalog)
+        catalog_manager.add_catalog(catalog)
 
         # Redirect to catalog list
         return templates.TemplateResponse(
             "catalogs.html",
             {
                 "request": request,
-                "catalogs": catalog_mgr.list_catalogs(),
+                "catalogs": catalog_manager.list_catalogs(),
                 "success": f"Catalog '{name}' added successfully",
             },
         )
@@ -130,14 +201,18 @@ async def add_catalog(
         if "already exists" in str(e):
             logger.warning(f"Catalog '{name}' already exists: {e}")
             return templates.TemplateResponse(
-                "add_catalog.html",
+                "catalog_form.html",
                 {
                     "request": request,
-                    "error": f"A catalog with the name '{name}' already exists. Please choose a different name or go to the existing catalog.",
+                    "error": (
+                        f"A catalog with the name '{name}' already exists. "
+                        "Please choose a different name or go to the existing catalog."
+                    ),
                     "existing_catalog_id": catalog_id,
                     "form_data": {
                         "name": name,
                         "root_dir": root_dir,
+                        "aws_profile": aws_profile,
                     },
                 },
             )
@@ -153,42 +228,17 @@ async def add_catalog(
 async def list_datasets(
     request: Request,
     catalog_id: str,
-    catalog_mgr: CatalogManager = Depends(get_catalog_manager),
+    catalog_manager: CatalogManager = Depends(get_catalog_manager),
 ):
-    """List datasets in a catalog - fast like notebook."""
-    catalog = catalog_mgr.get_catalog(catalog_id)
-    if not catalog:
-        raise HTTPException(status_code=404, detail="Catalog not found")
-
-    # Completely lazy - don't try to connect to cloud storage at all
-    # Just show the catalog info and let users click to explore
-    datasets = []  # Empty list - will be populated when user clicks "View Datasets"
-
-    return templates.TemplateResponse(
-        "datasets.html",
-        {
-            "request": request,
-            "catalog": catalog,
-            "datasets": datasets,
-            "lazy_loading": True,  # Signal to template that we're lazy loading
-        },
-    )
-
-
-@app.get("/catalog/{catalog_id}/datasets/load", response_class=HTMLResponse)
-async def load_datasets(
-    request: Request,
-    catalog_id: str,
-    catalog_mgr: CatalogManager = Depends(get_catalog_manager),
-):
-    """Load datasets in a catalog - only when user actually wants to see them."""
-    catalog = catalog_mgr.get_catalog(catalog_id)
+    """List datasets in a catalog - automatically load datasets."""
+    catalog = catalog_manager.get_catalog(catalog_id)
     if not catalog:
         raise HTTPException(status_code=404, detail="Catalog not found")
 
     try:
-        # Now we can actually try to connect - SSL certificates are fixed!
-        kirin_catalog = Catalog(catalog.root_dir)
+        # Create authenticated filesystem and load datasets automatically
+        fs = catalog_manager.create_filesystem(catalog)
+        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
         dataset_names = kirin_catalog.datasets()
 
         # Simple dataset info - no expensive operations
@@ -217,6 +267,7 @@ async def load_datasets(
 
     except Exception as e:
         logger.error(f"Failed to load datasets: {e}")
+        logger.exception("Full traceback:")
         # Return error page instead of crashing
         return templates.TemplateResponse(
             "datasets.html",
@@ -236,16 +287,17 @@ async def create_dataset(
     catalog_id: str,
     name: str = Form(...),
     description: str = Form(""),
-    catalog_mgr: CatalogManager = Depends(get_catalog_manager),
+    catalog_manager: CatalogManager = Depends(get_catalog_manager),
 ):
     """Create a new dataset - fast like notebook."""
-    catalog = catalog_mgr.get_catalog(catalog_id)
+    catalog = catalog_manager.get_catalog(catalog_id)
     if not catalog:
         raise HTTPException(status_code=404, detail="Catalog not found")
 
     try:
-        # Direct catalog creation like notebook
-        kirin_catalog = Catalog(catalog.root_dir)
+        # Create authenticated filesystem before creating Catalog
+        fs = catalog_manager.create_filesystem(catalog)
+        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
 
         # Check if dataset exists like notebook
         existing_datasets = kirin_catalog.datasets()
@@ -256,22 +308,19 @@ async def create_dataset(
                     "request": request,
                     "catalog": catalog,
                     "datasets": [],
-                    "error": f"Dataset '{name}' already exists. You can view it or choose a different name.",
+                    "error": (
+                        f"Dataset '{name}' already exists. "
+                        "You can view it or choose a different name."
+                    ),
                 },
             )
 
         # Create dataset like notebook
         kirin_catalog.create_dataset(name, description)
 
-        return templates.TemplateResponse(
-            "datasets.html",
-            {
-                "request": request,
-                "catalog": catalog,
-                "datasets": [],
-                "success": f"Dataset '{name}' created successfully",
-            },
-        )
+        # Redirect to the dataset page instead of showing empty catalog list
+        # This works better with S3 lazy directory creation
+        return RedirectResponse(url=f"/catalog/{catalog_id}/{name}", status_code=302)
 
     except Exception as e:
         logger.error(f"Failed to create dataset {name}: {e}")
@@ -284,18 +333,22 @@ async def create_dataset(
 async def edit_catalog_form(
     request: Request,
     catalog_id: str,
-    catalog_mgr: CatalogManager = Depends(get_catalog_manager),
+    catalog_manager: CatalogManager = Depends(get_catalog_manager),
 ):
     """Show edit catalog form."""
-    catalog = catalog_mgr.get_catalog(catalog_id)
+    catalog = catalog_manager.get_catalog(catalog_id)
     if not catalog:
         raise HTTPException(status_code=404, detail="Catalog not found")
 
     return templates.TemplateResponse(
-        "edit_catalog.html",
+        "catalog_form.html",
         {
             "request": request,
             "catalog": catalog,
+            "page_title": "Edit Catalog",
+            "page_description": "Update catalog configuration",
+            "form_action": f"/catalog/{catalog_id}/edit",
+            "submit_button_text": "Update Catalog",
         },
     )
 
@@ -304,14 +357,15 @@ async def edit_catalog_form(
 async def update_catalog(
     request: Request,
     catalog_id: str,
-    catalog_mgr: CatalogManager = Depends(get_catalog_manager),
+    catalog_manager: CatalogManager = Depends(get_catalog_manager),
     name: str = Form(...),
     root_dir: str = Form(...),
+    aws_profile: str = Form(""),
 ):
     """Update an existing catalog."""
     try:
         # Check if catalog exists
-        existing_catalog = catalog_mgr.get_catalog(catalog_id)
+        existing_catalog = catalog_manager.get_catalog(catalog_id)
         if not existing_catalog:
             raise HTTPException(status_code=404, detail="Catalog not found")
 
@@ -323,23 +377,24 @@ async def update_catalog(
             id=new_catalog_id,
             name=name,
             root_dir=root_dir,
+            aws_profile=aws_profile if aws_profile else None,
         )
 
         # Update catalog - handle ID changes
         if catalog_id != new_catalog_id:
             # Catalog ID changed, need to delete old and add new
-            catalog_mgr.delete_catalog(catalog_id)
+            catalog_manager.delete_catalog(catalog_id)
             # Check if new catalog ID already exists
-            existing_catalog = catalog_mgr.get_catalog(new_catalog_id)
+            existing_catalog = catalog_manager.get_catalog(new_catalog_id)
             if existing_catalog:
                 # Update existing catalog with new ID
-                catalog_mgr.update_catalog(updated_catalog)
+                catalog_manager.update_catalog(updated_catalog)
             else:
                 # Add new catalog
-                catalog_mgr.add_catalog(updated_catalog)
+                catalog_manager.add_catalog(updated_catalog)
         else:
             # Catalog ID didn't change, just update
-            catalog_mgr.update_catalog(updated_catalog)
+            catalog_manager.update_catalog(updated_catalog)
 
         # No more caching - direct creation like notebook
 
@@ -348,7 +403,7 @@ async def update_catalog(
             "catalogs.html",
             {
                 "request": request,
-                "catalogs": catalog_mgr.list_catalogs(),
+                "catalogs": catalog_manager.list_catalogs(),
                 "success": f"Catalog '{name}' updated successfully",
             },
         )
@@ -369,16 +424,17 @@ async def update_catalog(
 async def delete_catalog_confirmation(
     request: Request,
     catalog_id: str,
-    catalog_mgr: CatalogManager = Depends(get_catalog_manager),
+    catalog_manager: CatalogManager = Depends(get_catalog_manager),
 ):
     """Show delete catalog confirmation."""
-    catalog = catalog_mgr.get_catalog(catalog_id)
+    catalog = catalog_manager.get_catalog(catalog_id)
     if not catalog:
         raise HTTPException(status_code=404, detail="Catalog not found")
 
     # Get dataset count for this catalog
     try:
-        kirin_catalog = Catalog(catalog.root_dir)
+        fs = catalog_manager.create_filesystem(catalog)
+        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
         dataset_count = len(kirin_catalog.datasets())
     except Exception as e:
         logger.warning(f"Failed to get dataset count for catalog {catalog_id}: {e}")
@@ -398,22 +454,26 @@ async def delete_catalog_confirmation(
 async def delete_catalog(
     request: Request,
     catalog_id: str,
-    catalog_mgr: CatalogManager = Depends(get_catalog_manager),
+    catalog_manager: CatalogManager = Depends(get_catalog_manager),
 ):
     """Delete a catalog."""
     try:
-        catalog = catalog_mgr.get_catalog(catalog_id)
+        catalog = catalog_manager.get_catalog(catalog_id)
         if not catalog:
             raise HTTPException(status_code=404, detail="Catalog not found")
 
         # Check if catalog has datasets
         try:
-            kirin_catalog = Catalog(catalog.root_dir)
+            fs = catalog_manager.create_filesystem(catalog)
+            kirin_catalog = Catalog(catalog.root_dir, fs=fs)
             datasets = kirin_catalog.datasets()
             if datasets:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Cannot delete catalog with {len(datasets)} existing datasets. Please delete the datasets first.",
+                    detail=(
+                        f"Cannot delete catalog with {len(datasets)} existing datasets. "
+                        "Please delete the datasets first."
+                    ),
                 )
         except HTTPException:
             # Re-raise HTTP exceptions (like the 400 above)
@@ -423,7 +483,7 @@ async def delete_catalog(
             # For other exceptions, we'll allow deletion to proceed
 
         # Delete catalog
-        catalog_mgr.delete_catalog(catalog_id)
+        catalog_manager.delete_catalog(catalog_id)
 
         # No more caching - direct creation like notebook
 
@@ -432,7 +492,7 @@ async def delete_catalog(
             "catalogs.html",
             {
                 "request": request,
-                "catalogs": catalog_mgr.list_catalogs(),
+                "catalogs": catalog_manager.list_catalogs(),
                 "success": f"Catalog '{catalog.name}' deleted successfully",
             },
         )
@@ -457,8 +517,9 @@ async def view_dataset(
         if not catalog:
             raise HTTPException(status_code=404, detail="Catalog not found")
 
-        # Direct catalog and dataset creation like notebook
-        kirin_catalog = Catalog(catalog.root_dir)
+        # Create authenticated filesystem before creating Catalog
+        fs = catalog_manager.create_filesystem(catalog)
+        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
         dataset = kirin_catalog.get_dataset(dataset_name)
 
         # Get files like notebook: dataset.list_files()
@@ -509,9 +570,10 @@ async def view_dataset(
 async def dataset_files_tab(request: Request, catalog_id: str, dataset_name: str):
     """HTMX partial for files tab - fast like notebook."""
     try:
-        # Direct catalog and dataset creation like notebook
+        # Create authenticated filesystem before creating Catalog
         catalog = catalog_manager.get_catalog(catalog_id)
-        kirin_catalog = Catalog(catalog.root_dir)
+        fs = catalog_manager.create_filesystem(catalog)
+        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
         dataset = kirin_catalog.get_dataset(dataset_name)
 
         # Get files like notebook: dataset.list_files()
@@ -556,9 +618,10 @@ async def dataset_files_tab(request: Request, catalog_id: str, dataset_name: str
 async def dataset_history_tab(request: Request, catalog_id: str, dataset_name: str):
     """HTMX partial for history tab - fast like notebook."""
     try:
-        # Direct catalog and dataset creation like notebook
+        # Create authenticated filesystem before creating Catalog
         catalog = catalog_manager.get_catalog(catalog_id)
-        kirin_catalog = Catalog(catalog.root_dir)
+        fs = catalog_manager.create_filesystem(catalog)
+        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
         dataset = kirin_catalog.get_dataset(dataset_name)
 
         # Get commit history like notebook: dataset.history()
@@ -604,9 +667,10 @@ async def dataset_history_tab(request: Request, catalog_id: str, dataset_name: s
 async def commit_form(request: Request, catalog_id: str, dataset_name: str):
     """Show commit form - fast like notebook."""
     try:
-        # Direct catalog and dataset creation like notebook
+        # Create authenticated filesystem before creating Catalog
         catalog = catalog_manager.get_catalog(catalog_id)
-        kirin_catalog = Catalog(catalog.root_dir)
+        fs = catalog_manager.create_filesystem(catalog)
+        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
         dataset = kirin_catalog.get_dataset(dataset_name)
 
         # Get current files for removal selection
@@ -649,9 +713,10 @@ async def create_commit(
 ):
     """Create a new commit - fast like notebook."""
     try:
-        # Direct catalog and dataset creation like notebook
+        # Create authenticated filesystem before creating Catalog
         catalog = catalog_manager.get_catalog(catalog_id)
-        kirin_catalog = Catalog(catalog.root_dir)
+        fs = catalog_manager.create_filesystem(catalog)
+        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
         dataset = kirin_catalog.get_dataset(dataset_name)
 
         # Handle file uploads
@@ -711,18 +776,9 @@ async def create_commit(
             else None,
         }
 
-        # Redirect back to dataset view
-        return templates.TemplateResponse(
-            "dataset_view.html",
-            {
-                "request": request,
-                "catalog_id": catalog_id,
-                "dataset_name": dataset_name,
-                "dataset_info": info,
-                "files": [],  # Will be reloaded
-                "active_tab": "files",
-                "success": f"Commit created successfully: {commit_hash[:8]}",
-            },
+        # Redirect back to dataset view to refresh the state
+        return RedirectResponse(
+            url=f"/catalog/{catalog_id}/{dataset_name}", status_code=302
         )
 
     except HTTPException:
@@ -744,7 +800,14 @@ async def preview_file(
 ):
     """Preview a file (text only)."""
     try:
-        dataset = get_dataset(catalog_id, dataset_name)
+        # Create authenticated filesystem before creating Catalog
+        catalog = catalog_manager.get_catalog(catalog_id)
+        if not catalog:
+            raise HTTPException(status_code=404, detail="Catalog not found")
+
+        fs = catalog_manager.create_filesystem(catalog)
+        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
+        dataset = kirin_catalog.get_dataset(dataset_name)
         file_obj = dataset.get_file(file_name)
 
         if not file_obj:
@@ -847,7 +910,14 @@ async def preview_file(
 async def download_file(catalog_id: str, dataset_name: str, file_name: str):
     """Download a file."""
     try:
-        dataset = get_dataset(catalog_id, dataset_name)
+        # Create authenticated filesystem before creating Catalog
+        catalog = catalog_manager.get_catalog(catalog_id)
+        if not catalog:
+            raise HTTPException(status_code=404, detail="Catalog not found")
+
+        fs = catalog_manager.create_filesystem(catalog)
+        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
+        dataset = kirin_catalog.get_dataset(dataset_name)
         file_obj = dataset.get_file(file_name)
 
         if not file_obj:
@@ -896,7 +966,14 @@ async def checkout_commit(
 ):
     """Browse files at a specific commit (read-only)."""
     try:
-        dataset = get_dataset(catalog_id, dataset_name)
+        # Create authenticated filesystem before creating Catalog
+        catalog = catalog_manager.get_catalog(catalog_id)
+        if not catalog:
+            raise HTTPException(status_code=404, detail="Catalog not found")
+
+        fs = catalog_manager.create_filesystem(catalog)
+        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
+        dataset = kirin_catalog.get_dataset(dataset_name)
 
         try:
             commit = dataset.get_commit(commit_hash)
