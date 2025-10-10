@@ -9,7 +9,9 @@ Integration test for complete GitData workflow:
 6. Verify commit count and file structure
 """
 
+import os
 import shutil
+import tempfile
 from pathlib import Path
 
 from kirin import Dataset
@@ -23,12 +25,12 @@ def create_test_files(directory: Path, files: list) -> None:
         file_path.write_text(content)
 
 
-def test_complete_gitdata_workflow():
+def test_complete_kirin_linear_workflow():
     """Test the complete GitData workflow with proper assertions."""
 
     # Setup test environment
     test_dir = Path("test-integration-workflow")
-    dataset_name = "integration-test"
+    name = "integration-test"
 
     try:
         # Clean up any existing test directory
@@ -39,12 +41,12 @@ def test_complete_gitdata_workflow():
         test_dir.mkdir(exist_ok=True)
 
         # Step 1: Create new dataset
-        dataset = Dataset(root_dir=str(test_dir.absolute()), dataset_name=dataset_name)
+        dataset = Dataset(root_dir=str(test_dir.absolute()), name=name)
 
         # Verify dataset creation
-        assert dataset.dataset_name == dataset_name
+        assert dataset.name == name
         assert dataset.root_dir == str(test_dir.absolute())
-        assert dataset.get_current_branch() == "main"
+        # Note: Linear commit history - no branching functionality
 
         # Step 2: Create and commit initial 3 text files
         initial_files = [
@@ -79,26 +81,17 @@ def test_complete_gitdata_workflow():
         # Verify initial commit
         assert commit_hash_1 is not None
         assert len(commit_hash_1) == 64  # SHA-256 hash length
-        assert len(dataset.file_dict) == 3
-        assert "data_analysis.txt" in dataset.file_dict
-        assert "research_notes.txt" in dataset.file_dict
-        assert "project_requirements.txt" in dataset.file_dict
+        assert len(dataset.list_files()) == 3
+        file_names = dataset.list_files()
+        assert "data_analysis.txt" in file_names
+        assert "research_notes.txt" in file_names
+        assert "project_requirements.txt" in file_names
 
         # Verify commit count after first commit
-        dataset._commits_data_cache = None  # Clear cache
-        commits_data = dataset._get_commits_data()
-        assert len(commits_data) == 2  # Initial commit + our commit
+        commits = dataset.get_commits()
+        assert len(commits) == 1  # Our commit (no initial commit in linear workflow)
 
-        # Step 3: Create a new branch
-        branch_name = "feature-experimental-analysis"
-        dataset.create_branch(branch_name)
-        dataset.switch_branch(branch_name)
-
-        # Verify branch creation and switching
-        assert dataset.get_current_branch() == branch_name
-        assert branch_name in dataset.list_branches()
-
-        # Step 4: Commit 3 more files on the branch
+        # Step 3: Add more files to the dataset (linear workflow)
         feature_files = [
             (
                 "experimental_results.txt",
@@ -136,79 +129,46 @@ def test_complete_gitdata_workflow():
         # Verify feature commit
         assert commit_hash_2 is not None
         assert len(commit_hash_2) == 64
-        assert len(dataset.file_dict) == 6  # 3 initial + 3 feature files
-        assert "experimental_results.txt" in dataset.file_dict
-        assert "algorithm_optimization.txt" in dataset.file_dict
-        assert "user_feedback.txt" in dataset.file_dict
+        assert len(dataset.list_files()) == 6  # 3 initial + 3 feature files
+        file_names = dataset.list_files()
+        assert "experimental_results.txt" in file_names
+        assert "algorithm_optimization.txt" in file_names
+        assert "user_feedback.txt" in file_names
 
-        # Verify commit count on branch
-        dataset._commits_data_cache = None  # Clear cache
-        branch_commits_data = dataset._get_commits_data()
-        assert len(branch_commits_data) == 3  # Initial + first commit + feature commit
+        # Verify commit count after second commit
+        commits = dataset.get_commits()
+        assert len(commits) == 2
 
-        # Step 5: Switch back to main and merge
-        dataset.switch_branch("main")
-        assert dataset.get_current_branch() == "main"
-        assert len(dataset.file_dict) == 3  # Main branch should only have initial files
+        # Step 5: Remove a file and commit
+        file_to_remove = "data_analysis.txt"
+        commit_message_3 = f"Remove {file_to_remove}"
+        commit_hash_3 = dataset.commit(commit_message_3, remove_files=[file_to_remove])
 
-        # Perform merge
-        merge_result = dataset.merge(branch_name)
+        # Verify third commit
+        assert commit_hash_3 is not None
+        assert len(commit_hash_3) == 64
+        assert len(dataset.list_files()) == 5
+        file_names = dataset.list_files()
+        assert file_to_remove not in file_names
 
-        # Verify merge result
-        assert merge_result["success"] is True
-        assert merge_result["source_branch"] == branch_name
-        assert merge_result["target_branch"] == "main"
-        assert len(merge_result["conflicts"]) == 0  # No conflicts expected
-        assert "merge_commit" in merge_result
+        # Verify commit count after third commit
+        commits = dataset.get_commits()
+        assert len(commits) == 3
 
-        # Step 6: Verify final state
-        dataset._commits_data_cache = None  # Clear cache
-        final_commits_data = dataset._get_commits_data()
-        final_commit_count = len(final_commits_data)
-        final_file_count = len(dataset.file_dict)
+        # Step 6: Checkout a previous commit
+        dataset.checkout(commit_hash_1)
+        assert dataset.current_commit.hash == commit_hash_1
+        assert len(dataset.list_files()) == 3
+        file_names = dataset.list_files()
+        assert "data_analysis.txt" in file_names
+        assert "experimental_results.txt" not in file_names
 
-        # Expected results
-        expected_commits = (
-            4  # Initial commit + first commit + feature commit + merge commit
-        )
-        expected_files = 6  # 3 initial + 3 feature files
-
-        # Final assertions
-        assert final_commit_count == expected_commits, (
-            f"Expected {expected_commits} commits, got {final_commit_count}"
-        )
-        assert final_file_count == expected_files, (
-            f"Expected {expected_files} files, got {final_file_count}"
-        )
-
-        # Verify all files are present
-        expected_files_list = [
-            "data_analysis.txt",
-            "research_notes.txt",
-            "project_requirements.txt",
-            "experimental_results.txt",
-            "algorithm_optimization.txt",
-            "user_feedback.txt",
-        ]
-
-        for expected_file in expected_files_list:
-            assert expected_file in dataset.file_dict, (
-                f"Expected file {expected_file} not found in final dataset"
-            )
-
-        # Verify commit history structure
-        commit_messages = [
-            commit_data.get("commit_message", "")
-            for commit_data in final_commits_data.values()
-        ]
-        assert commit_message_1 in commit_messages
-        assert commit_message_2 in commit_messages
-
-        # Verify merge commit exists
-        merge_commits = [
-            msg for msg in commit_messages if "merge" in msg.lower() or "Merge" in msg
-        ]
-        assert len(merge_commits) > 0, "No merge commit found in history"
+        # Checkout the latest commit again
+        dataset.checkout(commit_hash_3)
+        assert dataset.current_commit.hash == commit_hash_3
+        assert len(dataset.list_files()) == 5
+        file_names = dataset.list_files()
+        assert "data_analysis.txt" not in file_names
 
         logger.info("✅ All integration test assertions passed!")
 
@@ -218,11 +178,11 @@ def test_complete_gitdata_workflow():
             shutil.rmtree(test_dir)
 
 
-def test_branch_name_validation():
-    """Test that branch names with slashes are properly rejected."""
+def test_linear_commit_history():
+    """Test that Kirin uses linear commit history without branching."""
 
-    test_dir = Path("test-branch-validation")
-    dataset_name = "branch-validation-test"
+    test_dir = Path("test-linear-history")
+    name = "linear-history-test"
 
     try:
         # Clean up any existing test directory
@@ -233,25 +193,53 @@ def test_branch_name_validation():
         test_dir.mkdir(exist_ok=True)
 
         # Create dataset
-        dataset = Dataset(root_dir=str(test_dir.absolute()), dataset_name=dataset_name)
+        dataset = Dataset(root_dir=str(test_dir.absolute()), name=name)
 
-        # Test that branch creation with slash fails due to filesystem error
+        # Test linear commit history - no branching functionality
+        # Create initial commit
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            f.write("Initial content")
+            initial_file = f.name
+
         try:
-            dataset.create_branch("feature/with-slash")
-            assert False, "Expected FileNotFoundError for branch name with slash"
-        except (FileNotFoundError, OSError) as e:
-            # The error occurs because the directory structure doesn't exist
-            assert "No such file or directory" in str(e) or "feature/with-slash" in str(
-                e
-            )
+            commit1 = dataset.commit(message="Initial commit", add_files=[initial_file])
+            assert commit1 is not None
 
-        # Test that valid branch name works
-        dataset.create_branch("feature-with-hyphen")
-        assert "feature-with-hyphen" in dataset.list_branches()
+            # Create second commit
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".txt", delete=False
+            ) as f:
+                f.write("Second content")
+                second_file = f.name
 
-        # Test underscore works too
-        dataset.create_branch("feature_with_underscore")
-        assert "feature_with_underscore" in dataset.list_branches()
+            try:
+                commit2 = dataset.commit(
+                    message="Second commit", add_files=[second_file]
+                )
+                assert commit2 is not None
+
+                # Verify linear history
+                history = dataset.history()
+                assert len(history) == 2
+                assert history[0].message == "Second commit"
+                assert history[1].message == "Initial commit"
+
+                # Verify we can checkout specific commits
+                dataset.checkout(commit1)
+                files = dataset.list_files()
+                assert len(files) == 1
+
+                dataset.checkout(commit2)
+                files = dataset.list_files()
+                assert len(files) == 2
+
+            finally:
+                if os.path.exists(second_file):
+                    os.unlink(second_file)
+
+        finally:
+            if os.path.exists(initial_file):
+                os.unlink(initial_file)
 
     finally:
         # Cleanup

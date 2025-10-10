@@ -76,8 +76,8 @@ def test_unknown_protocol_error():
     error_msg = str(excinfo.value)
     # Should mention the protocol
     assert "completely_unknown_protocol" in error_msg
-    # Should list available protocols or give helpful message
-    assert "available" in error_msg.lower() or "recognized" in error_msg.lower()
+    # Should mention that the protocol is not known
+    assert "not known" in error_msg.lower()
 
 
 def test_memory_filesystem():

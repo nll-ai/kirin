@@ -33,8 +33,8 @@ pytestmark = pytest.mark.skipif(
 
 def test_gcs_dataset_creation():
     """Test creating a dataset on GCS."""
-    ds = Dataset(root_dir="gs://gitdata-test-bucket", dataset_name="test")
-    assert ds.dataset_name == "test"
+    ds = Dataset(root_dir="gs://gitdata-test-bucket", name="test")
+    assert ds.name == "test"
     assert "gs://gitdata-test-bucket" in ds.root_dir
 
 
@@ -47,7 +47,7 @@ def test_gcs_dataset_commit():
 
     try:
         # Create dataset
-        ds = Dataset(root_dir="gs://gitdata-test-bucket", dataset_name="test-commit")
+        ds = Dataset(root_dir="gs://gitdata-test-bucket", name="test-commit")
 
         # Commit the file
         ds.commit(commit_message="Test commit to GCS", add_files=[temp_file])
@@ -75,7 +75,7 @@ def test_gcs_dataset_checkout():
         temp_file2 = f.name
 
     try:
-        ds = Dataset(root_dir="gs://gitdata-test-bucket", dataset_name="test-checkout")
+        ds = Dataset(root_dir="gs://gitdata-test-bucket", name="test-checkout")
 
         # First commit
         ds.commit(commit_message="First commit", add_files=[temp_file1])
@@ -107,23 +107,23 @@ def test_gcs_dataset_metadata():
     """Test reading metadata from GCS dataset."""
     ds = Dataset(
         root_dir="gs://gitdata-test-bucket",
-        dataset_name="test-metadata",
+        name="test-metadata",
         description="Test dataset for metadata",
     )
 
     metadata = ds.metadata()
-    assert metadata["dataset_name"] == "test-metadata"
+    assert metadata["name"] == "test-metadata"
     assert metadata["description"] == "Test dataset for metadata"
 
 
 @pytest.mark.parametrize(
-    "dataset_name", ["test", "test-commit", "test-checkout", "test-metadata"]
+    "name", ["test", "test-commit", "test-checkout", "test-metadata"]
 )
-def test_gcs_dataset_reopen(dataset_name):
+def test_gcs_dataset_reopen(name):
     """Test that we can reopen existing GCS datasets."""
     # This should not raise an error even if the dataset exists
-    ds = Dataset(root_dir="gs://gitdata-test-bucket", dataset_name=dataset_name)
-    assert ds.dataset_name == dataset_name
+    ds = Dataset(root_dir="gs://gitdata-test-bucket", name=name)
+    assert ds.name == name
     # Should be able to get metadata
     metadata = ds.metadata()
-    assert "dataset_name" in metadata
+    assert "name" in metadata

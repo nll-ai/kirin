@@ -76,7 +76,7 @@ dependencies = [
     "gcsfs",  # For Google Cloud Storage support
     "fastapi",
     "jinja2",
-    "python-multipart", "python-slugify>=8.0.4,<9",
+    "python-multipart", "python-slugify>=8.0.4,<9", "keyring",
 ]
 readme = "README.md"
 
@@ -92,7 +92,7 @@ docs = [
 ]
 
 [project.scripts]
-kirin = "kirin.cli:app"
+kirin = "kirin.cli:main"
 
 
 
@@ -119,3 +119,4 @@ test = "pytest --durations=10 --tb=short -v"
 [tool.pixi.dependencies]
 loguru = ">=0.7.3,<0.8"
 marimo = ">=0.16.5,<0.17"
+keyring = ">=25.6.0,<26"

@@ -27,23 +27,43 @@ def get_gcs_filesystem(
         >>> # Auto-detect from environment
         >>> fs = get_gcs_filesystem()
     """
+    from loguru import logger
+
+    logger.info(
+        f"Creating GCS filesystem with token={token}, project={project}, kwargs={kwargs}"
+    )
+
     config: Dict[str, Any] = {}
 
     if token is not None:
         config["token"] = str(token) if isinstance(token, Path) else token
+        logger.info(f"Set token in config: {config['token']}")
 
     if project is not None:
         config["project"] = project
+        logger.info(f"Set project in config: {config['project']}")
 
     config.update(kwargs)
+    logger.info(f"Final GCS config: {config}")
 
     try:
-        return fsspec.filesystem("gs", **config)
+        logger.info("Calling fsspec.filesystem('gs', **config)")
+        fs = fsspec.filesystem("gs", **config)
+        logger.info(f"GCS filesystem created successfully: {type(fs)}")
+        return fs
     except ImportError as e:
+        logger.error(f"Import error creating GCS filesystem: {e}")
         raise ValueError(
             "Google Cloud Storage support requires gcsfs. "
             "Install with: pip install gcsfs"
         ) from e
+    except Exception as e:
+        logger.error(f"Error creating GCS filesystem: {e}")
+        logger.error(f"Exception type: {type(e).__name__}")
+        import traceback
+
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        raise
 
 
 def get_s3_filesystem(

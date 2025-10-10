@@ -113,16 +113,32 @@
                     <line x1="16" y1="17" x2="8" y2="17"></line>
                     <polyline points="10,9 9,9 8,9"></polyline>
                 </svg>
-                <h3 class="text-lg font-semibold mb-2">No datasets found</h3>
+                <h3 class="text-lg font-semibold mb-2">Unable to list datasets</h3>
                 <p class="text-muted-foreground mb-4">
-                    This backend is ready to use. Create your first dataset to start versioning your data.
+                    Due to connection issues, we cannot list existing datasets. You can still create new datasets.
                 </p>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <div class="flex items-start gap-3">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-yellow-600 mt-0.5">
+                            <path d="M12 9v4"></path>
+                            <path d="M12 17h.01"></path>
+                            <circle cx="12" cy="12" r="10"></circle>
+                        </svg>
+                        <div>
+                            <h4 class="font-medium text-yellow-800">Connection Note</h4>
+                            <p class="text-sm text-yellow-700 mt-1">
+                                If you're experiencing SSL certificate issues on macOS, datasets may not be listed here.
+                                You can still create new datasets which will work normally.
+                            </p>
+                        </div>
+                    </div>
+                </div>
                 <button onclick="showCreateForm()" class="btn btn-primary">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
-                    Create Your First Dataset
+                    Create New Dataset
                 </button>
             </div>
             {% endif %}
