@@ -127,6 +127,11 @@ class BackendManager:
 
         raise ValueError(f"Backend with ID '{backend_id}' not found")
 
+    def clear_all_backends(self) -> None:
+        """Clear all backend configurations (for testing)."""
+        self._save_backends([])
+        logger.info("Cleared all backends")
+
     def test_connection(self, backend: BackendConfig) -> bool:
         """Test connection to a backend.
 
