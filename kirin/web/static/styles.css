@@ -268,6 +268,7 @@ body {
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   transition: border-color 0.2s;
+  box-sizing: border-box;
 }
 
 .input:focus {
@@ -703,6 +704,89 @@ body {
     width: 100%;
     justify-content: flex-end;
   }
+}
+
+/* File removal checkbox improvements */
+.file-remove-checkbox {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  accent-color: hsl(var(--destructive));
+  flex-shrink: 0;
+  border-radius: 6px;
+  margin: 0;
+  display: inline-block;
+  transition: all 0.2s ease;
+}
+
+.file-remove-checkbox:focus {
+  outline: 2px solid hsl(var(--destructive));
+  outline-offset: 2px;
+}
+
+/* Ensure proper flexbox layout for file removal items */
+.file-remove-item {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background-color: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px hsl(var(--border) / 0.1);
+}
+
+.file-remove-item .file-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  color: hsl(var(--muted-foreground));
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
+.file-remove-item:hover .file-icon {
+  opacity: 1;
+  color: hsl(var(--foreground));
+}
+
+/* Visual feedback for the container when checked */
+.file-remove-item:has(input:checked) {
+  background-color: hsl(var(--destructive) / 0.08);
+  border-color: hsl(var(--destructive));
+  box-shadow: 0 2px 4px hsl(var(--destructive) / 0.1);
+}
+
+.file-remove-item:has(input:checked) .file-icon {
+  color: hsl(var(--destructive));
+  opacity: 1;
+}
+
+.file-remove-item:hover {
+  border-color: hsl(var(--border));
+  box-shadow: 0 2px 8px hsl(var(--border) / 0.2);
+  transform: translateY(-1px);
+}
+
+.file-remove-item:has(input:checked):hover {
+  border-color: hsl(var(--destructive));
+  background-color: hsl(var(--destructive) / 0.12);
+  box-shadow: 0 4px 12px hsl(var(--destructive) / 0.15);
+}
+
+/* File name styling */
+.file-remove-item .font-medium {
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: hsl(var(--foreground));
+}
+
+.file-remove-item .text-sm {
+  font-size: 0.8rem;
+  color: hsl(var(--muted-foreground));
+  margin-top: 0.25rem;
 }
 
 /* Utility classes */

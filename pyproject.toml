@@ -76,7 +76,7 @@ dependencies = [
     "gcsfs",  # For Google Cloud Storage support
     "fastapi",
     "jinja2",
-    "python-multipart",
+    "python-multipart", "python-slugify>=8.0.4,<9",
 ]
 readme = "README.md"
 

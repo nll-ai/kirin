@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ backend.name }} - Kirin{% endblock %}
+
+{% block breadcrumb %}
+<span class="breadcrumb-separator">></span>
+<a href="/">Backends</a>
+<span class="breadcrumb-separator">></span>
+<span>Edit {{ backend.name }}</span>
+{% endblock %}
+
+{% block header_title %}Edit Backend{% endblock %}
+{% block header_description %}Update configuration for {{ backend.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Error Alert -->
+    {% if error %}
+    <div class="alert alert-error mb-6">
+        <strong>⚠️ {{ error }}</strong>
+    </div>
+    {% endif %}
+
+    <div class="panel">
+        <div class="panel-header">
+            <h2 class="panel-title">Backend Configuration</h2>
+        </div>
+        <div class="panel-content">
+            <form method="POST" action="/backend/{{ backend.id }}/edit" class="space-y-6">
+                <!-- Backend Name -->
+                <div class="form-group">
+                    <label for="name" class="form-label required">Backend Name</label>
+                    <input type="text" id="name" name="name" class="input" placeholder="Production S3 Data"
+                           value="{{ backend.name }}" required>
+                    <p class="text-sm text-muted-foreground mt-1">A friendly name for this storage location</p>
+                </div>
+
+                <!-- Storage Type -->
+                <div class="form-group">
+                    <label for="type" class="form-label required">Storage Type</label>
+                    <select id="type" name="type" class="select" required onchange="updateFormFields()">
+                        <option value="">Select storage type...</option>
+                        {% for type in types %}
+                        <option value="{{ type.value }}" {% if backend.type == type.value %}selected{% endif %}>{{ type.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Dynamic fields based on type -->
+                <div id="type-fields" class="space-y-4">
+                    <!-- Fields will be populated by JavaScript -->
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex gap-3 pt-4">
+                    <a href="/" class="btn btn-secondary">Cancel</a>
+                    <button type="button" id="test-connection" class="btn btn-ghost" onclick="testConnection()" disabled>
+                        <span id="test-spinner" class="spinner hidden"></span>
+                        Test Connection
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="save-backend" disabled>
+                        Update Backend
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form field configurations for each backend type
+const typeFields = {
+    local: [
+        { name: 'root_dir', label: 'Directory Path', type: 'text', required: true, placeholder: '/path/to/data' }
+    ],
+    s3: [
+        { name: 'bucket', label: 'Bucket Name', type: 'text', required: true },
+        { name: 'prefix', label: 'Prefix (optional)', type: 'text', required: false, placeholder: 'kirin' },
+        { name: 'region', label: 'Region', type: 'text', required: true, placeholder: 'us-west-2' },
+        { name: 'key', label: 'Access Key ID', type: 'text', required: true },
+        { name: 'secret', label: 'Secret Access Key', type: 'password', required: true }
+    ],
+    gcs: [
+        { name: 'bucket', label: 'Bucket Name', type: 'text', required: true },
+        { name: 'prefix', label: 'Prefix (optional)', type: 'text', required: false, placeholder: 'kirin' },
+        { name: 'project', label: 'GCP Project ID', type: 'text', required: true },
+        { name: 'token', label: 'Service Account JSON Path', type: 'text', required: false, placeholder: 'path/to/key.json or \'cloud\'' }
+    ],
+    azure: [
+        { name: 'container', label: 'Container Name', type: 'text', required: true },
+        { name: 'prefix', label: 'Prefix (optional)', type: 'text', required: false, placeholder: 'kirin' },
+        { name: 'account_name', label: 'Storage Account Name', type: 'text', required: true },
+        { name: 'account_key', label: 'Storage Account Key', type: 'password', required: false },
+        { name: 'connection_string', label: 'Connection String', type: 'text', required: false, placeholder: 'Alternative to account name/key' }
+    ],
+    s3_compatible: [
+        { name: 'service', label: 'Service', type: 'select', required: true, options: [
+            { value: 'minio', label: 'Minio' },
+            { value: 'backblaze_us_west', label: 'Backblaze B2 (US West)' },
+            { value: 'backblaze_us_east', label: 'Backblaze B2 (US East)' },
+            { value: 'digitalocean_nyc3', label: 'DigitalOcean Spaces (NYC3)' },
+            { value: 'custom', label: 'Custom Endpoint' }
+        ]},
+        { name: 'bucket', label: 'Bucket Name', type: 'text', required: true },
+        { name: 'prefix', label: 'Prefix (optional)', type: 'text', required: false, placeholder: 'kirin' },
+        { name: 'endpoint_url', label: 'Custom Endpoint URL', type: 'text', required: false, placeholder: 'https://custom-s3-endpoint.com' },
+        { name: 'key', label: 'Access Key ID', type: 'text', required: true },
+        { name: 'secret', label: 'Secret Access Key', type: 'password', required: true }
+    ]
+};
+
+// Current backend configuration
+const currentBackend = {
+    type: '{{ backend.type }}',
+    config: {{ backend.config | tojson }},
+    root_dir: '{{ backend.root_dir }}'
+};
+
+function updateFormFields() {
+    const type = document.getElementById('type').value;
+    const container = document.getElementById('type-fields');
+
+    if (!type || !typeFields[type]) {
+        container.innerHTML = '';
+        return;
+    }
+
+    const fields = typeFields[type];
+    let html = '';
+
+    fields.forEach(field => {
+        html += `<div class="form-group">`;
+        html += `<label for="${field.name}" class="form-label ${field.required ? 'required' : ''}">${field.label}</label>`;
+
+        if (field.type === 'select') {
+            html += `<select id="${field.name}" name="${field.name}" class="select" ${field.required ? 'required' : ''}>`;
+            html += `<option value="">Select ${field.label.toLowerCase()}...</option>`;
+            field.options.forEach(option => {
+                const selected = currentBackend.config[field.name] === option.value ? 'selected' : '';
+                html += `<option value="${option.value}" ${selected}>${option.label}</option>`;
+            });
+            html += `</select>`;
+        } else {
+            let value = currentBackend.config[field.name] || '';
+            // Special handling for root_dir field
+            if (field.name === 'root_dir' && currentBackend.root_dir) {
+                value = currentBackend.root_dir;
+            }
+            const placeholder = field.placeholder ? `placeholder="${field.placeholder}"` : '';
+            html += `<input type="${field.type}" id="${field.name}" name="${field.name}" class="input" ${placeholder} value="${value}" ${field.required ? 'required' : ''}>`;
+        }
+
+        html += `</div>`;
+    });
+
+    container.innerHTML = html;
+}
+
+// Initialize form fields on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateFormFields();
+
+    // Enable save button if form is valid
+    const form = document.querySelector('form');
+    const saveButton = document.getElementById('save-backend');
+
+    function checkFormValidity() {
+        const requiredFields = form.querySelectorAll('input[required], select[required]');
+        let allValid = true;
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                allValid = false;
+            }
+        });
+
+        saveButton.disabled = !allValid;
+    }
+
+    form.addEventListener('input', checkFormValidity);
+    form.addEventListener('change', checkFormValidity);
+
+    // Initial check
+    checkFormValidity();
+});
+
+function testConnection() {
+    const button = document.getElementById('test-connection');
+    const spinner = document.getElementById('test-spinner');
+
+    button.disabled = true;
+    spinner.classList.remove('hidden');
+
+    // In a real implementation, this would make an AJAX call to test the connection
+    // For now, just simulate the test
+    setTimeout(() => {
+        button.disabled = false;
+        spinner.classList.add('hidden');
+        alert('Connection test would be implemented here');
+    }, 2000);
+}
+</script>
+{% endblock %}

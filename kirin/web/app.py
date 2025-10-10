@@ -12,6 +12,7 @@ from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from loguru import logger
+from slugify import slugify
 
 from .. import Catalog, Dataset
 from .config import BackendConfig, BackendManager
@@ -96,7 +97,7 @@ async def list_backends(
     for backend in backends:
         try:
             # Test connection and get dataset count
-            fs = backend_mgr.create_filesystem(backend)
+            backend_mgr.create_filesystem(backend)
             catalog = Catalog(Path(backend.root_dir))
             dataset_count = len(catalog.datasets())
             status = "connected"
@@ -155,8 +156,8 @@ async def add_backend(
 ):
     """Add a new backend."""
     try:
-        # Generate backend ID from name
-        backend_id = name.lower().replace(" ", "-").replace("_", "-")
+        # Generate backend ID from name using slugify
+        backend_id = slugify(name)
 
         # Build config based on type
         config = {}
@@ -309,7 +310,7 @@ async def list_datasets(
 
     try:
         # Get filesystem and catalog
-        fs = backend_mgr.create_filesystem(backend)
+        backend_mgr.create_filesystem(backend)
         catalog = Catalog(Path(backend.root_dir))
 
         # Get dataset information
@@ -382,7 +383,7 @@ async def create_dataset(
 
     try:
         # Create filesystem and catalog
-        fs = backend_mgr.create_filesystem(backend)
+        backend_mgr.create_filesystem(backend)
         catalog = Catalog(Path(backend.root_dir))
 
         # Check if dataset already exists
@@ -401,7 +402,7 @@ async def create_dataset(
             )
 
         # Create dataset
-        dataset = catalog.create_dataset(name, description)
+        catalog.create_dataset(name, description)
 
         # Clear cache for this backend
         keys_to_remove = [k for k in dataset_cache.keys() if k[0] == backend_id]
@@ -423,6 +424,279 @@ async def create_dataset(
         logger.error(f"Failed to create dataset {name}: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to create dataset: {str(e)}"
+        )
+
+
+@app.get("/backend/{backend_id}/edit", response_class=HTMLResponse)
+async def edit_backend_form(
+    request: Request,
+    backend_id: str,
+    backend_mgr: BackendManager = Depends(get_backend_manager),
+):
+    """Show edit backend form."""
+    backend = backend_mgr.get_backend(backend_id)
+    if not backend:
+        raise HTTPException(status_code=404, detail="Backend not found")
+
+    types = backend_mgr.get_available_types()
+    return templates.TemplateResponse(
+        "edit_backend.html",
+        {
+            "request": request,
+            "backend": backend,
+            "types": types,
+        },
+    )
+
+
+@app.post("/backend/{backend_id}/edit", response_class=HTMLResponse)
+async def update_backend(
+    request: Request,
+    backend_id: str,
+    backend_mgr: BackendManager = Depends(get_backend_manager),
+    name: str = Form(...),
+    type: str = Form(...),
+    root_dir: Optional[str] = Form(None),
+    bucket: Optional[str] = Form(None),
+    prefix: Optional[str] = Form(None),
+    region: Optional[str] = Form(None),
+    key: Optional[str] = Form(None),
+    secret: Optional[str] = Form(None),
+    project: Optional[str] = Form(None),
+    token: Optional[str] = Form(None),
+    container: Optional[str] = Form(None),
+    account_name: Optional[str] = Form(None),
+    account_key: Optional[str] = Form(None),
+    connection_string: Optional[str] = Form(None),
+    service: Optional[str] = Form(None),
+    endpoint_url: Optional[str] = Form(None),
+):
+    """Update an existing backend."""
+    try:
+        # Check if backend exists
+        existing_backend = backend_mgr.get_backend(backend_id)
+        if not existing_backend:
+            raise HTTPException(status_code=404, detail="Backend not found")
+
+        # Generate new backend ID from name (may change if name changed)
+        new_backend_id = slugify(name)
+
+        # Build config based on type (same logic as add_backend)
+        config = {}
+        if type == "local":
+            if not root_dir:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Root directory is required for local backend",
+                )
+            final_root_dir = root_dir
+        elif type == "s3":
+            if not bucket or not region or not key or not secret:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Bucket, region, key, and secret are required for S3",
+                )
+            config = {"key": key, "secret": secret, "region": region}
+            final_root_dir = f"s3://{bucket}"
+            if prefix:
+                final_root_dir += f"/{prefix}"
+        elif type == "gcs":
+            if not bucket or not project:
+                raise HTTPException(
+                    status_code=400, detail="Bucket and project are required for GCS"
+                )
+            config = {"project": project}
+            if token:
+                config["token"] = token
+            final_root_dir = f"gs://{bucket}"
+            if prefix:
+                final_root_dir += f"/{prefix}"
+        elif type == "azure":
+            if not container or not account_name:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Container and account name are required for Azure",
+                )
+            if account_key:
+                config = {"account_name": account_name, "account_key": account_key}
+            elif connection_string:
+                config = {"connection_string": connection_string}
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Either account key or connection string is required for Azure",
+                )
+            final_root_dir = f"az://{container}"
+            if prefix:
+                final_root_dir += f"/{prefix}"
+        elif type == "s3_compatible":
+            if not bucket or not key or not secret:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Bucket, key, and secret are required for S3-compatible",
+                )
+            config = {"key": key, "secret": secret}
+            if service and service != "custom":
+                config["service"] = service
+            elif endpoint_url:
+                config["endpoint_url"] = endpoint_url
+            else:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Either service or endpoint URL is required for S3-compatible",
+                )
+            final_root_dir = f"s3://{bucket}"
+            if prefix:
+                final_root_dir += f"/{prefix}"
+        else:
+            raise HTTPException(
+                status_code=400, detail=f"Unsupported backend type: {type}"
+            )
+
+        # Create new backend config
+        updated_backend = BackendConfig(
+            id=new_backend_id,
+            name=name,
+            type=type,
+            root_dir=final_root_dir,
+            config=config,
+        )
+
+        # Test connection
+        if not backend_mgr.test_connection(updated_backend):
+            raise HTTPException(
+                status_code=400,
+                detail="Failed to connect to backend. Please check your credentials.",
+            )
+
+        # Update backend - handle ID changes
+        if backend_id != new_backend_id:
+            # Backend ID changed, need to delete old and add new
+            backend_mgr.delete_backend(backend_id)
+            # Check if new backend ID already exists
+            existing_backend = backend_mgr.get_backend(new_backend_id)
+            if existing_backend:
+                # Update existing backend with new ID
+                backend_mgr.update_backend(updated_backend)
+            else:
+                # Add new backend
+                backend_mgr.add_backend(updated_backend)
+        else:
+            # Backend ID didn't change, just update
+            backend_mgr.update_backend(updated_backend)
+
+        # Clear dataset cache for both old and new backend IDs
+        keys_to_remove = [
+            k for k in dataset_cache.keys() if k[0] in [backend_id, new_backend_id]
+        ]
+        for key in keys_to_remove:
+            del dataset_cache[key]
+
+        # Redirect to backend list
+        return templates.TemplateResponse(
+            "backends.html",
+            {
+                "request": request,
+                "backends": backend_mgr.list_backends(),
+                "success": f"Backend '{name}' updated successfully",
+            },
+        )
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        logger.error(f"Validation error updating backend: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to update backend: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to update backend: {str(e)}"
+        )
+
+
+@app.get("/backend/{backend_id}/delete", response_class=HTMLResponse)
+async def delete_backend_confirmation(
+    request: Request,
+    backend_id: str,
+    backend_mgr: BackendManager = Depends(get_backend_manager),
+):
+    """Show delete backend confirmation."""
+    backend = backend_mgr.get_backend(backend_id)
+    if not backend:
+        raise HTTPException(status_code=404, detail="Backend not found")
+
+    # Get dataset count for this backend
+    try:
+        backend_mgr.create_filesystem(backend)
+        catalog = Catalog(Path(backend.root_dir))
+        dataset_count = len(catalog.datasets())
+    except Exception as e:
+        logger.warning(f"Failed to get dataset count for backend {backend_id}: {e}")
+        dataset_count = 0
+
+    return templates.TemplateResponse(
+        "delete_backend.html",
+        {
+            "request": request,
+            "backend": backend,
+            "dataset_count": dataset_count,
+        },
+    )
+
+
+@app.post("/backend/{backend_id}/delete", response_class=HTMLResponse)
+async def delete_backend(
+    request: Request,
+    backend_id: str,
+    backend_mgr: BackendManager = Depends(get_backend_manager),
+):
+    """Delete a backend."""
+    try:
+        backend = backend_mgr.get_backend(backend_id)
+        if not backend:
+            raise HTTPException(status_code=404, detail="Backend not found")
+
+        # Check if backend has datasets
+        try:
+            backend_mgr.create_filesystem(backend)
+            catalog = Catalog(Path(backend.root_dir))
+            datasets = catalog.datasets()
+            if datasets:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Cannot delete backend with {len(datasets)} existing datasets. Please delete the datasets first.",
+                )
+        except HTTPException:
+            # Re-raise HTTP exceptions (like the 400 above)
+            raise
+        except Exception as e:
+            logger.warning(f"Failed to check datasets for backend {backend_id}: {e}")
+            # For other exceptions, we'll allow deletion to proceed
+
+        # Delete backend
+        backend_mgr.delete_backend(backend_id)
+
+        # Clear dataset cache for this backend
+        keys_to_remove = [k for k in dataset_cache.keys() if k[0] == backend_id]
+        for key in keys_to_remove:
+            del dataset_cache[key]
+
+        # Redirect to backend list
+        return templates.TemplateResponse(
+            "backends.html",
+            {
+                "request": request,
+                "backends": backend_mgr.list_backends(),
+                "success": f"Backend '{backend.name}' deleted successfully",
+            },
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete backend: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to delete backend: {str(e)}"
         )
 
 
