@@ -1,0 +1,97 @@
+<!-- Files Tab Content -->
+<div class="space-y-4">
+
+    <!-- Files List -->
+    {% if files %}
+    <div class="space-y-2">
+        {% for file in files %}
+        <div class="file-item">
+            <div class="file-icon">
+                {% if file.name.endswith('.csv') or file.name.endswith('.tsv') %}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14,2 14,8 20,8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10,9 9,9 8,9"></polyline>
+                </svg>
+                {% elif file.name.endswith('.json') %}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14,2 14,8 20,8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10,9 9,9 8,9"></polyline>
+                </svg>
+                {% elif file.name.endswith('.py') or file.name.endswith('.js') or file.name.endswith('.ts') %}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="16,18 22,12 16,6"></polyline>
+                    <polyline points="8,6 2,12 8,18"></polyline>
+                </svg>
+                {% elif file.name.endswith('.md') or file.name.endswith('.txt') %}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14,2 14,8 20,8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10,9 9,9 8,9"></polyline>
+                </svg>
+                {% else %}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14,2 14,8 20,8"></polyline>
+                </svg>
+                {% endif %}
+            </div>
+
+            <div class="flex-1">
+                <div class="file-name">{{ file.name }}</div>
+                <div class="file-size">{{ "%.1f"|format(file.size / 1024) }} KB</div>
+            </div>
+
+            <div class="file-actions">
+                <button onclick="openPreview(this.dataset.filename)" data-filename="{{ file.name|e }}" class="btn btn-ghost btn-sm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    Preview
+                </button>
+                <a href="/backend/{{ backend_id }}/{{ dataset_name }}/file/{{ file.name }}/download"
+                   class="btn btn-primary btn-sm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7,10 12,15 17,10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Total Size -->
+    <div class="text-sm text-muted-foreground text-center py-4">
+        Total size: {{ "%.1f"|format(files|sum(attribute='size') / (1024*1024)) }} MB
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-12">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-4 text-muted-foreground">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14,2 14,8 20,8"></polyline>
+        </svg>
+        <h3 class="text-lg font-semibold mb-2">No files in this commit</h3>
+        <p class="text-muted-foreground mb-4">
+            {% if checkout_commit %}
+            This commit contains no files.
+            {% else %}
+            No files in this commit. Use the Commit tab to add files.
+            {% endif %}
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+

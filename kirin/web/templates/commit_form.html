@@ -1,0 +1,244 @@
+<!-- Commit Form Content -->
+<div class="space-y-6">
+    <div class="panel">
+        <div class="panel-header">
+            <h2 class="panel-title">Create New Commit</h2>
+        </div>
+        <div class="panel-content">
+            <form method="POST" action="/backend/{{ backend_id }}/{{ dataset_name }}/commit" enctype="multipart/form-data" class="space-y-6">
+                <!-- Upload Files Section -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold">Upload Files</h3>
+
+                    <div class="upload-area" id="upload-area">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-2 text-muted-foreground">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7,10 12,15 17,10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <p class="text-sm text-muted-foreground mb-2">Drag and drop files here or click to browse</p>
+                        <input type="file" name="files" multiple class="hidden" id="file-input" onchange="updateFileList()">
+                        <button type="button" onclick="document.getElementById('file-input').click()" class="btn btn-secondary">
+                            Choose Files
+                        </button>
+                    </div>
+
+                    <div id="file-list" class="hidden">
+                        <h4 class="font-medium mb-2">Files to add:</h4>
+                        <div id="selected-files" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <!-- Remove Files Section -->
+                {% if files %}
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold">Remove Files</h3>
+                    <p class="text-sm text-muted-foreground">Select files to remove from the dataset:</p>
+
+                    <div class="space-y-2">
+                        {% for file in files %}
+                        <label class="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted cursor-pointer">
+                            <input type="checkbox" name="remove_files" value="{{ file.name }}" class="rounded">
+                            <div class="file-icon">
+                                {% if file.name.endswith('.csv') or file.name.endswith('.tsv') %}
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14,2 14,8 20,8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10,9 9,9 8,9"></polyline>
+                                </svg>
+                                {% elif file.name.endswith('.json') %}
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14,2 14,8 20,8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10,9 9,9 8,9"></polyline>
+                                </svg>
+                                {% elif file.name.endswith('.py') or file.name.endswith('.js') or file.name.endswith('.ts') %}
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="16,18 22,12 16,6"></polyline>
+                                    <polyline points="8,6 2,12 8,18"></polyline>
+                                </svg>
+                                {% elif file.name.endswith('.md') or file.name.endswith('.txt') %}
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14,2 14,8 20,8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10,9 9,9 8,9"></polyline>
+                                </svg>
+                                {% else %}
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14,2 14,8 20,8"></polyline>
+                                </svg>
+                                {% endif %}
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-medium">{{ file.name }}</div>
+                                <div class="text-sm text-muted-foreground">{{ "%.1f"|format(file.size / 1024) }} KB</div>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Commit Message -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold">Commit Message</h3>
+
+                    <div class="form-group">
+                        <label for="message" class="form-label required">Message</label>
+                        <input type="text" id="message" name="message" class="input" placeholder="Describe your changes..." required>
+                        <p class="text-sm text-muted-foreground mt-1">A clear description of what this commit changes</p>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold">Summary</h3>
+
+                    <div id="commit-summary" class="p-4 bg-muted rounded-lg">
+                        <div class="text-sm text-muted-foreground">
+                            <div id="add-summary">No files to add</div>
+                            <div id="remove-summary">No files to remove</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex gap-3 pt-4">
+                    <a href="/backend/{{ backend_id }}/{{ dataset_name }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary" id="commit-button" disabled>
+                        Create Commit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// File upload handling
+function updateFileList() {
+    const input = document.getElementById('file-input');
+    const fileList = document.getElementById('file-list');
+    const selectedFiles = document.getElementById('selected-files');
+
+    if (input.files.length > 0) {
+        fileList.classList.remove('hidden');
+        selectedFiles.innerHTML = '';
+
+        Array.from(input.files).forEach(file => {
+            const div = document.createElement('div');
+            div.className = 'flex items-center justify-between p-2 bg-white border rounded';
+            div.innerHTML = `
+                <span class="text-sm">${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
+                <button type="button" onclick="removeFile(this)" class="btn btn-ghost btn-sm">Remove</button>
+            `;
+            selectedFiles.appendChild(div);
+        });
+    } else {
+        fileList.classList.add('hidden');
+    }
+
+    updateSummary();
+}
+
+function removeFile(button) {
+    // In a real implementation, you'd need to handle file removal from the input
+    // For now, just hide the file list if no files remain
+    const fileList = document.getElementById('file-list');
+    const remainingFiles = fileList.querySelectorAll('.flex.items-center').length;
+    if (remainingFiles <= 1) {
+        fileList.classList.add('hidden');
+        document.getElementById('file-input').value = '';
+    }
+    button.parentElement.remove();
+    updateSummary();
+}
+
+// Remove files checkbox handling - set up immediately when script loads
+function setupRemoveFileCheckboxes() {
+    const removeCheckboxes = document.querySelectorAll('input[name="remove_files"]');
+    removeCheckboxes.forEach(checkbox => {
+        // Remove any existing listeners to avoid duplicates
+        checkbox.removeEventListener('change', updateSummary);
+        checkbox.addEventListener('change', updateSummary);
+    });
+
+    // Initial summary update
+    updateSummary();
+}
+
+// Set up checkboxes immediately
+setupRemoveFileCheckboxes();
+
+// Also set up on DOMContentLoaded as fallback
+document.addEventListener('DOMContentLoaded', setupRemoveFileCheckboxes);
+
+// Set up checkboxes when content is loaded via HTMX
+document.addEventListener('htmx:afterRequest', function(event) {
+    // Only set up if this is the commit form
+    if (event.target.id === 'tab-content' && event.target.innerHTML.includes('Create New Commit')) {
+        setupRemoveFileCheckboxes();
+    }
+});
+
+function updateSummary() {
+    const fileInput = document.getElementById('file-input');
+    const removeCheckboxes = document.querySelectorAll('input[name="remove_files"]:checked');
+
+    const filesToAdd = fileInput.files.length;
+    const filesToRemove = removeCheckboxes.length;
+
+    const addSummary = document.getElementById('add-summary');
+    const removeSummary = document.getElementById('remove-summary');
+    const commitButton = document.getElementById('commit-button');
+
+    if (filesToAdd > 0) {
+        addSummary.textContent = `Adding ${filesToAdd} file${filesToAdd !== 1 ? 's' : ''}`;
+    } else {
+        addSummary.textContent = 'No files to add';
+    }
+
+    if (filesToRemove > 0) {
+        removeSummary.textContent = `Removing ${filesToRemove} file${filesToRemove !== 1 ? 's' : ''}`;
+    } else {
+        removeSummary.textContent = 'No files to remove';
+    }
+
+    // Enable commit button if there are changes
+    const shouldEnable = filesToAdd > 0 || filesToRemove > 0;
+    commitButton.disabled = !shouldEnable;
+}
+
+// Drag and drop functionality
+const uploadArea = document.getElementById('upload-area');
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+});
+
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+
+    const files = e.dataTransfer.files;
+    const input = document.getElementById('file-input');
+
+    // Create a new FileList-like object
+    const dt = new DataTransfer();
+    Array.from(files).forEach(file => dt.items.add(file));
+    input.files = dt.files;
+
+    updateFileList();
+});
+</script>

@@ -7,19 +7,43 @@ Guidelines for AI agents working on the Kirin project.
 **Kirin is simplified "git" for data** - follows git conventions but with
 linear-only history:
 
-- **Linear Commits**: Simple, linear commit history without branching complexity
-- **Content-Addressed Storage**: Files stored by content hash for integrity and deduplication
+- **Linear Commits**: Simple, linear commit history without branching
+  complexity
+- **Content-Addressed Storage**: Files stored by content hash for integrity
+  and deduplication
 - **Ergonomic Python API**: Focus on ease of use and developer experience
 - **Backend-Agnostic**: Works with any storage backend via fsspec
 - **No Branching**: Linear-only commit history to avoid complexity
 
 ### Key Design Principles
 
-- **Simplicity First**: Linear commit history without branching/merging complexity
+- **Simplicity First**: Linear commit history without branching/merging
+  complexity
 - **Content Integrity**: Files stored by content hash ensure data integrity
-- **Python-First**: Ergonomic Python API optimized for data science workflows
-- **Backend Flexibility**: Support for local filesystem, S3, GCS, Azure, etc.
-- **Zero-Copy Operations**: Efficient handling of large files through streaming
+- **Python-First**: Ergonomic Python API optimized for data science
+  workflows
+- **Backend Flexibility**: Support for local filesystem, S3, GCS, Azure,
+  etc.
+- **Zero-Copy Operations**: Efficient handling of large files through
+  streaming
+
+### Content-Addressed Storage Design
+
+**CRITICAL**: Files are stored **without file extensions** in the
+content-addressed storage system:
+
+- **Storage Path**: `root_dir/data/{hash[:2]}/{hash[2:]}` (e.g.,
+  `data/ab/cdef1234...`)
+- **No Extensions**: Original `.csv`, `.txt`, `.json` extensions are not
+  preserved in storage
+- **Metadata Storage**: File extensions are stored as metadata in the `File`
+  entity's `name` attribute
+- **Extension Restoration**: When files are downloaded or accessed, they get
+  their original names back
+- **Content Integrity**: Files are identified purely by content hash,
+  ensuring data integrity
+- **Deduplication**: Identical content (regardless of original filename) is
+  stored only once
 
 ## Simplified Architecture (2024 Overhaul)
 
@@ -51,7 +75,11 @@ linear-only history:
 **ContentStore** (`kirin/storage.py`):
 
 - Content-addressed storage using fsspec backends
-- Files stored at `root_dir/data/{hash[:2]}/{hash[2:]}`
+- Files stored at `root_dir/data/{hash[:2]}/{hash[2:]}` **without file
+  extensions**
+- File extensions are metadata stored in the `File` entity's `name` attribute
+- Storage is extension-agnostic (content is stored as pure hash)
+- Extensions are restored when files are downloaded/accessed
 - Methods: `store_file()`, `store_content()`, `retrieve()`, `exists()`
 - Supports local filesystem, S3, GCS, Azure, etc.
 
@@ -59,7 +87,8 @@ linear-only history:
 
 - Linear commit history storage in JSON format
 - Single file per dataset: `root_dir/datasets/{name}/commits.json`
-- Methods: `save_commit()`, `get_commit()`, `get_latest_commit()`, `get_commit_history()`
+- Methods: `save_commit()`, `get_commit()`, `get_latest_commit()`,
+  `get_commit_history()`
 
 ### Removed Components
 
@@ -106,10 +135,13 @@ history = ds.history(limit=10)
 
 ### UI Framework: shadcn/ui
 
-This project uses **shadcn/ui** as the design system for all user interface components. When working on the web UI:
+This project uses **shadcn/ui** as the design system for all user interface
+components. When working on the web UI:
 
-- **Use shadcn/ui components and styling patterns** - All UI elements should follow shadcn/ui design principles
-- **CSS Variables** - The project uses CSS custom properties defined in the `:root` selector for consistent theming:
+- **Use shadcn/ui components and styling patterns** - All UI elements should
+  follow shadcn/ui design principles
+- **CSS Variables** - The project uses CSS custom properties defined in the
+  `:root` selector for consistent theming:
   - `--background`, `--foreground` for text and backgrounds
   - `--card`, `--card-foreground` for panel backgrounds
   - `--primary`, `--primary-foreground` for primary actions
@@ -123,7 +155,8 @@ This project uses **shadcn/ui** as the design system for all user interface comp
 
 **Component Classes** - Use the established component classes:
 
-- `.btn` with variants: `.btn-primary`, `.btn-secondary`, `.btn-ghost`, `.btn-destructive`
+- `.btn` with variants: `.btn-primary`, `.btn-secondary`, `.btn-ghost`,
+  `.btn-destructive`
 - `.input` for form inputs
 - `.panel` for card-like containers
 - `.panel-header` and `.panel-title` for panel headers
@@ -140,11 +173,15 @@ This project uses **shadcn/ui** as the design system for all user interface comp
 
 ### CSS Architecture & Best Practices
 
-**External Stylesheet System** - The project uses a centralized CSS architecture with all common styles in `/gitdata/static/styles.css`:
+**External Stylesheet System** - The project uses a centralized CSS
+architecture with all common styles in `/gitdata/static/styles.css`:
 
-- **Base Template** - `base.html` includes the external stylesheet via `<link rel="stylesheet" href="/static/styles.css">`
-- **No CSS Duplication** - All common component styles are defined once in the external file
-- **Page-Specific Styles** - Only use `{% block extra_styles %}` for truly page-specific CSS that can't be reused
+- **Base Template** - `base.html` includes the external stylesheet via
+  `<link rel="stylesheet" href="/static/styles.css">`
+- **No CSS Duplication** - All common component styles are defined once in
+  the external file
+- **Page-Specific Styles** - Only use `{% block extra_styles %}` for truly
+  page-specific CSS that can't be reused
 
 **Template Structure Guidelines**:
 
@@ -193,12 +230,17 @@ This project uses **shadcn/ui** as the design system for all user interface comp
 
 **Component Standards**:
 
-- **File Icons**: Always 16px x 16px (`width: 16px; height: 16px`), use `.file-icon` class, `color: hsl(var(--muted-foreground)); opacity: 0.6;`
-- **Panels**: Always use `.panel` > `.panel-header` > `.panel-content` structure, `padding: 1.25rem 1.5rem` for headers, `padding: 1.5rem` for content, `border: 1px solid hsl(var(--border))`
+- **File Icons**: Always 16px x 16px (`width: 16px; height: 16px`), use
+  `.file-icon` class, `color: hsl(var(--muted-foreground)); opacity: 0.6;`
+- **Panels**: Always use `.panel` > `.panel-header` > `.panel-content`
+  structure, `padding: 1.25rem 1.5rem` for headers, `padding: 1.5rem` for
+  content, `border: 1px solid hsl(var(--border))`
 
 **Common Mistakes to Avoid**:
+
 ❌ **DON'T** copy CSS from other templates - use the external stylesheet
-❌ **DON'T** use generic CSS classes like `bg-white`, `rounded-lg`, `shadow-md`
+❌ **DON'T** use generic CSS classes like `bg-white`, `rounded-lg`,
+  `shadow-md`
 ❌ **DON'T** create custom styling that doesn't match the design system
 ❌ **DON'T** add common component styles to individual templates
 
@@ -231,7 +273,9 @@ This project uses **shadcn/ui** as the design system for all user interface comp
 
 ### Linting Guidelines
 
-**IMPORTANT**: Only fix linting errors that cannot be automatically fixed by linters like ruff. The project has pre-commit hooks that handle automatic linting fixes (formatting, import sorting, etc.). Focus on:
+**IMPORTANT**: Only fix linting errors that cannot be automatically fixed by
+linters like ruff. The project has pre-commit hooks that handle automatic
+linting fixes (formatting, import sorting, etc.). Focus on:
 
 - Logic errors and bugs that require manual intervention
 - Issues that cannot be automatically resolved by linters
@@ -244,18 +288,23 @@ This project uses **shadcn/ui** as the design system for all user interface comp
 - Line length issues (handled by formatters)
 - Whitespace and spacing (handled by formatters)
 
-The pre-commit hooks will automatically handle these formatting issues, so focus on substantive code improvements.
+The pre-commit hooks will automatically handle these formatting issues, so
+focus on substantive code improvements.
 
 ### Logging Standards
 
-**CRITICAL**: This project uses **loguru** for all logging throughout the codebase. Never use the standard Python `logging` module.
+**CRITICAL**: This project uses **loguru** for all logging throughout the
+codebase. Never use the standard Python `logging` module.
 
 **Logging Requirements**:
 
 - **Always use loguru**: Import with `from loguru import logger`
-- **Never use standard logging**: Do not use `import logging` or `logging.getLogger()`
-- **Consistent formatting**: Use the configured loguru format for all log messages
-- **Performance logging**: Use `PERF:` prefix for performance-related log messages
+- **Never use standard logging**: Do not use `import logging` or
+  `logging.getLogger()`
+- **Consistent formatting**: Use the configured loguru format for all log
+  messages
+- **Performance logging**: Use `PERF:` prefix for performance-related log
+  messages
 
 **Implementation Pattern**:
 
@@ -279,22 +328,84 @@ The web UI configures loguru with a specific format that includes:
 - Module, function, and line number in cyan
 - Message content
 
-All new code must follow this logging standard to maintain consistency across the project.
+All new code must follow this logging standard to maintain consistency across
+the project.
 
 ### Static File Serving
 
-The application is configured to serve static files from the `/gitdata/static/` directory:
+The application is configured to serve static files from the
+`/gitdata/static/` directory:
 
 - **CSS Files** - Place all stylesheets in `/gitdata/static/` directory
 - **Static Mount** - FastAPI StaticFiles is mounted at `/static` route
 - **CSS Reference** - Templates reference CSS via `/static/styles.css`
-- **Development** - Use `pixi run python -m gitdata.web_ui` to start the server with auto-reload
+- **Development** - Use `pixi run python -m gitdata.web_ui` to start the
+  server with auto-reload
+
+### Pixi Environment Management
+
+**CRITICAL**: The Kirin project uses **pixi** for dependency management and
+environment setup. All Python commands for testing and running the project
+must be executed within the pixi environment:
+
+- **Testing Commands**: Always use `pixi run python -m pytest` or
+  `pixi run python script.py`
+- **Development Server**: Use `pixi run python -m gitdata.web_ui` to start
+  the server
+- **Kirin UI**: Use `pixi run gitdata ui` to run the Kirin web interface
+- **CLI Commands**: Use `pixi run python -m gitdata.cli` for command-line
+  operations
+
+**Note**: The Kirin project does not use debugging scripts like
+`debug_script.py`.
+
+**Critical**: Never run Python commands directly without the `pixi run`
+prefix, as this will use the system Python instead of the project's managed
+environment with all required dependencies.
+
+### Testing Dependencies
+
+**CRITICAL**: When adding testing dependencies, use the pixi environment
+management:
+
+- **Check pyproject.toml first**: Always inspect `pyproject.toml` to see what
+  features and environments exist before adding dependencies
+- **Conda-installable packages**: `pixi add -f <feature_name> <package_name>`
+- **PyPI-only packages**: `pixi add -f <feature_name> --pypi <package_name>`
+- **Test environment**: Use `pixi run -e <environment_name> python script.py`
+  to run tests with test dependencies
+
+**Examples**:
+
+```bash
+# Check pyproject.toml first to see available features
+# Then add dependencies to the correct feature
+pixi add -f tests --pypi httpx
+
+# Run tests with test dependencies
+pixi run -e tests python test_ui.py
+```
+
+**Key Points**:
+
+- **Always check pyproject.toml first** - Look for
+  `[tool.pixi.environments]` and `[tool.pixi.feature.*]` sections
+- **Use correct feature names** - The feature name in `pixi add -f <feature>`
+  must match what's defined in pyproject.toml
+- **Use correct environment names** - The environment name in
+  `pixi run -e <env>` must match what's defined in
+  `[tool.pixi.environments]`
+
+This ensures testing dependencies are properly managed and isolated from the
+main project dependencies.
 
 ## Web UI Implementation
 
 ### Commit Cache Management
 
-The web UI uses a caching system to improve performance when displaying commits. **Critical**: The commit cache must be invalidated after any commit operations to ensure the UI shows the latest data.
+The web UI uses a caching system to improve performance when displaying
+commits. **Critical**: The commit cache must be invalidated after any commit
+operations to ensure the UI shows the latest data.
 
 - **Cache Key**: `(dataset_name, dataset_root_dir)` tuple
 - **Cache TTL**: Configurable time-to-live for cache entries
@@ -311,7 +422,8 @@ if cache_key in commit_cache:
     logger.info(f"Cleared commit cache for dataset: {current_dataset.dataset_name}")
 ```
 
-**Failure to invalidate cache** results in stale commit lists where new commits don't appear in the UI, even though they exist in the dataset.
+**Failure to invalidate cache** results in stale commit lists where new
+commits don't appear in the UI, even though they exist in the dataset.
 
 ### File Upload Validation
 
@@ -331,7 +443,8 @@ The commit endpoint supports multiple operation types:
 
 ### Temporary File Handling
 
-When processing file uploads, the system uses temporary directories that must be properly managed:
+When processing file uploads, the system uses temporary directories that must
+be properly managed:
 
 ```python
 temp_dir = tempfile.mkdtemp()
@@ -344,39 +457,115 @@ finally:
         shutil.rmtree(temp_dir)
 ```
 
-**Critical**: The commit operation must happen **before** the temporary directory cleanup, otherwise files will be deleted before the commit can access them.
+**Critical**: The commit operation must happen **before** the temporary
+directory cleanup, otherwise files will be deleted before the commit can
+access them.
+
+### Template Escaping for Special Characters
+
+**CRITICAL**: When working with filenames containing special characters in
+HTML templates, proper escaping is essential to avoid JavaScript syntax
+errors.
+
+**Problem**: Filenames with special characters (spaces, quotes, etc.) can
+break JavaScript when used in inline `onclick` attributes.
+
+**Solution**: Use data attributes instead of inline JavaScript for complex
+strings:
+
+```html
+<!-- ❌ WRONG - Inline JavaScript with special characters -->
+<button onclick="openPreview('{{ file.name|e }}')" class="btn btn-ghost btn-sm">
+
+<!-- ❌ WRONG - JSON escaping can break HTML parsing -->
+<button onclick="openPreview({{ file.name|tojson }})" class="btn btn-ghost btn-sm">
+
+<!-- ✅ CORRECT - Data attributes approach -->
+<button onclick="openPreview(this.dataset.filename)"
+        data-filename="{{ file.name|e }}"
+        class="btn btn-ghost btn-sm">
+```
+
+**Key Principles**:
+
+- **Use data attributes**: Store complex strings in `data-*` attributes, not
+  inline JavaScript
+- **HTML escaping for data attributes**: Use `|e` filter for HTML attribute
+  values
+- **JavaScript access**: Use `this.dataset.attributeName` to access data
+  attributes
+- **Avoid inline JavaScript**: Complex strings with spaces/special chars
+  break HTML parsing
+
+**Example Implementation**:
+
+```html
+<!-- Template -->
+<button onclick="openPreview(this.dataset.filename)"
+        data-filename="{{ file.name|e }}"
+        class="btn btn-ghost btn-sm">
+
+<!-- JavaScript -->
+function openPreview(fileName) {
+    // fileName comes from this.dataset.filename
+    // No need for additional escaping
+}
+```
+
+**Why This Works**:
+
+- **HTML parsing**: Data attributes are properly handled by HTML parsers
+- **No JavaScript syntax errors**: No complex strings in inline JavaScript
+- **Proper escaping**: HTML entities (`&#39;`) work correctly in data
+  attributes
+- **Robust**: Handles any filename with spaces, quotes, or special
+  characters
 
 ### Error Handling Patterns
 
 The web UI follows consistent error handling patterns:
 
-- **400 Bad Request**: Invalid input (no dataset loaded, no operations specified)
+- **400 Bad Request**: Invalid input (no dataset loaded, no operations
+  specified)
 - **404 Not Found**: File not found for removal operations
-- **422 Unprocessable Content**: Form validation errors (fixed by making file uploads optional)
+- **422 Unprocessable Content**: Form validation errors (fixed by making file
+  uploads optional)
 - **500 Internal Server Error**: Unexpected errors with detailed logging
 
-All error responses include user-friendly HTML with appropriate styling using the design system components.
+All error responses include user-friendly HTML with appropriate styling using
+the design system components.
 
 ## Development Environment
 
 ### Pixi Environment
 
-This project uses **pixi** for dependency management and environment setup. All shell commands for testing and running the project must be executed within the pixi environment:
+This project uses **pixi** for dependency management and environment setup.
+All shell commands for testing and running the project must be executed within
+the pixi environment:
 
-- **Testing Commands**: Always use `pixi run python -m pytest` or `pixi run python script.py`
-- **Development Server**: Use `pixi run python -m gitdata.web_ui` to start the server
+- **Testing Commands**: Always use `pixi run python -m pytest` or
+  `pixi run python script.py`
+- **Development Server**: Use `pixi run python -m gitdata.web_ui` to start
+  the server
 - **Kirin UI**: Use `pixi run gitdata ui` to run the Kirin web interface
-- **CLI Commands**: Use `pixi run python -m gitdata.cli` for command-line operations
+- **CLI Commands**: Use `pixi run python -m gitdata.cli` for command-line
+  operations
 
-**Note**: The Kirin project does not use debugging scripts like `debug_script.py`.
+**Note**: The Kirin project does not use debugging scripts like
+`debug_script.py`.
 
-**Critical**: Never run Python commands directly without the `pixi run` prefix, as this will use the system Python instead of the project's managed environment with all required dependencies.
+**Critical**: Never run Python commands directly without the `pixi run`
+prefix, as this will use the system Python instead of the project's managed
+environment with all required dependencies.
 
-**Note**: Do not run the web UI server for the user - they will handle running the application themselves when needed.
+**Note**: Do not run the web UI server for the user - they will handle
+running the application themselves when needed.
 
 ### Script Metadata Requirements
 
-**MANDATORY**: All Python scripts must include PEP723-style inline script metadata for dependency management. This ensures scripts can be run with proper dependency resolution.
+**MANDATORY**: All Python scripts must include PEP723-style inline script
+metadata for dependency management. This ensures scripts can be run with
+proper dependency resolution.
 
 **Required Pattern**:
 
@@ -399,17 +588,23 @@ This project uses **pixi** for dependency management and environment setup. All 
 
 - **Python Version**: Always specify `requires-python = ">=3.13"`
 - **Kirin Dependency**: Include `gitdata==0.0.1` in dependencies
-- **Editable Source**: Use `[tool.uv.sources]` with `gitdata = { path = "../", editable = true }`
+- **Editable Source**: Use `[tool.uv.sources]` with
+  `gitdata = { path = "../", editable = true }`
 - **Additional Dependencies**: Include any other libraries the script needs
-- **Metadata Block**: Must be at the very top of the file, before any imports
+- **Metadata Block**: Must be at the very top of the file, before any
+  imports
 
 ### The Notebook - Kirin Capabilities Showcase
 
-The project includes a Marimo notebook at `notebooks/prototype.py` that serves as the primary showcase for Kirin's capabilities. This notebook demonstrates:
+The project includes a Marimo notebook at `notebooks/prototype.py` that serves
+as the primary showcase for Kirin's capabilities. This notebook demonstrates:
 
-- **File Access Patterns**: How to work with remote files using the context manager
-- **Lazy Loading**: Demonstrating that files are only downloaded when accessed
-- **Integration Examples**: Real-world usage with libraries like Marimo, Polars, etc.
+- **File Access Patterns**: How to work with remote files using the context
+  manager
+- **Lazy Loading**: Demonstrating that files are only downloaded when
+  accessed
+- **Integration Examples**: Real-world usage with libraries like Marimo,
+  Polars, etc.
 - **Visualization**: Commit history and dataset exploration
 
 **Notebook Guidelines**:
@@ -417,10 +612,14 @@ The project includes a Marimo notebook at `notebooks/prototype.py` that serves a
 - **Keep it updated** - Add new capabilities and examples to the notebook
 - **Use real examples** - Show actual use cases, not just toy examples
 - **Document patterns** - Include comments explaining the Kirin patterns
-- **Test regularly** - Use `uvx marimo check notebooks/prototype.py` to validate the notebook
+- **Test regularly** - Use `uvx marimo check notebooks/prototype.py` to
+  validate the notebook
 - **Interactive demos** - Make it runnable and educational
-- **MANDATORY: Inline Script Metadata** - All notebooks MUST contain PEP723-style inline script metadata for dependency management
-- **CRITICAL: Always Run Marimo Check** - ALWAYS run `uvx marimo check` on any notebook after editing it to ensure it's valid and has no cell conflicts
+- **MANDATORY: Inline Script Metadata** - All notebooks MUST contain
+  PEP723-style inline script metadata for dependency management
+- **CRITICAL: Always Run Marimo Check** - ALWAYS run `uvx marimo check` on
+  any notebook after editing it to ensure it's valid and has no cell
+  conflicts
 
 **Marimo Notebook Best Practices**:
 
@@ -456,9 +655,11 @@ def _(dataset, temp_dir):
 - **Simple Cell Names** - Use `_()` for all cells to avoid complexity
 - **No Test Functions** - Execute workflow steps directly in cells
 - **No Fixtures** - Each cell does what it needs to do
-- **Clear Dependencies** - Use explicit parameter names to declare what variables each cell needs
+- **Clear Dependencies** - Use explicit parameter names to declare what
+  variables each cell needs
 - **Return Variables** - Always return variables that subsequent cells need
-- **Display Output** - Always assign display objects to variables and explicitly display them
+- **Display Output** - Always assign display objects to variables and
+  explicitly display them
 
 **Notebook Validation**:
 
@@ -474,12 +675,19 @@ uvx marimo run notebooks/prototype.py
 
 When writing tests for the project:
 
-- **Always write tests in the test suite** - Place test files in the `/tests/` directory following the existing naming conventions
-- **Use the test environment** - Always run tests with `pixi run -e tests pytest` or `pixi run -e tests pytest tests/test_filename.py`
-- **Test new functionality immediately** - Write tests for new features before or alongside implementation
-- **Follow existing test patterns** - Use the same structure and naming conventions as existing tests in the test suite
-- **Use pytest function style only** - Write tests as functions, not classes. Use `def test_function_name():` pattern
-- **No test classes** - Avoid `class TestSomething:` patterns. Use function-based tests with descriptive names
+- **Always write tests in the test suite** - Place test files in the
+  `/tests/` directory following the existing naming conventions
+- **Use the test environment** - Always run tests with
+  `pixi run -e tests pytest` or
+  `pixi run -e tests pytest tests/test_filename.py`
+- **Test new functionality immediately** - Write tests for new features
+  before or alongside implementation
+- **Follow existing test patterns** - Use the same structure and naming
+  conventions as existing tests in the test suite
+- **Use pytest function style only** - Write tests as functions, not
+  classes. Use `def test_function_name():` pattern
+- **No test classes** - Avoid `class TestSomething:` patterns. Use
+  function-based tests with descriptive names
 
 **Pytest-Style Test Functions** (PREFERRED):
 
@@ -513,29 +721,44 @@ class TestLocalStateManager:
 
 **Documentation and Examples**:
 
-- **Tests are the primary demonstration** - Tests serve as the main way to show functionality and usage patterns
-- **No example scripts needed** - Do not create standalone example scripts to demonstrate functionality
-- **Comprehensive test coverage** - Write tests that cover both basic usage and edge cases
-- **Test documentation** - Use descriptive test names and docstrings to explain what each test demonstrates
-- **Real-world scenarios** - Write tests that reflect actual usage patterns and workflows
+- **Tests are the primary demonstration** - Tests serve as the main way to
+  show functionality and usage patterns
+- **No example scripts needed** - Do not create standalone example scripts
+  to demonstrate functionality
+- **Comprehensive test coverage** - Write tests that cover both basic usage
+  and edge cases
+- **Test documentation** - Use descriptive test names and docstrings to
+  explain what each test demonstrates
+- **Real-world scenarios** - Write tests that reflect actual usage patterns
+  and workflows
 
 ## Design Document Reference
 
 ### Code Changes and Design Alignment
 
-**CRITICAL**: When making changes to the codebase, always refer back to the design document (`docs/design.md`) and explicitly mention where in the design document the choice was made. This ensures:
+**CRITICAL**: When making changes to the codebase, always refer back to the
+design document (`docs/design.md`) and explicitly mention where in the design
+document the choice was made. This ensures:
 
-- **Design Consistency**: All implementation decisions align with the documented architecture
-- **Design Evolution**: Real usage patterns can inform design document updates
-- **Traceability**: Clear connection between design decisions and implementation
-- **Documentation Maintenance**: Design document stays current with actual usage
+- **Design Consistency**: All implementation decisions align with the
+  documented architecture
+- **Design Evolution**: Real usage patterns can inform design document
+  updates
+- **Traceability**: Clear connection between design decisions and
+  implementation
+- **Documentation Maintenance**: Design document stays current with actual
+  usage
 
 **Required Process**:
 
-1. **Before Making Changes**: Review the relevant sections of `docs/design.md`
-2. **During Implementation**: Reference specific design document sections that justify the approach
-3. **After Changes**: Note any discrepancies between design and implementation that may require design document updates
-4. **Design Document Updates**: When real usage reveals design issues, update the design document accordingly
+1. **Before Making Changes**: Review the relevant sections of
+   `docs/design.md`
+2. **During Implementation**: Reference specific design document sections
+   that justify the approach
+3. **After Changes**: Note any discrepancies between design and
+  implementation that may require design document updates
+4. **Design Document Updates**: When real usage reveals design issues,
+  update the design document accordingly
 
 **Example Reference Format**:
 
@@ -546,19 +769,26 @@ decision]. However, real usage has revealed [specific issue], suggesting we may
 need to update the design document to reflect [proposed change].
 ```
 
-This process ensures the design document remains a living document that accurately reflects both the intended architecture and the lessons learned from actual implementation and usage.
+This process ensures the design document remains a living document that
+accurately reflects both the intended architecture and the lessons learned
+from actual implementation and usage.
 
 ## Documentation Standards
 
 ### Writing Style Guidelines
 
-**CRITICAL**: When writing documentation, sacrifice grammar for concision. This means:
+**CRITICAL**: When writing documentation, sacrifice grammar for concision.
+This means:
 
-- **Prioritize clarity over perfect grammar** - Use incomplete sentences if they're clearer
-- **Use bullet points and fragments** - Don't force complete sentences everywhere
-- **Be direct and concise** - Get to the point quickly without unnecessary words
+- **Prioritize clarity over perfect grammar** - Use incomplete sentences if
+  they're clearer
+- **Use bullet points and fragments** - Don't force complete sentences
+  everywhere
+- **Be direct and concise** - Get to the point quickly without unnecessary
+  words
 - **Use active voice** - "Do this" instead of "This should be done"
-- **Break rules for readability** - Grammar rules can be bent for better understanding
+- **Break rules for readability** - Grammar rules can be bent for better
+  understanding
 
 **Examples**:
 
@@ -568,24 +798,28 @@ This process ensures the design document remains a living document that accurate
 - **Never use standard logging**: Do not use `import logging`
 
 <!-- Avoid: Overly formal and wordy -->
-- **You should always use loguru**: You should import it with `from loguru import logger`
+- **You should always use loguru**: You should import it with
+  `from loguru import logger`
 - **You should never use standard logging**: You should not use `import logging`
 ```
 
 ### Markdown Style Guidelines
 
-All Markdown documentation in the project must follow **Markdownlint** rules for consistency and quality. This ensures:
+All Markdown documentation in the project must follow **Markdownlint** rules
+for consistency and quality. This ensures:
 
 - **Consistent formatting** across all documentation files
 - **Improved readability** for developers and contributors
 - **Automated linting** can catch style issues early
 - **Professional appearance** in rendered documentation
 
-**Required**: All Markdown files must pass Markdownlint validation with zero errors.
+**Required**: All Markdown files must pass Markdownlint validation with zero
+errors.
 
 **Installation and Usage**:
 
-- The user already has `markdownlint-cli` installed - only offer to install it if it's not available
+- The user already has `markdownlint-cli` installed - only offer to install
+  it if it's not available
 - Run `markdownlint <filename>` on any Markdown file before committing
 - All documentation changes must pass markdownlint validation
 
@@ -615,22 +849,27 @@ markdownlint docs/*.md
 markdownlint docs/design.md
 ```
 
-**Required Workflow**: Run markdownlint on any Markdown file that is created or edited before committing changes.
+**Required Workflow**: Run markdownlint on any Markdown file that is created
+or edited before committing changes.
 
-**CRITICAL**: Always run markdownlint on any markdown file edits to ensure consistency and quality. This is mandatory for all markdown file changes.
+**CRITICAL**: Always run markdownlint on any markdown file edits to ensure
+consistency and quality. This is mandatory for all markdown file changes.
 
 **MANDATORY PROCESS**:
 
-1. **Run markdownlint CLI**: Always run `markdownlint <filename>` on every Markdown
-   file that is edited
-2. **Fix ALL issues**: Every single issue that markdownlint reports must be fixed
-3. **Zero tolerance**: No markdownlint errors are acceptable - all must be resolved
-4. **Re-run until clean**: Continue running markdownlint until the file passes with
-   zero errors
-5. **Before committing**: Never commit a Markdown file that has markdownlint errors
+1. **Run markdownlint CLI**: Always run `markdownlint <filename>` on every
+   Markdown file that is edited
+2. **Fix ALL issues**: Every single issue that markdownlint reports must be
+   fixed
+3. **Zero tolerance**: No markdownlint errors are acceptable - all must be
+   resolved
+4. **Re-run until clean**: Continue running markdownlint until the file
+   passes with zero errors
+5. **Before committing**: Never commit a Markdown file that has markdownlint
+   errors
 
-**BULK LINTING**: When working on multiple Markdown files, run markdownlint on all
-files at once to identify issues across the entire documentation set:
+**BULK LINTING**: When working on multiple Markdown files, run markdownlint
+on all files at once to identify issues across the entire documentation set:
 
 ```bash
 # Lint all Markdown files in the repository
@@ -650,22 +889,29 @@ fd -e md | xargs markdownlint
 
 ## Repository Cleanup Standards
 
-**CRITICAL**: After major architectural changes, always clean up unnecessary files to maintain a clean repository.
+**CRITICAL**: After major architectural changes, always clean up unnecessary
+files to maintain a clean repository.
 
 **Files to Remove After Architecture Changes**:
 
 - **Build artifacts**: Remove `build/`, `*.egg-info/` directories
-- **Temporary files**: Remove temporary files created during development (e.g., `*_new.py`)
-- **Outdated documentation**: Remove docs for features that no longer exist (e.g., `branching.md`)
-- **Outdated scripts**: Remove scripts that test removed functionality (e.g., branch switching, git semantics)
-- **Outdated tests**: Remove test files that import removed classes or test removed functionality
+- **Temporary files**: Remove temporary files created during development
+  (e.g., `*_new.py`)
+- **Outdated documentation**: Remove docs for features that no longer exist
+  (e.g., `branching.md`)
+- **Outdated scripts**: Remove scripts that test removed functionality (e.g.,
+  branch switching, git semantics)
+- **Outdated tests**: Remove test files that import removed classes or test
+  removed functionality
 - **Dummy files**: Remove test dummy files that are no longer needed
 - **Backup files**: Remove `.bak` files and other backup artifacts
 
 **Cleanup Process**:
 
-1. **Identify outdated files** - Look for files referencing removed functionality
-2. **Check file contents** - Verify files are actually outdated, not just renamed
+1. **Identify outdated files** - Look for files referencing removed
+   functionality
+2. **Check file contents** - Verify files are actually outdated, not just
+   renamed
 3. **Remove systematically** - Delete files one by one to avoid mistakes
 4. **Verify removal** - Ensure no imports or references are broken
 5. **Update documentation** - Remove references to deleted files in docs
@@ -678,14 +924,160 @@ fd -e md | xargs markdownlint
 - Build artifacts from old architecture
 - Temporary development files
 
+## Notebook Prototype Updates
+
+**CRITICAL**: When updating the prototype notebook (`notebooks/prototype.py`),
+ensure it showcases the current architecture and capabilities.
+
+**Notebook Update Requirements**:
+
+- **Update Dependencies**: Change from `gitdata==0.0.1` to `kirin==0.0.1` in
+  script metadata
+- **Update Imports**: Use `from kirin import Dataset, File, Commit` instead
+  of old imports
+- **Showcase New API**: Demonstrate linear commit history, content-addressed
+  storage, and ergonomic Python API
+- **Real Examples**: Use practical data science workflows (CSV processing,
+  file operations, commit history)
+- **Architecture Diagrams**: Include visual representations of the new
+  simplified architecture
+- **Key Benefits**: Highlight linear versioning, content integrity, and
+  backend flexibility
+
+**Notebook Content Structure**:
+
+1. **Setup and Imports** - Import Kirin and dependencies
+2. **Dataset Creation** - Create sample dataset with realistic data
+3. **Commit Operations** - Demonstrate linear commit history
+4. **File Access** - Show context managers and file operations
+5. **Data Processing** - Integrate with data science libraries (Polars,
+   etc.)
+6. **Checkout Operations** - Demonstrate version switching
+7. **Architecture Overview** - Visual diagrams and key benefits
+8. **API Examples** - Code snippets showing ergonomic usage
+
+**Notebook Best Practices**:
+
+- **Use Real Data**: Create realistic sample datasets (sales data, notes,
+  etc.)
+- **Progressive Complexity**: Start simple, build up to advanced features
+- **Interactive Elements**: Use Marimo's display capabilities effectively
+- **Error Handling**: Show how Kirin handles edge cases gracefully
+- **Performance**: Demonstrate lazy loading and efficient storage
+
+**Marimo Notebook Structure**:
+
+- **Consolidated Imports**: All imports in the first cell for better
+  organization
+- **Meaningful Returns**: Each cell should return values that other cells
+  can use
+- **Combined Operations**: Group related operations in single cells to
+  reduce fragmentation
+- **Reactive Dependencies**: Ensure proper variable dependencies between
+  cells
+- **Clean Structure**: Remove empty cells and unnecessary whitespace
+- **Consistent Naming**: Use descriptive variable names throughout
+
+**MANDATORY**: Always run `uvx marimo check /path/to/notebook.py` whenever we
+edit a notebook.
+
+**Notebook Validation Process**:
+
+1. **Edit Notebook**: Make changes to the notebook file
+2. **Run Marimo Check**: Execute `uvx marimo check /path/to/notebook.py`
+3. **Fix Issues**: Address any validation errors or warnings
+4. **Re-run Check**: Continue until the notebook passes validation
+5. **Verify Functionality**: Ensure the notebook runs correctly
+
+**Common Marimo Check Issues**:
+
+- **Cell Dependencies**: Ensure proper variable dependencies between cells
+- **Return Statements**: All cells must return variables or have explicit
+  return statements
+- **Import Organization**: Keep imports at the top of cells
+- **Variable Naming**: Use consistent variable naming patterns
+- **Cell Structure**: Maintain proper cell structure and organization
+
 **Common Issues to Avoid**:
 
 - ❌ Inconsistent heading levels (skipping from H1 to H3)
 - ❌ Long lines without proper wrapping
+- ❌ **Temporary Directory Issues**: Never create datasets inside
+  `tempfile.TemporaryDirectory()` context managers that get cleaned up
+- ❌ **Content Storage Issues**: Ensure dataset root directories persist for
+  the lifetime of File objects
+- ❌ **Variable Naming Conflicts**: Use unique variable names across all
+  cells
+- ❌ **Empty Cells**: Remove cells that contain only whitespace, comments,
+  or pass statements
+- ❌ **Missing Return Values**: All cells should return meaningful values for
+  reactive dependencies
+- ❌ **Fragmented Logic**: Combine related operations into single cells for
+  better organization
 - ❌ Inconsistent list formatting
 - ❌ Missing language specification in code blocks
 - ❌ Trailing whitespace
 - ❌ Multiple consecutive blank lines
+
+## Marimo Markdown Cell Pattern
+
+**CRITICAL**: When writing markdown cells in Marimo notebooks, use the string
+concatenation pattern instead of f-strings or multi-line strings with
+`mo.md()`.
+
+**Required Pattern**:
+
+```python
+# ✅ CORRECT - String concatenation pattern
+str_content = ""
+str_content += "**Section Title:**\n"
+str_content += f"- **Item 1**: {variable1}\n"
+str_content += f"- **Item 2**: {variable2}\n"
+str_content += "\n**Subsection:**\n"
+str_content += "```python\n"
+str_content += "code_example()\n"
+str_content += "```\n"
+
+mo.md(str_content)
+```
+
+**Why This Pattern**:
+
+- **Marimo Compatibility**: Avoids issues with nested f-strings and complex
+  string formatting
+- **Reliable Rendering**: Ensures markdown content renders correctly in
+  Marimo
+- **Maintainable**: Easy to modify and extend markdown content
+- **Consistent**: Works reliably across different Marimo versions
+
+**Avoid These Patterns**:
+
+```python
+# ❌ WRONG - Multi-line f-strings
+mo.md(f"""
+**Section Title:**
+- **Item 1**: {variable1}
+- **Item 2**: {variable2}
+""")
+
+# ❌ WRONG - Nested f-strings in loops
+for item in items:
+    mo.md(f"**{item.title}**: {item.value}")
+
+# ❌ WRONG - Complex string formatting
+mo.md(f"**Title**: {complex_expression if condition else 'default'}")
+```
+
+**Best Practices**:
+
+- **Initialize Empty String**: Always start with `str_content = ""`
+- **Explicit Newlines**: Add `\n` at the end of each line for proper
+  formatting
+- **Consistent Indentation**: Use consistent spacing for code blocks and
+  lists
+- **Single mo.md() Call**: Use only one `mo.md()` call per cell at the end
+- **Variable Substitution**: Use f-strings within the concatenation pattern
+  for dynamic content
 
 **Examples**:
 
@@ -715,22 +1107,29 @@ def example_function():
 
 ### Script Location and Execution Pattern
 
-**CRITICAL**: All Python scripts in the Kirin project follow a specific execution pattern:
+**CRITICAL**: All Python scripts in the Kirin project follow a specific
+execution pattern:
 
 - **Script Location**: All scripts are placed in the `scripts/` directory
-- **Execution Method**: Scripts are run using `uv run` from the scripts directory
+- **Execution Method**: Scripts are run using `uv run` from the scripts
+  directory
 - **Execution Pattern**: `cd scripts && uv run script_name.py`
-- **PEP723 Metadata**: All scripts must include inline script metadata for dependency management
+- **PEP723 Metadata**: All scripts must include inline script metadata for
+  dependency management
 
 ### Ephemeral Scripts for Problem Solving
 
-**ACCEPTABLE**: It's acceptable to create ephemeral scripts for problem solving as long as they are cleaned up once the problem is solved. This allows for quick debugging and testing without cluttering the codebase.
+**ACCEPTABLE**: It's acceptable to create ephemeral scripts for problem
+solving as long as they are cleaned up once the problem is solved. This
+allows for quick debugging and testing without cluttering the codebase.
 
 **Guidelines for Ephemeral Scripts**:
 
-- **Temporary Nature**: Scripts should be created for specific debugging/testing purposes
+- **Temporary Nature**: Scripts should be created for specific
+  debugging/testing purposes
 - **Clean Up**: Always delete ephemeral scripts once the problem is solved
-- **Naming**: Use descriptive names like `debug_commit_history.py` or `test_git_semantics.py`
+- **Naming**: Use descriptive names like `debug_commit_history.py` or
+  `test_git_semantics.py`
 - **Location**: Place in `scripts/` directory for consistency
 
 **Required Pattern**:
@@ -747,14 +1146,19 @@ uv run other_script.py
 **Key Requirements**:
 
 - **Always use `uv run`** - Never use `python` directly
-- **Always run from scripts directory** - Change to `scripts/` directory first
-- **Script naming** - Use descriptive names with underscores (e.g., `create_dummy_dataset.py`)
+- **Always run from scripts directory** - Change to `scripts/` directory
+  first
+- **Script naming** - Use descriptive names with underscores (e.g.,
+  `create_dummy_dataset.py`)
 
 **Benefits of this pattern**:
 
-- **Consistent execution environment** - All scripts use the same dependency resolution
-- **Proper dependency management** - `uv run` handles script dependencies automatically
-- **Isolated execution** - Scripts don't interfere with the main project environment
+- **Consistent execution environment** - All scripts use the same dependency
+  resolution
+- **Proper dependency management** - `uv run` handles script dependencies
+  automatically
+- **Isolated execution** - Scripts don't interfere with the main project
+  environment
 - **Easy maintenance** - All utility scripts are organized in one location
 
 **Examples**:
@@ -775,7 +1179,9 @@ python scripts/create_dummy_dataset.py
 
 ### Propose Solutions First, Then Discuss
 
-**CRITICAL**: When working on building solutions, the user prefers that you propose a solution in chat first for critique, rather than asking questions. This approach:
+**CRITICAL**: When working on building solutions, the user prefers that you
+propose a solution in chat first for critique, rather than asking questions.
+This approach:
 
 - **Saves time** - Avoids back-and-forth question sessions
 - **Shows initiative** - Demonstrates understanding of the problem

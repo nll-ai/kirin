@@ -1,0 +1,98 @@
+<!-- History Tab Content -->
+<div class="space-y-4">
+    {% if commits %}
+    <div class="space-y-2">
+        {% for commit in commits %}
+        <div class="commit-item">
+            <div class="commit-header">
+                <span class="commit-hash">{{ commit.short_hash }}</span>
+                {% if loop.first %}
+                <span class="badge badge-primary">HEAD</span>
+                {% endif %}
+                <span class="commit-message">{{ commit.message }}</span>
+            </div>
+
+            <div class="commit-meta">
+                <span class="commit-timestamp">{{ commit.timestamp }}</span>
+
+                <div class="commit-stats">
+                    {% if commit.files_added > 0 %}
+                    <span class="commit-stat">+{{ commit.files_added }} files</span>
+                    {% endif %}
+                    {% if commit.files_removed > 0 %}
+                    <span class="commit-stat">-{{ commit.files_removed }} files</span>
+                    {% endif %}
+                    {% if commit.total_size > 0 %}
+                    <span class="commit-stat">{{ "%.1f"|format(commit.total_size / (1024*1024)) }} MB</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="flex gap-2 mt-3">
+                <a href="/backend/{{ backend_id }}/{{ dataset_name }}/checkout/{{ commit.hash }}"
+                   class="btn btn-ghost btn-sm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    Browse Files
+                </a>
+                <button onclick="copyHash('{{ commit.hash }}')" class="btn btn-ghost btn-sm">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Copy Hash
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Load More Button -->
+    <div class="text-center py-4">
+        <button class="btn btn-ghost" onclick="loadMoreCommits()">
+            Load More Commits
+        </button>
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-12">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-4 text-muted-foreground">
+            <path d="M3 3v18h18"></path>
+            <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path>
+        </svg>
+        <h3 class="text-lg font-semibold mb-2">No commit history</h3>
+        <p class="text-muted-foreground mb-4">
+            This dataset has no commits yet.
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function copyHash(hash) {
+    navigator.clipboard.writeText(hash).then(() => {
+        // Show a temporary success message
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20,6 9,17 4,12"></polyline>
+            </svg>
+            Copied!
+        `;
+        setTimeout(() => {
+            button.innerHTML = originalText;
+        }, 2000);
+    }).catch(err => {
+        console.error('Failed to copy hash: ', err);
+        alert('Failed to copy hash to clipboard');
+    });
+}
+
+function loadMoreCommits() {
+    // In a real implementation, this would load more commits via HTMX
+    alert('Load more commits functionality would be implemented here');
+}
+</script>
