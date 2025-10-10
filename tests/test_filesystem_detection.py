@@ -36,9 +36,11 @@ def test_s3_filesystem():
         )
         assert "s3" in protocols or "s3a" in protocols
     except ValueError as e:
-        # If s3fs is not installed, should get helpful error message
-        assert "s3fs" in str(e).lower()
-        assert "pip install" in str(e).lower()
+        # Should get error about s3fs not installed or AWS profile not found
+        error_msg = str(e).lower()
+        assert (
+            "s3fs" in error_msg and "pip install" in error_msg
+        ) or "aws profile" in error_msg
 
 
 def test_gcs_filesystem():

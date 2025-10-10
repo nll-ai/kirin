@@ -3,46 +3,83 @@
 import os
 import subprocess
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 
 from loguru import logger
 
 
 def detect_aws_credentials() -> Dict[str, any]:
-    """Detect AWS credentials from system.
+    """Detect AWS credentials from system using boto3.
 
     Returns:
-        dict with 'available', 'source', 'profile', 'region'
+        dict with 'available', 'source', 'profile', 'region', 'account_id', 'user_arn'
     """
     result = {
         "available": False,
         "source": None,
         "region": None,
+        "profile": None,
+        "account_id": None,
+        "user_arn": None,
     }
 
-    # Check environment variables first
-    if os.getenv("AWS_ACCESS_KEY_ID") and os.getenv("AWS_SECRET_ACCESS_KEY"):
-        result["available"] = True
-        result["source"] = "environment"
-        result["region"] = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
-        logger.debug("AWS credentials detected from environment variables")
+    try:
+        import boto3
+        from botocore.exceptions import NoCredentialsError, ProfileNotFound
+    except ImportError:
+        logger.debug("boto3 not available for credential detection")
         return result
 
-    # Check AWS profile
-    profile = os.getenv("AWS_PROFILE", "default")
-    aws_dir = Path.home() / ".aws"
-    credentials_file = aws_dir / "credentials"
+    # Try to get credentials using boto3's credential chain
+    try:
+        # Use the same profile logic as get_filesystem
+        profile_name = os.getenv("AWS_PROFILE", "default")
+        session = boto3.Session(profile_name=profile_name)
+        credentials = session.get_credentials()
 
-    if credentials_file.exists():
+        if not credentials:
+            logger.debug("No AWS credentials found via boto3")
+            return result
+
+        # Get additional info about the credentials
+        sts_client = session.client("sts")
+        try:
+            identity = sts_client.get_caller_identity()
+            result["account_id"] = identity.get("Account")
+            result["user_arn"] = identity.get("Arn")
+        except Exception as e:
+            logger.debug(f"Could not get caller identity: {e}")
+
         result["available"] = True
-        result["source"] = "profile"
-        result["profile"] = profile
-        result["region"] = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
-        logger.debug(f"AWS credentials detected from profile: {profile}")
+        result["source"] = "boto3"
+        result["profile"] = profile_name
+        result["region"] = session.region_name or os.getenv(
+            "AWS_DEFAULT_REGION", "us-east-1"
+        )
+
+        # Try to determine the credential source
+        if hasattr(credentials, "method"):
+            if "sso" in credentials.method.lower():
+                result["source"] = "sso"
+            elif "profile" in credentials.method.lower():
+                result["source"] = "profile"
+            elif "env" in credentials.method.lower():
+                result["source"] = "environment"
+
+        logger.debug(
+            f"AWS credentials detected via boto3: {result['source']} profile={profile_name}"
+        )
         return result
 
-    logger.debug("No AWS credentials detected")
-    return result
+    except ProfileNotFound as e:
+        logger.debug(f"AWS profile '{profile_name}' not found: {e}")
+        return result
+    except NoCredentialsError as e:
+        logger.debug(f"No AWS credentials found: {e}")
+        return result
+    except Exception as e:
+        logger.debug(f"Error detecting AWS credentials: {e}")
+        return result
 
 
 def detect_gcp_credentials() -> Dict[str, any]:

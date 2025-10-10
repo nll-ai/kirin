@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 from typing import List, Union, Optional
 import fsspec
+from loguru import logger
 
 from .dataset import Dataset
 from .utils import get_filesystem, strip_protocol
@@ -27,9 +28,12 @@ class Catalog:
 
         # Set up datasets directory path
         self.datasets_dir = f"{strip_protocol(self.root_dir)}/datasets"
+        logger.debug(f"Datasets directory path: {self.datasets_dir}")
 
-        # Ensure the datasets directory exists
-        self.fs.makedirs(self.datasets_dir, exist_ok=True)
+        # Note: We don't create directories upfront because:
+        # - S3/GCS/Azure: Empty directories don't exist until they contain objects
+        # - Local filesystem: Directories will be created when first dataset is added
+        # This ensures consistent behavior across all filesystems
 
     def __len__(self) -> int:
         """Return the number of datasets in the catalog.
@@ -47,13 +51,23 @@ class Catalog:
         :return: A list of the names of the datasets in the catalog.
         """
         try:
+            # List contents of datasets directory
             dataset_paths = [
                 d for d in self.fs.ls(self.datasets_dir) if self.fs.isdir(d)
             ]
             # Extract dataset names from paths
             return [d.split("/")[-1] for d in dataset_paths]
         except FileNotFoundError:
+            # This is normal - empty catalogs don't have a datasets directory yet
+            # Works consistently across all filesystems (local, S3, GCS, Azure, etc.)
+            logger.debug(
+                f"Datasets directory is empty or doesn't exist yet: {self.datasets_dir}"
+            )
             return []
+        except Exception as e:
+            logger.error(f"Error listing datasets from {self.datasets_dir}: {e}")
+            logger.exception("Full traceback:")
+            return []  # Return empty list instead of crashing
 
     def get_dataset(self, dataset_name: str) -> Dataset:
         """Get a dataset from the catalog.
@@ -70,8 +84,8 @@ class Catalog:
         :param description: The description of the dataset.
         :return: The Dataset object with the given name.
         """
-        dataset_dir = f"{self.datasets_dir}/{dataset_name}"
-        self.fs.makedirs(dataset_dir, exist_ok=True)
+        # Note: We don't create directories here for S3 compatibility
+        # Directories will be created when the first commit happens
         return Dataset(
             root_dir=self.root_dir,
             name=dataset_name,

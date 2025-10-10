@@ -1,14 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}Add Catalog - Kirin{% endblock %}
+{% block title %}{{ page_title }} - Kirin{% endblock %}
 
 {% block breadcrumb %}
 <span class="breadcrumb-separator">></span>
+{% if catalog %}
+<a href="/">Catalogs</a>
+<span class="breadcrumb-separator">></span>
+<span>Edit {{ catalog.name }}</span>
+{% else %}
 <span>Add Catalog</span>
+{% endif %}
 {% endblock %}
 
-{% block header_title %}Add Data Catalog{% endblock %}
-{% block header_description %}Configure a new data catalog for your datasets{% endblock %}
+{% block header_title %}{{ page_title }}{% endblock %}
+{% block header_description %}{{ page_description }}{% endblock %}
 
 {% block content %}
 <div class="max-w-2xl mx-auto">
@@ -31,12 +37,12 @@
             <h2 class="panel-title">Catalog Configuration</h2>
         </div>
         <div class="panel-content">
-            <form method="POST" action="/catalogs/add" class="space-y-6">
+            <form method="POST" action="{{ form_action }}" class="space-y-6">
                 <!-- Catalog Name -->
                 <div class="form-group">
                     <label for="name" class="form-label required">Catalog Name</label>
                     <input type="text" id="name" name="name" class="input" placeholder="My Data Catalog"
-                           value="{{ form_data.name if form_data else '' }}" required>
+                           value="{{ catalog.name if catalog else (form_data.name if form_data else '') }}" required>
                     <p class="text-sm text-muted-foreground mt-1">A friendly name for this data catalog</p>
                 </div>
 
@@ -45,10 +51,21 @@
                     <label for="root_dir" class="form-label required">Root Directory</label>
                     <input type="text" id="root_dir" name="root_dir" class="input"
                            placeholder="/path/to/data or gs://bucket/prefix or s3://bucket/prefix"
-                           value="{{ form_data.root_dir if form_data else '' }}" required>
+                           value="{{ catalog.root_dir if catalog else (form_data.root_dir if form_data else '') }}" required>
                     <p class="text-sm text-muted-foreground mt-1">
                         Local path or cloud URL (gs://, s3://, az://).
                         <a href="#help" onclick="showHelp()" class="underline">See examples</a>
+                    </p>
+                </div>
+
+                <!-- AWS Profile -->
+                <div class="form-group">
+                    <label for="aws_profile" class="form-label">AWS Profile</label>
+                    <select id="aws_profile" name="aws_profile" class="input">
+                        <option value="">Select AWS Profile (optional)</option>
+                    </select>
+                    <p class="text-sm text-muted-foreground mt-1">
+                        AWS profile name for S3 authentication. Leave empty to use default profile or environment variables.
                     </p>
                 </div>
 
@@ -75,7 +92,7 @@
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                         </svg>
-                        Create Catalog
+                        {{ submit_button_text }}
                     </button>
                     <a href="/" class="btn btn-secondary">
                         Cancel
@@ -92,15 +109,68 @@ function showHelp() {
     helpSection.classList.toggle('hidden');
 }
 
+// Load AWS profiles and populate dropdown
+async function loadAwsProfiles() {
+    try {
+        const response = await fetch('/api/aws-profiles');
+        const data = await response.json();
+        const select = document.getElementById('aws_profile');
+
+        // Clear existing options except the first one
+        select.innerHTML = '<option value="">Select AWS Profile (optional)</option>';
+
+        // Add profile options
+        data.profiles.forEach(profile => {
+            const option = document.createElement('option');
+            option.value = profile;
+            option.textContent = profile;
+            select.appendChild(option);
+        });
+
+        // Set current value if editing
+        const currentValue = select.getAttribute('data-current-value');
+        if (currentValue) {
+            select.value = currentValue;
+        }
+    } catch (error) {
+        console.error('Failed to load AWS profiles:', error);
+    }
+}
+
 // Auto-detect storage type from URL
 document.getElementById('root_dir').addEventListener('input', function(e) {
     const value = e.target.value;
-    const helpSection = document.getElementById('help-section');
+    const awsProfileField = document.getElementById('aws_profile');
 
-    if (value.startsWith('gs://') || value.startsWith('s3://') || value.startsWith('az://')) {
-        helpSection.classList.remove('hidden');
-    } else if (value.startsWith('/') || value.startsWith('C:\\') || value.startsWith('D:\\')) {
-        helpSection.classList.add('hidden');
+    if (value.startsWith('s3://')) {
+        // Show AWS profile field for S3 URLs
+        awsProfileField.closest('.form-group').style.display = 'block';
+        // Load profiles when S3 URL is detected
+        loadAwsProfiles();
+    } else {
+        // Hide AWS profile field for non-S3 URLs
+        awsProfileField.closest('.form-group').style.display = 'none';
+        awsProfileField.value = '';
+    }
+});
+
+// Initialize visibility based on current root_dir value
+document.addEventListener('DOMContentLoaded', function() {
+    const rootDirField = document.getElementById('root_dir');
+    const awsProfileField = document.getElementById('aws_profile');
+
+    // Set current value for editing
+    const currentValue = '{{ catalog.aws_profile if catalog else (form_data.aws_profile if form_data else "") }}';
+    if (currentValue) {
+        awsProfileField.setAttribute('data-current-value', currentValue);
+    }
+
+    if (rootDirField.value.startsWith('s3://')) {
+        awsProfileField.closest('.form-group').style.display = 'block';
+        // Load profiles for S3 URLs
+        loadAwsProfiles();
+    } else {
+        awsProfileField.closest('.form-group').style.display = 'none';
     }
 });
 </script>

@@ -28,6 +28,7 @@ def _():
 
     from kirin import Dataset, File, Commit
     from kirin.catalog import Catalog
+
     return Catalog, logger
 
 
