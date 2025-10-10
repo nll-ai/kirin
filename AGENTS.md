@@ -873,6 +873,64 @@ need to update the design document to reflect [proposed change].
 
 This process ensures the design document remains a living document that accurately reflects both the intended architecture and the lessons learned from actual implementation and usage.
 
+## SSL Certificate Management in Isolated Python Environments
+
+**CRITICAL**: When using isolated Python environments (pixi, uv, venv, conda), SSL certificates are not automatically available. This affects HTTPS connections to cloud storage providers.
+
+### The Problem
+
+- **System Python**: Has SSL certificates from system installation
+- **Isolated Environments**: pixi, uv, venv, conda environments lack system SSL certificates
+- **Result**: HTTPS connections fail with `SSLCertVerificationError`
+
+### The Solution
+
+**Automatic Setup (Recommended)**:
+```bash
+# Works with any Python environment - detects automatically
+python -m kirin.setup_ssl
+```
+
+**Manual Setup** (if automatic setup fails):
+```bash
+# The automatic setup script handles this automatically
+# But if you need to do it manually, use the Python executable path:
+python -c "import sys; print('Python path:', sys.executable)"
+# Then create ssl directory next to that path and copy certificates
+```
+
+**For Global Tool Installs**:
+- `pixi global install <tool>` creates separate environments
+- `uv tool install <tool>` also creates isolated environments
+- Each tool environment may need SSL certificates copied separately
+- SSL certificate path is environment-specific and not shared
+
+### Installation Impact
+
+**For End Users**:
+- **Local Development**: Run `python -m kirin.setup_ssl` once per environment
+- **Global Tools**: Each tool installation may need separate SSL certificate setup
+- **Production**: Use system Python or ensure SSL certificates are available in deployment environment
+
+**Best Practices**:
+- Document SSL certificate requirements in installation instructions
+- Provide setup scripts for common environments
+- Consider using system Python for production deployments
+- Test HTTPS connections in all target environments
+
+### Verification
+
+```bash
+# Check SSL paths in any Python environment
+python -c "import ssl; print(ssl.get_default_verify_paths())"
+
+# Test HTTPS connection
+python -c "import requests; r = requests.get('https://storage.googleapis.com'); print('HTTPS works:', r.status_code)"
+
+# Or use the automatic setup
+python -m kirin.setup_ssl
+```
+
 ## Documentation Standards
 
 ### Writing Style Guidelines
