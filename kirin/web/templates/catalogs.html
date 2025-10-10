@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Kirin - Data Catalogs{% endblock %}
+
+{% block header_title %}Data Catalogs{% endblock %}
+{% block header_description %}Manage your data storage locations and datasets{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Add Catalog Button -->
+    <div class="flex justify-end">
+        <a href="/catalogs/add" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Catalog
+        </a>
+    </div>
+
+    <!-- Catalog Cards -->
+    {% if catalogs %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for catalog in catalogs %}
+        <div class="card">
+            <div class="card-header">
+                <div class="flex items-center gap-2">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                        <path d="M8 21v-4a2 2 0 012-2h4a2 2 0 012 2v4"></path>
+                    </svg>
+                    <h3 class="card-title">{{ catalog.name }}</h3>
+                </div>
+                <p class="card-description">
+                    Path: {{ catalog.root_dir }}
+                </p>
+            </div>
+
+            <div class="card-content">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="badge {% if catalog.status == 'connected' %}badge-primary{% elif catalog.status == 'error' %}badge-destructive{% else %}badge{% endif %}">
+                        {% if catalog.status == 'connected' %}Connected{% elif catalog.status == 'error' %}Error{% else %}Unknown{% endif %}
+                    </span>
+                    <span class="text-sm text-muted-foreground">
+                        {{ catalog.dataset_count }} dataset{{ 's' if catalog.dataset_count != 1 else '' }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-footer">
+                <div class="flex gap-2">
+                    <a href="/catalog/{{ catalog.id }}" class="btn btn-primary btn-sm">
+                        View Datasets
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14"></path>
+                            <path d="M12 5l7 7-7 7"></path>
+                        </svg>
+                    </a>
+                    <a href="/catalog/{{ catalog.id }}/edit" class="btn btn-ghost btn-sm">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        Edit
+                    </a>
+                    <a href="/catalog/{{ catalog.id }}/delete" class="btn btn-ghost btn-sm text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3,6 5,6 21,6"></polyline>
+                            <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                        Delete
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="text-center py-12">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-4 text-muted-foreground">
+            <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+            <path d="M8 21v-4a2 2 0 012-2h4a2 2 0 012 2v4"></path>
+        </svg>
+        <h3 class="text-lg font-semibold mb-2">No data catalogs configured</h3>
+        <p class="text-muted-foreground mb-4">
+            Add your first data catalog to start managing datasets
+        </p>
+        <a href="/catalogs/add" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Add Your First Catalog
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

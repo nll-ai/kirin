@@ -1,22 +1,22 @@
 """Pytest configuration for web UI tests."""
 
 import pytest
-from kirin.web.app import backend_manager, dataset_cache
+from kirin.web.app import catalog_manager, dataset_cache
 
 
 @pytest.fixture(autouse=True, scope="session")
-def reset_backend_manager():
-    """Reset backend manager state at the start of test session for isolation."""
-    # Store original backends
-    original_backends = backend_manager._load_backends()
+def reset_catalog_manager():
+    """Reset catalog manager state at the start of test session for isolation."""
+    # Store original catalogs
+    original_catalogs = catalog_manager._load_catalogs()
 
-    # Clear the backend manager at the start of test session
-    backend_manager._save_backends([])
+    # Clear the catalog manager at the start of test session
+    catalog_manager._save_catalogs([])
 
     yield
 
-    # Restore original backends after all tests
-    backend_manager._save_backends(original_backends)
+    # Restore original catalogs after all tests
+    catalog_manager._save_catalogs(original_catalogs)
 
 
 @pytest.fixture(autouse=True)

@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}{{ dataset_name }} - {{ backend_id }} - Kirin{% endblock %}
+{% block title %}{{ dataset_name }} - {{ catalog_id }} - Kirin{% endblock %}
 
 {% block breadcrumb %}
 <span class="breadcrumb-separator">></span>
-<a href="/backend/{{ backend_id }}">{{ backend_id }}</a>
+<a href="/catalog/{{ catalog_id }}">{{ catalog_id }}</a>
 <span class="breadcrumb-separator">></span>
 <span>{{ dataset_name }}</span>
 {% endblock %}
@@ -28,7 +28,7 @@
 {% if checkout_commit %}
 <div class="alert alert-warning">
     <strong>⚠️ Viewing historical commit [{{ checkout_commit[:8] }}] from {{ checkout_timestamp }}</strong><br>
-    This is a read-only view. <a href="/backend/{{ backend_id }}/{{ dataset_name }}" class="underline">Return to HEAD →</a>
+    This is a read-only view. <a href="/catalog/{{ catalog_id }}/{{ dataset_name }}" class="underline">Return to HEAD →</a>
 </div>
 {% endif %}
 
@@ -50,7 +50,7 @@
                 Files
             </button>
             <button class="tab {% if active_tab == 'history' %}active{% endif %}"
-                    hx-get="/backend/{{ backend_id }}/{{ dataset_name }}/history"
+                    hx-get="/catalog/{{ catalog_id }}/{{ dataset_name }}/history"
                     hx-target="#tab-content"
                     hx-indicator="#loading">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -61,7 +61,7 @@
             </button>
             {% if not checkout_commit %}
             <button class="tab {% if active_tab == 'commit' %}active{% endif %}"
-                    hx-get="/backend/{{ backend_id }}/{{ dataset_name }}/commit"
+                    hx-get="/catalog/{{ catalog_id }}/{{ dataset_name }}/commit"
                     hx-target="#tab-content"
                     hx-indicator="#loading">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -155,7 +155,7 @@ function openPreview(fileName) {
 
     // Set title and download link
     title.textContent = fileName;
-    downloadLink.href = `/backend/{{ backend_id }}/{{ dataset_name }}/file/${fileName}/download`;
+    downloadLink.href = `/catalog/{{ catalog_id }}/{{ dataset_name }}/file/${fileName}/download`;
 
     // Show loading state
     content.innerHTML = `
@@ -170,7 +170,7 @@ function openPreview(fileName) {
     document.body.style.overflow = 'hidden';
 
     // Load preview content
-    fetch(`/backend/{{ backend_id }}/{{ dataset_name }}/file/${fileName}/preview`)
+    fetch(`/catalog/{{ catalog_id }}/{{ dataset_name }}/file/${fileName}/preview`)
         .then(response => response.text())
         .then(html => {
             // Extract just the content from the response

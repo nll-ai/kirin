@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}{{ backend.name }} - Kirin{% endblock %}
+{% block title %}{{ catalog.name }} - Kirin{% endblock %}
 
 {% block breadcrumb %}
 <span class="breadcrumb-separator">></span>
-<span>{{ backend.name }}</span>
+<span>{{ catalog.name }}</span>
 {% endblock %}
 
-{% block header_title %}{{ backend.name }}{% endblock %}
-{% block header_description %}Datasets in {{ backend.name }} ({{ backend.root_dir }}){% endblock %}
+{% block header_title %}{{ catalog.name }}{% endblock %}
+{% block header_description %}Datasets in {{ catalog.name }} ({{ catalog.root_dir }}){% endblock %}
 
 {% block content %}
 <div class="space-y-6">
@@ -92,7 +92,7 @@
             </div>
 
             <div class="card-footer">
-                <a href="/backend/{{ backend.id }}/{{ dataset.name }}" class="btn btn-primary btn-sm">
+                <a href="/catalog/{{ catalog.id }}/{{ dataset.name }}" class="btn btn-primary btn-sm">
                     View Dataset
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M5 12h14"></path>
@@ -156,14 +156,14 @@
                     <div class="alert alert-error mb-4">
                         <strong>⚠️ {{ error }}</strong>
                         <div class="mt-2">
-                            <a href="/backend/{{ backend.id }}/{{ existing_dataset_name }}" class="btn btn-primary btn-sm">
+                            <a href="/catalog/{{ catalog.id }}/{{ existing_dataset_name }}" class="btn btn-primary btn-sm">
                                 View Existing Dataset →
                             </a>
                         </div>
                     </div>
                     {% endif %}
 
-                    <form method="POST" action="/backend/{{ backend.id }}/datasets/create" class="space-y-4">
+                    <form method="POST" action="/catalog/{{ catalog.id }}/datasets/create" class="space-y-4">
                         <div class="form-group">
                             <label for="name" class="form-label required">Dataset Name</label>
                             <input type="text" id="name" name="name" class="input" placeholder="my-dataset" required>
