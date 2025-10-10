@@ -3,6 +3,7 @@
 import os
 import shutil
 import tempfile
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -139,6 +140,7 @@ async def add_backend(
     backend_mgr: BackendManager = Depends(get_backend_manager),
     name: str = Form(...),
     type: str = Form(...),
+    auth_mode: str = Form("system"),
     root_dir: Optional[str] = Form(None),
     bucket: Optional[str] = Form(None),
     prefix: Optional[str] = Form(None),
@@ -169,21 +171,38 @@ async def add_backend(
                 )
             final_root_dir = root_dir
         elif type == "s3":
-            if not bucket or not region or not key or not secret:
+            if not bucket or not region:
                 raise HTTPException(
                     status_code=400,
-                    detail="Bucket, region, key, and secret are required for S3",
+                    detail="Bucket and region are required for S3",
                 )
-            config = {"key": key, "secret": secret, "region": region}
+            config = {"region": region}
+            # Only add credentials for explicit auth mode
+            if auth_mode == "explicit":
+                if not key or not secret:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Key and secret are required for explicit authentication",
+                    )
+                config["key"] = key
+                config["secret"] = secret
             final_root_dir = f"s3://{bucket}"
             if prefix:
                 final_root_dir += f"/{prefix}"
         elif type == "gcs":
-            if not bucket or not project:
+            if not bucket:
                 raise HTTPException(
-                    status_code=400, detail="Bucket and project are required for GCS"
+                    status_code=400, detail="Bucket is required for GCS"
                 )
-            config = {"project": project}
+            config = {}
+            # Only require project for explicit auth mode
+            if auth_mode == "explicit" and not project:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Project is required for explicit authentication",
+                )
+            if project:
+                config["project"] = project
             if token:
                 config["token"] = token
             final_root_dir = f"gs://{bucket}"
@@ -232,16 +251,25 @@ async def add_backend(
             )
 
         # Create backend config
+        logger.info(f"Creating backend config for: {name}")
+        logger.info(f"Backend ID: {backend_id}")
+        logger.info(f"Type: {type}")
+        logger.info(f"Root dir: {final_root_dir}")
+        logger.info(f"Config: {config}")
+        logger.info(f"Auth mode: {auth_mode}")
+
         backend = BackendConfig(
-            id=backend_id, name=name, type=type, root_dir=final_root_dir, config=config
+            id=backend_id,
+            name=name,
+            type=type,
+            root_dir=final_root_dir,
+            config=config,
+            auth_mode=auth_mode,
         )
 
-        # Test connection
-        if not backend_mgr.test_connection(backend):
-            raise HTTPException(
-                status_code=400,
-                detail="Failed to connect to backend. Please check your credentials.",
-            )
+        # Skip connection test - trust user configuration
+        # Connection will be validated when actually used
+        logger.info("Skipping connection test - backend will be validated on first use")
 
         # Add backend
         backend_mgr.add_backend(backend)
@@ -304,34 +332,76 @@ async def list_datasets(
     backend_mgr: BackendManager = Depends(get_backend_manager),
 ):
     """List datasets in a backend."""
+    logger.info(f"=== Starting list_datasets for backend {backend_id} ===")
+    overall_start = time.time()
+
     backend = backend_mgr.get_backend(backend_id)
     if not backend:
         raise HTTPException(status_code=404, detail="Backend not found")
 
     try:
         # Get filesystem and catalog
+        logger.info(f"Step 1: Creating filesystem for backend {backend_id}")
+        start_time = time.time()
         backend_mgr.create_filesystem(backend)
+        logger.info(f"Step 1 completed in {time.time() - start_time:.2f}s")
+
+        logger.info(f"Step 2: Creating catalog for {backend.root_dir}")
+        start_time = time.time()
         catalog = Catalog(Path(backend.root_dir))
+        logger.info(f"Step 2 completed in {time.time() - start_time:.2f}s")
 
         # Get dataset information
         datasets = []
+        logger.info(f"Step 3: Listing datasets")
+        start_time = time.time()
         try:
             dataset_names = catalog.datasets()
+            logger.info(
+                f"Step 3 completed in {time.time() - start_time:.2f}s - found {len(dataset_names)} datasets"
+            )
         except (FileNotFoundError, OSError) as e:
             # Handle case where datasets directory doesn't exist yet
-            logger.info(f"No datasets directory found for backend {backend_id}: {e}")
+            logger.info(
+                f"Step 3 completed in {time.time() - start_time:.2f}s - No datasets directory found: {e}"
+            )
+            dataset_names = []
+        except Exception as e:
+            # Handle SSL and other connection errors gracefully
+            logger.warning(
+                f"Step 3 failed after {time.time() - start_time:.2f}s due to connection error: {e}"
+            )
+            logger.warning(f"Error type: {type(e).__name__}")
+            # Return empty list instead of crashing
             dataset_names = []
 
-        for dataset_name in dataset_names:
+        logger.info(f"Step 4: Processing {len(dataset_names)} datasets")
+        start_time = time.time()
+        for i, dataset_name in enumerate(dataset_names):
             try:
+                logger.info(f"Step 4.{i + 1}: Processing dataset '{dataset_name}'")
+                dataset_start = time.time()
+
                 dataset = get_dataset(backend_id, dataset_name)
+                logger.info(
+                    f"Step 4.{i + 1}a: get_dataset completed in {time.time() - dataset_start:.2f}s"
+                )
+
+                info_start = time.time()
                 info = dataset.get_info()
+                logger.info(
+                    f"Step 4.{i + 1}b: get_info completed in {time.time() - info_start:.2f}s"
+                )
 
                 # Calculate total size
+                size_start = time.time()
                 total_size = 0
                 if dataset.current_commit:
                     for file_obj in dataset.files.values():
                         total_size += file_obj.size
+                logger.info(
+                    f"Step 4.{i + 1}c: size calculation completed in {time.time() - size_start:.2f}s"
+                )
 
                 datasets.append(
                     {
@@ -343,8 +413,13 @@ async def list_datasets(
                         "last_updated": info.get("last_updated"),
                     }
                 )
+                logger.info(
+                    f"Step 4.{i + 1}: Dataset '{dataset_name}' processed in {time.time() - dataset_start:.2f}s"
+                )
             except Exception as e:
-                logger.warning(f"Failed to get info for dataset {dataset_name}: {e}")
+                logger.warning(
+                    f"Step 4.{i + 1}: Failed to get info for dataset {dataset_name} after {time.time() - dataset_start:.2f}s: {e}"
+                )
                 datasets.append(
                     {
                         "name": dataset_name,
@@ -356,13 +431,22 @@ async def list_datasets(
                     }
                 )
 
+        logger.info(
+            f"Step 4 completed in {time.time() - start_time:.2f}s - processed {len(datasets)} datasets"
+        )
+
+        logger.info(
+            f"=== list_datasets completed in {time.time() - overall_start:.2f}s ==="
+        )
         return templates.TemplateResponse(
             "datasets.html",
             {"request": request, "backend": backend, "datasets": datasets},
         )
 
     except Exception as e:
-        logger.error(f"Failed to list datasets for backend {backend_id}: {e}")
+        logger.error(
+            f"=== list_datasets failed after {time.time() - overall_start:.2f}s: {e} ==="
+        )
         raise HTTPException(
             status_code=500, detail=f"Failed to list datasets: {str(e)}"
         )
@@ -456,6 +540,7 @@ async def update_backend(
     backend_mgr: BackendManager = Depends(get_backend_manager),
     name: str = Form(...),
     type: str = Form(...),
+    auth_mode: str = Form("system"),
     root_dir: Optional[str] = Form(None),
     bucket: Optional[str] = Form(None),
     prefix: Optional[str] = Form(None),
@@ -491,21 +576,38 @@ async def update_backend(
                 )
             final_root_dir = root_dir
         elif type == "s3":
-            if not bucket or not region or not key or not secret:
+            if not bucket or not region:
                 raise HTTPException(
                     status_code=400,
-                    detail="Bucket, region, key, and secret are required for S3",
+                    detail="Bucket and region are required for S3",
                 )
-            config = {"key": key, "secret": secret, "region": region}
+            config = {"region": region}
+            # Only add credentials for explicit auth mode
+            if auth_mode == "explicit":
+                if not key or not secret:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Key and secret are required for explicit authentication",
+                    )
+                config["key"] = key
+                config["secret"] = secret
             final_root_dir = f"s3://{bucket}"
             if prefix:
                 final_root_dir += f"/{prefix}"
         elif type == "gcs":
-            if not bucket or not project:
+            if not bucket:
                 raise HTTPException(
-                    status_code=400, detail="Bucket and project are required for GCS"
+                    status_code=400, detail="Bucket is required for GCS"
                 )
-            config = {"project": project}
+            config = {}
+            # Only require project for explicit auth mode
+            if auth_mode == "explicit" and not project:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Project is required for explicit authentication",
+                )
+            if project:
+                config["project"] = project
             if token:
                 config["token"] = token
             final_root_dir = f"gs://{bucket}"
@@ -560,6 +662,7 @@ async def update_backend(
             type=type,
             root_dir=final_root_dir,
             config=config,
+            auth_mode=auth_mode,
         )
 
         # Test connection
@@ -1150,6 +1253,34 @@ async def checkout_commit(
         logger.error(f"Failed to checkout commit {commit_hash}: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to checkout commit: {str(e)}"
+        )
+
+
+@app.get("/api/auth-status/{backend_type}")
+async def get_auth_status(backend_type: str):
+    """Get authentication status for a backend type."""
+    try:
+        from ..auth_helpers import get_auth_status as check_auth_status
+
+        return check_auth_status(backend_type)
+    except Exception as e:
+        logger.error(f"Failed to get auth status for {backend_type}: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get auth status: {str(e)}"
+        )
+
+
+@app.get("/api/setup-instructions/{backend_type}")
+async def get_setup_instructions(backend_type: str):
+    """Get setup instructions for a backend type."""
+    try:
+        from ..auth_helpers import get_setup_instructions
+
+        return {"instructions": get_setup_instructions(backend_type)}
+    except Exception as e:
+        logger.error(f"Failed to get setup instructions for {backend_type}: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get setup instructions: {str(e)}"
         )
 
 

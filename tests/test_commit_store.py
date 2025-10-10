@@ -285,11 +285,10 @@ def test_get_dataset_info(temp_dir):
     """Test getting dataset information."""
     store = CommitStore(temp_dir, "test_dataset")
 
-    # Empty dataset
-    info = store.get_dataset_info()
-    assert info["dataset_name"] == "test_dataset"
-    assert info["commit_count"] == 0
-    assert info["latest_commit"] is None
+    # Empty dataset - check basic properties
+    assert store.dataset_name == "test_dataset"
+    assert store.get_commit_count() == 0
+    assert store.get_latest_commit() is None
 
     # Add commit
     commit = Commit(
@@ -297,12 +296,13 @@ def test_get_dataset_info(temp_dir):
     )
     store.save_commit(commit)
 
-    # Get info
-    info = store.get_dataset_info()
-    assert info["commit_count"] == 1
-    assert info["latest_commit"] == "abc123"
-    assert info["latest_message"] == "Test commit"
-    assert len(info["recent_commits"]) == 1
+    # Dataset with commit - check basic properties
+    assert store.dataset_name == "test_dataset"
+    assert store.get_commit_count() == 1
+    latest_commit = store.get_latest_commit()
+    assert latest_commit is not None
+    assert latest_commit.hash == "abc123"
+    assert latest_commit.message == "Test commit"
 
 
 def test_persistence(temp_dir):

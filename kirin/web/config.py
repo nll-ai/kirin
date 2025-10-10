@@ -14,6 +14,7 @@ from ..cloud_auth import (
     get_s3_compatible_filesystem,
     get_s3_filesystem,
 )
+from ..keyring_store import get_backend_credentials
 
 
 @dataclass
@@ -25,6 +26,7 @@ class BackendConfig:
     type: str  # local, s3, gcs, azure, s3_compatible
     root_dir: str
     config: Dict[str, Any]
+    auth_mode: str = "system"  # system, keyring, explicit
 
 
 class BackendManager:
@@ -56,7 +58,32 @@ class BackendManager:
         try:
             with open(self.config_file, "r") as f:
                 data = json.load(f)
-                return data.get("backends", [])
+                backends = data.get("backends", [])
+
+                # Migrate old backends to new format
+                migrated = False
+                for backend in backends:
+                    if "auth_mode" not in backend:
+                        # Migrate to system auth mode
+                        backend["auth_mode"] = "system"
+
+                        # Remove plain-text credentials for security
+                        if "config" in backend:
+                            config = backend["config"]
+                            if "key" in config and "secret" in config:
+                                logger.warning(
+                                    f"Removing plain-text credentials from backend {backend.get('id', 'unknown')}"
+                                )
+                                config.pop("key", None)
+                                config.pop("secret", None)
+                                migrated = True
+
+                # Save migrated backends
+                if migrated:
+                    self._save_backends(backends)
+                    logger.info("Migrated backends to new auth_mode format")
+
+                return backends
         except (json.JSONDecodeError, FileNotFoundError) as e:
             logger.warning(f"Failed to load backends config: {e}")
             return []
@@ -141,20 +168,73 @@ class BackendManager:
         Returns:
             True if connection successful, False otherwise
         """
+        logger.info(
+            f"Testing connection for backend: {backend.id} (type: {backend.type})"
+        )
+        logger.info(f"Backend config: {backend.config}")
+        logger.info(f"Auth mode: {backend.auth_mode}")
+        logger.info(f"Root dir: {backend.root_dir}")
+
         try:
+            logger.info("Creating filesystem...")
             fs = self.create_filesystem(backend)
+            logger.info(f"Filesystem created successfully: {type(fs)}")
 
             # Try to list the root directory
             if backend.type == "local":
                 # For local, check if directory exists
-                return os.path.exists(backend.root_dir)
+                logger.info(f"Checking if local directory exists: {backend.root_dir}")
+                exists = os.path.exists(backend.root_dir)
+                logger.info(f"Directory exists: {exists}")
+                return exists
             else:
-                # For cloud storage, try to list files
-                fs.ls(backend.root_dir, detail=False)
-                return True
+                # For cloud storage, try Kirin's Dataset approach first (bypasses SSL issues)
+                logger.info(
+                    "Testing with Kirin Dataset (bypassing raw filesystem SSL issues)..."
+                )
+                try:
+                    from kirin.dataset import Dataset
+
+                    test_dataset = Dataset(
+                        root_dir=backend.root_dir, name="test-connection"
+                    )
+                    logger.info("Kirin Dataset created successfully")
+                    # Try to get the catalog to test the connection
+                    from kirin.catalog import Catalog
+
+                    catalog = Catalog(backend.root_dir)
+                    datasets = catalog.datasets()
+                    logger.info(f"Catalog found {len(datasets)} datasets")
+                    logger.info("Kirin Dataset connection test successful")
+                    return True
+                except Exception as e:
+                    logger.warning(f"Kirin Dataset test failed: {e}")
+                    logger.warning(f"Dataset exception type: {type(e).__name__}")
+                    import traceback
+
+                    logger.warning(f"Dataset traceback: {traceback.format_exc()}")
+
+                    # Fallback to raw filesystem test (may fail with SSL)
+                    logger.info("Falling back to raw filesystem test...")
+                    try:
+                        files = fs.ls(backend.root_dir, detail=False)
+                        logger.info(
+                            f"Successfully listed {len(files)} items in {backend.root_dir}"
+                        )
+                        logger.info(
+                            f"Sample files: {files[:5] if files else 'No files found'}"
+                        )
+                        return True
+                    except Exception as fs_e:
+                        logger.error(f"Raw filesystem test also failed: {fs_e}")
+                        raise fs_e
 
         except Exception as e:
-            logger.warning(f"Backend connection test failed for {backend.id}: {e}")
+            logger.error(f"Backend connection test failed for {backend.id}: {e}")
+            logger.error(f"Exception type: {type(e).__name__}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
             return False
 
     def create_filesystem(self, backend: BackendConfig):
@@ -166,25 +246,77 @@ class BackendManager:
         Returns:
             fsspec filesystem instance
         """
+        logger.info(f"Creating filesystem for backend: {backend.id}")
+        logger.info(f"Backend type: {backend.type}")
+        logger.info(f"Auth mode: {backend.auth_mode}")
+        logger.info(f"Initial config: {backend.config}")
+
         if backend.type == "local":
+            logger.info("Creating local filesystem")
             import fsspec
 
-            return fsspec.filesystem("file")
+            fs = fsspec.filesystem("file")
+            logger.info(f"Local filesystem created: {type(fs)}")
+            return fs
 
-        elif backend.type == "s3":
-            return get_s3_filesystem(**backend.config)
+        # Handle authentication based on auth_mode
+        config = backend.config.copy()
+        logger.info(f"Starting with config: {config}")
 
-        elif backend.type == "gcs":
-            return get_gcs_filesystem(**backend.config)
+        if backend.auth_mode == "keyring":
+            logger.info("Using keyring authentication")
+            # Retrieve credentials from keyring
+            credentials = get_backend_credentials(backend.id)
+            if credentials:
+                logger.info("Found keyring credentials, updating config")
+                config.update(credentials)
+            else:
+                logger.info("No keyring credentials found, falling back to system auth")
+            # If no credentials found, fall back to system auth
 
-        elif backend.type == "azure":
-            return get_azure_filesystem(**backend.config)
+        elif backend.auth_mode == "explicit":
+            logger.info("Using explicit authentication")
+            # Use explicit credentials from config (backward compatibility)
+            pass
 
-        elif backend.type == "s3_compatible":
-            return get_s3_compatible_filesystem(**backend.config)
+        # Remove keyring-specific fields before passing to cloud auth functions
+        config.pop("keyring_key", None)
+        logger.info(f"Final config for cloud auth: {config}")
 
-        else:
-            raise ValueError(f"Unsupported backend type: {backend.type}")
+        # For "system" auth_mode or when keyring has no credentials,
+        # let the cloud_auth functions auto-detect system credentials
+        logger.info(f"Calling cloud auth function for type: {backend.type}")
+
+        try:
+            if backend.type == "s3":
+                logger.info("Creating S3 filesystem")
+                fs = get_s3_filesystem(**config)
+                logger.info(f"S3 filesystem created: {type(fs)}")
+                return fs
+            elif backend.type == "gcs":
+                logger.info("Creating GCS filesystem")
+                fs = get_gcs_filesystem(**config)
+                logger.info(f"GCS filesystem created: {type(fs)}")
+                return fs
+            elif backend.type == "azure":
+                logger.info("Creating Azure filesystem")
+                fs = get_azure_filesystem(**config)
+                logger.info(f"Azure filesystem created: {type(fs)}")
+                return fs
+            elif backend.type == "s3_compatible":
+                logger.info("Creating S3-compatible filesystem")
+                fs = get_s3_compatible_filesystem(**config)
+                logger.info(f"S3-compatible filesystem created: {type(fs)}")
+                return fs
+            else:
+                raise ValueError(f"Unsupported backend type: {backend.type}")
+        except Exception as e:
+            logger.error(f"Failed to create filesystem for {backend.type}: {e}")
+            logger.error(f"Exception type: {type(e).__name__}")
+            import traceback
+
+            logger.error(f"Full traceback: {traceback.format_exc()}")
+            raise
 
     def get_available_types(self) -> List[Dict[str, str]]:
         """Get list of available backend types with descriptions."""

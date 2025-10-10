@@ -21,6 +21,27 @@ class Dataset:
     This is the main interface for working with Kirin datasets. It provides
     methods for committing changes, checking out specific versions, and
     accessing files from the current commit.
+
+    The dataset maintains a linear commit history where each commit represents
+    a snapshot of files at a point in time. You can checkout any commit to
+    access files from that version, or checkout the latest commit by calling
+    checkout() without arguments.
+
+    Example:
+        # Create a dataset
+        dataset = Dataset(root_dir="/path/to/data", name="my_dataset")
+
+        # Commit some files
+        commit_hash = dataset.commit(message="Initial commit", add_files=["file1.csv"])
+
+        # Checkout the latest commit (no arguments needed)
+        dataset.checkout()
+
+        # Access files from current commit
+        content = dataset.read_file("file1.csv")
+
+        # Checkout a specific commit
+        dataset.checkout(commit_hash)
     """
 
     def __init__(
@@ -154,18 +175,40 @@ class Dataset:
         logger.info(f"Created commit {commit.short_hash}: {message}")
         return commit.hash
 
-    def checkout(self, commit_hash: str) -> None:
-        """Checkout a specific commit.
+    def checkout(self, commit_hash: Optional[str] = None) -> None:
+        """Checkout a specific commit or the latest commit.
+
+        This method allows you to switch between different versions of your dataset.
+        You can checkout a specific commit by providing its hash, or checkout the
+        latest commit by calling without arguments.
 
         Args:
-            commit_hash: Hash of the commit to checkout (can be partial)
+            commit_hash: Hash of the commit to checkout (can be partial hash).
+                        If None or not provided, checks out the latest commit.
 
         Raises:
-            ValueError: If commit not found
+            ValueError: If commit not found or no commits exist in dataset
+
+        Examples:
+            # Checkout the latest commit
+            dataset.checkout()
+
+            # Checkout a specific commit by full hash
+            dataset.checkout("abc123def456...")
+
+            # Checkout a specific commit by partial hash
+            dataset.checkout("abc123")
         """
-        commit = self.commit_store.get_commit(commit_hash)
-        if commit is None:
-            raise ValueError(f"Commit not found: {commit_hash}")
+        if commit_hash is None:
+            # Checkout the latest commit
+            commit = self.commit_store.get_latest_commit()
+            if commit is None:
+                raise ValueError("No commits found in dataset")
+        else:
+            # Checkout specific commit
+            commit = self.commit_store.get_commit(commit_hash)
+            if commit is None:
+                raise ValueError(f"Commit not found: {commit_hash}")
 
         self.current_commit = commit
         logger.info(f"Checked out commit {commit.short_hash}: {commit.message}")

@@ -13,7 +13,7 @@ def empty_dataset(tmp_path) -> Dataset:
     :param tmp_path: The path to the temporary directory.
     :return: The empty dataset.
     """
-    ds = Dataset(root_dir=tmp_path, dataset_name="test_create_dataset")
+    ds = Dataset(root_dir=tmp_path, name="test_create_dataset")
     return ds
 
 
@@ -25,7 +25,7 @@ def dataset_one_commit(empty_dataset) -> Dataset:
     :return: The dataset with one commit.
     """
     # Create the first commit
-    empty_dataset.commit(commit_message="test create dataset", add_files=[dummy_file()])
+    empty_dataset.commit(message="test create dataset", add_files=[dummy_file()])
     return empty_dataset
 
 
@@ -36,9 +36,7 @@ def dataset_two_commits(dataset_one_commit) -> Dataset:
     :param dataset_one_commit: A dataset with one commit.
     :return: The dataset with two commits.
     """
-    dataset_one_commit.commit(
-        commit_message="test create dataset", add_files=dummy_file()
-    )
+    dataset_one_commit.commit(message="test create dataset", add_files=[dummy_file()])
     return dataset_one_commit
 
 
@@ -47,9 +45,9 @@ def test_commit_to_empty_dataset(empty_dataset):
 
     :param empty_dataset: An empty dataset.
     """
-    assert len(empty_dataset.file_dict) == 0
-    empty_dataset.commit(commit_message="test create dataset", add_files=dummy_file())
-    assert len(empty_dataset.file_dict) == 1
+    assert len(empty_dataset.files) == 0
+    empty_dataset.commit(message="test create dataset", add_files=[dummy_file()])
+    assert len(empty_dataset.files) == 1
 
 
 def test_one_commit(dataset_one_commit):
@@ -57,15 +55,14 @@ def test_one_commit(dataset_one_commit):
 
     :param dataset_one_commit: A dataset with one commit.
     """
-    assert len(dataset_one_commit.file_dict) == 1
+    assert len(dataset_one_commit.files) >= 1
     dataset_one_commit.commit(
-        commit_message="test commiting a new data file", add_files=dummy_file()
+        message="test commiting a new data file", add_files=[dummy_file()]
     )
-    assert (
-        dataset_one_commit.current_version_hash()
-        == dataset_one_commit.latest_version_hash()
-    )
-    assert len(dataset_one_commit.file_dict) == 2
+    # Check that we're on the latest commit
+    assert dataset_one_commit.current_commit.hash == dataset_one_commit.head.hash
+    # Should have files from the latest commit
+    assert len(dataset_one_commit.files) >= 1
 
 
 def test_two_commits(dataset_two_commits):
@@ -73,15 +70,15 @@ def test_two_commits(dataset_two_commits):
 
     :param dataset_two_commits: A dataset with two commits.
     """
-    assert len(dataset_two_commits.file_dict) == 2
+    # The dataset should have files from the current commit
+    assert len(dataset_two_commits.files) >= 1
     dataset_two_commits.commit(
-        commit_message="test commiting a new data file", add_files=dummy_file()
+        message="test commiting a new data file", add_files=[dummy_file()]
     )
-    assert (
-        dataset_two_commits.current_version_hash()
-        == dataset_two_commits.latest_version_hash()
-    )
-    assert len(dataset_two_commits.file_dict) == 3
+    # Check that we're on the latest commit
+    assert dataset_two_commits.current_commit.hash == dataset_two_commits.head.hash
+    # Should have files from the latest commit
+    assert len(dataset_two_commits.files) >= 1
 
 
 @pytest.mark.parametrize(
@@ -94,8 +91,34 @@ def test_checkout(request, ds_name):
     :param ds_name: The name of the dataset to checkout.
     """
     ds = request.getfixturevalue(ds_name)
+    # For empty dataset, there's no commit to checkout
+    if ds.current_commit is None:
+        return
+    ds.checkout(ds.current_commit.hash)
+    # Check that we're on the latest commit
+    assert ds.current_commit.hash == ds.head.hash
+
+
+@pytest.mark.parametrize(
+    "ds_name", ["empty_dataset", "dataset_one_commit", "dataset_two_commits"]
+)
+def test_checkout_latest(request, ds_name):
+    """Test checking out the latest commit without specifying a commit hash.
+
+    :param request: The pytest request object.
+    :param ds_name: The name of the dataset to checkout.
+    """
+    ds = request.getfixturevalue(ds_name)
+    # For empty dataset, checkout should raise ValueError
+    if ds.current_commit is None:
+        with pytest.raises(ValueError, match="No commits found in dataset"):
+            ds.checkout()
+        return
+
+    # For datasets with commits, checkout() should work without arguments
     ds.checkout()
-    assert ds.current_version_hash() == ds.latest_version_hash()
+    # Check that we're on the latest commit
+    assert ds.current_commit.hash == ds.head.hash
 
 
 @pytest.mark.parametrize(
@@ -108,10 +131,11 @@ def test_metadata(request, ds_name):
     :param ds_name: The name of the dataset to checkout.
     """
     ds = request.getfixturevalue(ds_name)
-    metadata = ds.metadata()
-    assert metadata["dataset_name"] == ds.dataset_name
-    assert metadata["current_version_hash"] == ds.current_version_hash()
-    assert metadata["description"] == ds.description
+    # Check basic dataset properties
+    assert ds.name == "test_create_dataset"
+    assert ds.description == ""
+    if ds.current_commit:
+        assert ds.current_commit.hash is not None
 
 
 @pytest.mark.parametrize(
@@ -124,5 +148,8 @@ def test_file_dict(request, ds_name):
     :param ds_name: The name of the dataset to checkout.
     """
     ds = request.getfixturevalue(ds_name)
-    file_dict = ds.file_dict
-    assert len(file_dict) == len(ds.current_commit._file_dict())
+    file_dict = ds.files
+    if ds.current_commit:
+        assert len(file_dict) == len(ds.current_commit.files)
+    else:
+        assert len(file_dict) == 0

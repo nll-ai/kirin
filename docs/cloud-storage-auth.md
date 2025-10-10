@@ -260,3 +260,21 @@ ds = Dataset(root_dir="memory://test-data", dataset_name="my_data")
   pip install gcsfs     # For GCS
   pip install adlfs     # For Azure
   ```
+
+## Known Issues
+
+### macOS Python 3.13 SSL Certificate Verification
+
+On macOS with Python 3.13, you may encounter SSL certificate verification errors when using cloud storage backends. This is a known Python/macOS issue.
+
+**Workaround**: The web UI skips connection testing during backend creation. Backends are validated when actually used. If you encounter SSL errors during actual usage, install certificates:
+
+```bash
+/Applications/Python\ 3.13/Install\ Certificates.command
+```
+
+Or use `certifi`:
+
+```bash
+pip install --upgrade certifi
+```

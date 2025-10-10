@@ -51,6 +51,64 @@
                     </select>
                 </div>
 
+                <!-- Authentication Mode -->
+                <div class="form-group">
+                    <label for="auth_mode" class="form-label required">Authentication Mode</label>
+                    <select id="auth_mode" name="auth_mode" class="select" required onchange="updateAuthFields()">
+                        <option value="system" {% if not form_data or form_data.auth_mode == 'system' %}selected{% endif %}>System Authentication (Recommended)</option>
+                        <option value="keyring" {% if form_data and form_data.auth_mode == 'keyring' %}selected{% endif %}>Secure Keyring Storage</option>
+                        <option value="explicit" {% if form_data and form_data.auth_mode == 'explicit' %}selected{% endif %}>Explicit Credentials (Not Recommended)</option>
+                    </select>
+                    <p class="text-sm text-muted-foreground mt-1">
+                        <strong>System Auth:</strong> Use existing CLI credentials (aws configure, gcloud auth, az login)<br>
+                        <strong>Keyring:</strong> Store credentials securely in OS keyring<br>
+                        <strong>Explicit:</strong> Store credentials in config (insecure)
+                    </p>
+                </div>
+
+                <!-- Auth Status and Setup Instructions -->
+                <div id="auth-status-section" class="space-y-4" style="display: none;">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Authentication Status</h3>
+                        </div>
+                        <div class="panel-content">
+                            <div id="auth-status-content">
+                                <div class="flex items-center gap-2">
+                                    <span id="auth-status-indicator" class="w-3 h-3 rounded-full bg-gray-400"></span>
+                                    <span id="auth-status-text">Checking authentication status...</span>
+                                </div>
+                                <div id="auth-status-details" class="mt-2 text-sm text-muted-foreground"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3 class="panel-title">Setup Instructions</h3>
+                        </div>
+                        <div class="panel-content">
+                            <div id="setup-instructions-content">
+                                <p class="text-sm text-muted-foreground">Loading setup instructions...</p>
+                            </div>
+                            <div class="mt-3">
+                                <button type="button" id="refresh-auth-status" class="btn btn-ghost btn-sm" onclick="refreshAuthStatus()">
+                                    🔄 Refresh Status
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-content">
+                            <p class="text-sm text-muted-foreground">
+                                <strong>Note:</strong> Connection testing is skipped during backend creation.
+                                The connection will be validated when you create or access datasets.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Dynamic fields based on type -->
                 <div id="type-fields" class="space-y-4">
                     <!-- Fields will be populated by JavaScript -->
@@ -116,6 +174,7 @@ const typeFields = {
 
 function updateFormFields() {
     const type = document.getElementById('type').value;
+    const authMode = document.getElementById('auth_mode').value;
     const container = document.getElementById('type-fields');
 
     if (!type || !typeFields[type]) {
@@ -130,23 +189,37 @@ function updateFormFields() {
         const formData = {{ form_data | tojson if form_data else 'null' }};
         const value = formData ? formData[field.name] || '' : '';
 
+        // Skip credential fields for system auth
+        if (authMode === 'system' && (field.name === 'key' || field.name === 'secret' || field.name === 'token' || field.name === 'account_key')) {
+            return '';
+        }
+
+        // Make credential fields and project field optional for system auth
+        const isRequired = authMode === 'explicit' ? field.required :
+            (field.name === 'key' || field.name === 'secret' || field.name === 'token' || field.name === 'account_key' ||
+             (authMode === 'system' && field.name === 'project')) ? false : field.required;
+
         if (field.type === 'select') {
-            input = `<select name="${field.name}" class="select" ${field.required ? 'required' : ''}>
+            input = `<select name="${field.name}" class="select" ${isRequired ? 'required' : ''}>
                 <option value="">Select ${field.label.toLowerCase()}...</option>
                 ${field.options ? field.options.map(opt =>
                     `<option value="${opt.value}" ${value === opt.value ? 'selected' : ''}>${opt.label}</option>`
                 ).join('') : ''}
             </select>`;
         } else if (field.type === 'password') {
-            input = `<input type="password" name="${field.name}" class="input" placeholder="${field.placeholder || ''}" value="${value}" ${field.required ? 'required' : ''}>`;
+            input = `<input type="password" name="${field.name}" class="input" placeholder="${field.placeholder || ''}" value="${value}" ${isRequired ? 'required' : ''}>`;
         } else {
-            input = `<input type="${field.type}" name="${field.name}" class="input" placeholder="${field.placeholder || ''}" value="${value}" ${field.required ? 'required' : ''}>`;
+            input = `<input type="${field.type}" name="${field.name}" class="input" placeholder="${field.placeholder || ''}" value="${value}" ${isRequired ? 'required' : ''}>`;
         }
 
         return `
             <div class="form-group">
-                <label for="${field.name}" class="form-label ${field.required ? 'required' : ''}">${field.label}</label>
+                <label for="${field.name}" class="form-label ${isRequired ? 'required' : ''}">${field.label}</label>
                 ${input}
+                ${authMode === 'system' && (field.name === 'key' || field.name === 'secret' || field.name === 'token' || field.name === 'account_key') ?
+                    '<p class="text-sm text-muted-foreground mt-1">Not needed for system authentication</p>' :
+                 authMode === 'system' && field.name === 'project' ?
+                    '<p class="text-sm text-muted-foreground mt-1">Optional for system authentication (will auto-detect from gcloud config)</p>' : ''}
             </div>
         `;
     }).join('');
@@ -154,11 +227,78 @@ function updateFormFields() {
     document.getElementById('save-backend').disabled = false;
 }
 
+function updateAuthFields() {
+    const type = document.getElementById('type').value;
+    const authMode = document.getElementById('auth_mode').value;
+    const authSection = document.getElementById('auth-status-section');
+
+    // Show auth status section for cloud backends
+    if (type && ['s3', 'gcs', 'azure'].includes(type)) {
+        authSection.style.display = 'block';
+        refreshAuthStatus();
+    } else {
+        authSection.style.display = 'none';
+    }
+
+    // Update form fields based on auth mode
+    updateFormFields();
+}
+
+async function refreshAuthStatus() {
+    const type = document.getElementById('type').value;
+    if (!type || !['s3', 'gcs', 'azure'].includes(type)) return;
+
+    const statusIndicator = document.getElementById('auth-status-indicator');
+    const statusText = document.getElementById('auth-status-text');
+    const statusDetails = document.getElementById('auth-status-details');
+    const instructionsContent = document.getElementById('setup-instructions-content');
+
+    // Show loading state
+    statusIndicator.className = 'w-3 h-3 rounded-full bg-yellow-400';
+    statusText.textContent = 'Checking authentication status...';
+    statusDetails.textContent = '';
+    instructionsContent.innerHTML = '<p class="text-sm text-muted-foreground">Loading setup instructions...</p>';
+
+    try {
+        // Fetch auth status
+        const authResponse = await fetch(`/api/auth-status/${type}`);
+        const authData = await authResponse.json();
+
+        // Update status indicator
+        if (authData.available) {
+            statusIndicator.className = 'w-3 h-3 rounded-full bg-green-400';
+            statusText.textContent = '✅ Authentication available';
+            statusDetails.textContent = `Source: ${authData.source}${authData.region ? `, Region: ${authData.region}` : ''}`;
+        } else {
+            statusIndicator.className = 'w-3 h-3 rounded-full bg-red-400';
+            statusText.textContent = '❌ Authentication not available';
+            statusDetails.textContent = 'Please follow the setup instructions below';
+        }
+
+        // Fetch setup instructions
+        const instructionsResponse = await fetch(`/api/setup-instructions/${type}`);
+        const instructionsData = await instructionsResponse.json();
+
+        // Display setup instructions
+        instructionsContent.innerHTML = `
+            <div class="prose prose-sm max-w-none">
+                <pre class="bg-gray-100 p-3 rounded text-sm overflow-x-auto">${instructionsData.instructions}</pre>
+            </div>
+        `;
+
+    } catch (error) {
+        statusIndicator.className = 'w-3 h-3 rounded-full bg-red-400';
+        statusText.textContent = '❌ Error checking authentication';
+        statusDetails.textContent = 'Failed to check authentication status';
+        instructionsContent.innerHTML = '<p class="text-sm text-red-600">Failed to load setup instructions</p>';
+    }
+}
+
 // Initialize form fields on page load if there's form data
 document.addEventListener('DOMContentLoaded', function() {
     const typeSelect = document.getElementById('type');
     if (typeSelect.value) {
-        updateFormFields();
+        updateAuthFields();
     }
 });
 

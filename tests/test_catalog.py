@@ -56,9 +56,9 @@ def test_create_dataset(empty_catalog):
     dataset = catalog.create_dataset(
         "test_dataset", "Test dataset for testing purposes."
     )
-    assert dataset.dataset_name == "test_dataset"
+    assert dataset.name == "test_dataset"
     assert dataset.description == "Test dataset for testing purposes."
     assert len(catalog) == len(catalog.datasets())
 
     dataset = catalog.get_dataset("test_dataset")
-    assert dataset.dataset_name == "test_dataset"
+    assert dataset.name == "test_dataset"

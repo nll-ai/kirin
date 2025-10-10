@@ -10,6 +10,7 @@ class BackendForm(BaseModel):
 
     name: str = Field(..., min_length=1, max_length=100, description="Backend name")
     type: str = Field(..., description="Backend type")
+    auth_mode: str = Field("system", description="Authentication mode")
 
     # Common fields
     root_dir: Optional[str] = Field(None, description="Root directory path")
