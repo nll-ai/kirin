@@ -450,6 +450,46 @@ The web UI follows consistent error handling patterns:
 
 All error responses include user-friendly HTML with appropriate styling using the design system components.
 
+### CRUD Operation Redirects
+
+**CRITICAL**: All CRUD operations must redirect users to a logical landing page that shows the updated state. This ensures users see the results of their actions immediately.
+
+**Redirect Patterns**:
+- **After commit operations**: Redirect to `/{catalog}/{dataset}` to show updated dataset state
+- **After file operations**: Redirect to `/{catalog}/{dataset}` to show updated file list
+- **After catalog operations**: Redirect to `/{catalog}` to show updated catalog state
+- **After dataset operations**: Redirect to `/{catalog}` to show updated dataset list
+
+**Implementation Pattern**:
+
+```python
+# ✅ CORRECT - Redirect after successful operations
+@app.post("/{catalog}/{dataset}/commit")
+async def commit_files(catalog: str, dataset: str, ...):
+    # Perform commit operation
+    commit_hash = current_dataset.commit(...)
+
+    # Redirect to dataset view to show updated state
+    return RedirectResponse(
+        url=f"/{catalog}/{dataset}",
+        status_code=303  # See Other
+    )
+
+# ❌ WRONG - Return JSON or stay on same page
+return {"status": "success", "commit_hash": commit_hash}
+```
+
+**Benefits**:
+- **Immediate feedback**: Users see the results of their actions
+- **Updated state**: Landing page reflects current data state
+- **Better UX**: Clear navigation flow after operations
+- **Consistent behavior**: All operations follow the same redirect pattern
+
+**Status Codes**:
+- **303 See Other**: Use for POST operations that should redirect to GET
+- **302 Found**: Use for general redirects
+- **301 Moved Permanently**: Use for permanent URL changes
+
 ## Script Execution Standards
 
 ### Script Location and Execution Pattern
