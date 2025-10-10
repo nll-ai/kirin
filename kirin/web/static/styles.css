@@ -344,6 +344,8 @@ body {
 .file-actions {
   display: flex;
   gap: 0.5rem;
+  justify-content: flex-end;
+  flex: 1;
 }
 
 /* Commit Items */
@@ -593,9 +595,23 @@ body {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-@media (max-width: 768px) {
-  .grid-cols-2,
-  .grid-cols-3 {
+/* Responsive grid classes */
+@media (min-width: 768px) {
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Override for smaller screens */
+@media (max-width: 767px) {
+  .md\:grid-cols-2,
+  .lg\:grid-cols-3 {
     grid-template-columns: repeat(1, minmax(0, 1fr));
   }
 }
@@ -687,4 +703,9 @@ body {
     width: 100%;
     justify-content: flex-end;
   }
+}
+
+/* Utility classes */
+.hidden {
+  display: none;
 }
