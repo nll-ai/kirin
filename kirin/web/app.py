@@ -932,28 +932,28 @@ async def download_file(catalog_id: str, dataset_name: str, file_name: str):
         temp_path = temp_file.name
         temp_file.close()
 
-        try:
-            # Download file to temporary location
-            file_obj.download_to(temp_path)
+        # Download file to temporary location
+        file_obj.download_to(temp_path)
 
-            # Stream the temporary file
-            def generate():
-                """Generate file chunks for streaming response."""
+        # Stream the temporary file
+        def generate():
+            """Generate file chunks for streaming response."""
+            try:
                 with open(temp_path, "rb") as f:
                     while chunk := f.read(8192):
                         yield chunk
+            finally:
+                # Clean up temporary file after streaming is complete
+                try:
+                    os.unlink(temp_path)
+                except Exception:
+                    pass  # Ignore cleanup errors
 
-            return StreamingResponse(
-                generate(),
-                media_type=file_obj.content_type,
-                headers={"Content-Disposition": f"attachment; filename={file_name}"},
-            )
-        finally:
-            # Clean up temporary file
-            try:
-                os.unlink(temp_path)
-            except Exception:
-                pass  # Ignore cleanup errors
+        return StreamingResponse(
+            generate(),
+            media_type=file_obj.content_type,
+            headers={"Content-Disposition": f"attachment; filename={file_name}"},
+        )
 
     except Exception as e:
         logger.error(f"Failed to download file {file_name}: {e}")
