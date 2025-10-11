@@ -20,11 +20,13 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     # Kirin Catalog Demo - Managing Multiple Datasets with Content-Addressed Storage
+    import tempfile
+    from pathlib import Path
+
     import marimo as mo
     import polars as pl
-    from pathlib import Path
-    import tempfile
-    from kirin import Dataset, File, Commit, Catalog
+
+    from kirin import Catalog
     return Catalog, Path, mo, pl, tempfile
 
 
@@ -337,7 +339,7 @@ def _(cross_analysis_results, mo):
         str_cross_analysis += (
             f"```\n{cross_analysis_results['sales_summary']}\n```\n\n"
         )
-        str_cross_analysis += f"**Customer Statistics:**\n"
+        str_cross_analysis += "**Customer Statistics:**\n"
         str_cross_analysis += (
             f"- **Total Customers**: {cross_analysis_results['customer_count']}\n"
         )

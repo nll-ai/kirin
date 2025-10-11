@@ -8,16 +8,19 @@ from pathlib import Path
 from typing import List
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+from fastapi.responses import (
+    HTMLResponse,
+    JSONResponse,
+    RedirectResponse,
+    StreamingResponse,
+)
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import JSONResponse
 from loguru import logger
 from slugify import slugify
 
 from .. import Catalog
 from .config import CatalogConfig, CatalogManager
-
 
 # Global catalog manager
 catalog_manager = CatalogManager()

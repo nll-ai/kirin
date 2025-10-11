@@ -1,16 +1,12 @@
 """Tests for the commit store."""
 
 import json
-import tempfile
 from datetime import datetime
 from pathlib import Path
-
-import pytest
 
 from kirin.commit import Commit
 from kirin.commit_store import CommitStore
 from kirin.file import File
-from kirin.storage import ContentStore
 
 
 def test_commit_store_creation(temp_dir):

@@ -1,9 +1,9 @@
 """Tests for file access methods in GitData."""
 
 import os
-import tempfile
-import pytest
 from pathlib import Path
+
+import pytest
 
 from kirin import Dataset
 

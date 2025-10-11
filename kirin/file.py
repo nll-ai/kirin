@@ -4,12 +4,10 @@ import os
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Union, BinaryIO, TextIO
+from typing import BinaryIO, Optional, TextIO, Union
 
 import fsspec
 from loguru import logger
-
-from .utils import strip_protocol
 
 
 @dataclass(frozen=True)

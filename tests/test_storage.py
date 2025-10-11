@@ -1,6 +1,5 @@
 """Tests for the storage layer."""
 
-import tempfile
 from pathlib import Path
 
 import pytest

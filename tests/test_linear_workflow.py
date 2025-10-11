@@ -1,6 +1,5 @@
 """Tests for end-to-end linear workflow."""
 
-import tempfile
 from pathlib import Path
 
 import pytest

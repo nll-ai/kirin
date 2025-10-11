@@ -297,7 +297,7 @@ def _(dataset):
     print("✅ Linear history verification passed!")
     print(f"✅ Dataset: {dataset.dataset_name}")
     print(f"✅ Commits: {len(history_commits)}")
-    print(f"✅ No merge commits found")
+    print("✅ No merge commits found")
 
     # Display commit history
     print("\n📋 Commit History:")

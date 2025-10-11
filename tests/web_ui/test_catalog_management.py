@@ -3,8 +3,9 @@
 
 import tempfile
 from pathlib import Path
-from fastapi.testclient import TestClient
+
 import pytest
+from fastapi.testclient import TestClient
 
 from kirin.web.app import app
 from kirin.web.config import CatalogManager
@@ -127,7 +128,8 @@ def test_delete_catalog_success(client, temp_catalog):
     response = client.post("/catalog/test-catalog/delete")
     assert response.status_code == 200
     assert "deleted successfully" in response.text
-    # The success message will contain the catalog name, but the catalog list should be empty
+    # The success message will contain the catalog name, but the catalog list
+    # should be empty
     assert "No data catalogs configured" in response.text
 
 

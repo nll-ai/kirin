@@ -10,6 +10,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+
 from loguru import logger
 
 
@@ -68,6 +69,7 @@ def verify_ssl_setup(ssl_dir: Path):
     """Verify that SSL certificates are working."""
     try:
         import ssl
+
         import requests
 
         # Check if SSL paths are configured
@@ -132,7 +134,7 @@ def setup_ssl_certificates():
             "ℹ️  Using system Python - SSL certificates should work automatically"
         )
     else:
-        logger.info(f"ℹ️  SSL certificates configured for isolated Python environment")
+        logger.info("ℹ️  SSL certificates configured for isolated Python environment")
 
     return True
 

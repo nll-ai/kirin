@@ -29,6 +29,7 @@ import os
 import shutil
 import tempfile
 from pathlib import Path
+
 from loguru import logger
 
 from kirin import Dataset
@@ -230,7 +231,7 @@ def main():
         dataset_url = f"file://{dataset_path}"
         dataset_name = "test-dataset"
         print(f"\n{'=' * 60}")
-        print(f"DATASET INFORMATION:")
+        print("DATASET INFORMATION:")
         print(f"{'=' * 60}")
         print(f"Dataset URL: {dataset_url}")
         print(f"Dataset Name: {dataset_name}")

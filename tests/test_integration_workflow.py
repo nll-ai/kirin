@@ -14,8 +14,9 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from kirin import Dataset
 from loguru import logger
+
+from kirin import Dataset
 
 
 def create_test_files(directory: Path, files: list) -> None:

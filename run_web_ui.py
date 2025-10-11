@@ -2,6 +2,7 @@
 """Simple script to run the Kirin Web UI."""
 
 import uvicorn
+
 from kirin.web.app import app
 
 if __name__ == "__main__":

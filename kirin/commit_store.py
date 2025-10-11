@@ -9,7 +9,7 @@ from loguru import logger
 
 from .commit import Commit
 from .storage import ContentStore
-from .utils import strip_protocol, get_filesystem
+from .utils import get_filesystem, strip_protocol
 
 
 class CommitStore:
