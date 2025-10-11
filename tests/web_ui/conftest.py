@@ -1,6 +1,7 @@
 """Pytest configuration for web UI tests."""
 
 import pytest
+
 from kirin.web.app import catalog_manager
 
 

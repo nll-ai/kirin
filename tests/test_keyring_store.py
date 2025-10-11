@@ -1,8 +1,7 @@
 """Tests for secure credential storage using OS keyring."""
 
 import json
-import tempfile
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 

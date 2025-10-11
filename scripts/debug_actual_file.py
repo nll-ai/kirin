@@ -11,13 +11,11 @@
 # kirin = { path = "../", editable = true }
 # ///
 
-import tempfile
-import os
 import json
-from pathlib import Path
+import tempfile
+
 from kirin import Dataset
 from kirin.testing_utils import dummy_file
-from kirin.utils import strip_protocol
 
 
 def debug_actual_file():

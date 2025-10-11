@@ -1,7 +1,6 @@
 """Tests for the File entity class."""
 
 import tempfile
-from pathlib import Path
 
 import pytest
 

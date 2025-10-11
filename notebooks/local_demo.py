@@ -20,11 +20,12 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     # Kirin Capabilities Showcase - Linear data versioning, content-addressed storage
+    from pathlib import Path
+
     import marimo as mo
     import polars as pl
-    from pathlib import Path
-    import kirin
-    from kirin import Dataset, File, Commit
+
+    from kirin import Dataset
     return Dataset, Path, mo, pl
 
 

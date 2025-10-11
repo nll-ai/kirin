@@ -30,7 +30,6 @@ def run_integration_tests():
     print("🧪 Running Full Integration Tests\n")
 
     try:
-        import pytest
         import subprocess
 
         # Run pytest on the web UI tests

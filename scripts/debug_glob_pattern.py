@@ -12,8 +12,7 @@
 # ///
 
 import tempfile
-import os
-from pathlib import Path
+
 from kirin import Dataset
 from kirin.testing_utils import dummy_file
 from kirin.utils import strip_protocol

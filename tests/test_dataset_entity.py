@@ -1,13 +1,10 @@
 """Tests for the Dataset entity class."""
 
-import tempfile
 from pathlib import Path
 
 import pytest
 
 from kirin.dataset import Dataset
-from kirin.file import File
-from kirin.commit import Commit
 
 
 def test_dataset_creation(temp_dir):

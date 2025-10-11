@@ -18,13 +18,14 @@ by using the dataset API directly to checkout branches and visualize the history
 
 import sys
 from pathlib import Path
+
 from loguru import logger
 
 # Add the parent directory to the path so we can import kirin
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from kirin.dataset import Dataset
-from kirin.git_semantics import get_branch_aware_commits, GitDAG
+from kirin.git_semantics import GitDAG, get_branch_aware_commits
 
 
 def print_commit_info(commits, title):

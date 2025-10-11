@@ -21,11 +21,13 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     # Kirin GCP Storage Demo - Cloud-native data versioning with Google Cloud Storage
+    import tempfile
+    from pathlib import Path
+
     import marimo as mo
     import polars as pl
-    from pathlib import Path
-    import tempfile
-    from kirin import Dataset, File, Commit
+
+    from kirin import Dataset
 
     return Dataset, Path, mo, pl, tempfile
 

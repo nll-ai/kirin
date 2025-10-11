@@ -1,7 +1,6 @@
 """Tests for the Commit entity class."""
 
 from datetime import datetime
-from pathlib import Path
 
 import pytest
 

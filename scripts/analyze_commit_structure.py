@@ -15,6 +15,7 @@ Analyze the actual commit structure to understand why we have duplicates.
 
 import sys
 from pathlib import Path
+
 from loguru import logger
 
 # Add the parent directory to the path so we can import kirin

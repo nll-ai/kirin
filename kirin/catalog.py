@@ -1,7 +1,8 @@
 """Lightweight implementation of a Data Catalog, which is a collection of Datasets."""
 
 from dataclasses import dataclass
-from typing import List, Union, Optional
+from typing import List, Optional, Union
+
 import fsspec
 from loguru import logger
 

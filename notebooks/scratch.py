@@ -21,12 +21,12 @@ def _():
     """Setup Kirin and basic imports."""
     import sys
     from pathlib import Path
+
     from loguru import logger
 
     # Add the parent directory to Python path for Kirin imports
     sys.path.insert(0, str(Path.cwd().parent))
 
-    from kirin import Dataset, File, Commit
     from kirin.catalog import Catalog
 
     return Catalog, logger
@@ -35,8 +35,8 @@ def _():
 @app.cell
 def _(logger):
     """Create a temporary directory for testing."""
-    import tempfile
     import os
+    import tempfile
 
     # Create a temporary directory for this notebook session
     temp_dir = tempfile.mkdtemp(prefix="kirin_notebook_")
