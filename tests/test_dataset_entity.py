@@ -85,7 +85,7 @@ def test_dataset_file_removal(temp_dir):
     dataset.commit("Add files", add_files=[file1, file2])
 
     # Remove one file
-    commit_hash = dataset.commit(message="Remove file1", remove_files=["file1.txt"])
+    dataset.commit(message="Remove file1", remove_files=["file1.txt"])
 
     assert dataset.has_file("file2.txt")
     assert not dataset.has_file("file1.txt")

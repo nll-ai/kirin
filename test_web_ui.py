@@ -9,7 +9,6 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from kirin.web.app import app
     from kirin.web.config import BackendManager
 
     print("✅ Successfully imported Kirin Web UI components")

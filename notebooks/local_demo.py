@@ -65,7 +65,7 @@ def _(Dataset, Path):
     )
 
     # Initial commit
-    commit1 = ds.commit(
+    ds.commit(
         message="Initial commit: Add sales data and notes",
         add_files=[csv_file, text_file],
     )
@@ -82,13 +82,13 @@ def _(Dataset, Path):
     Widget A,29.99,80,2024-01-21""")
 
     # Second commit
-    commit2 = ds.commit(
+    ds.commit(
         message="Add new product Widget D and additional sales",
         add_files=[updated_csv],
     )
 
     # Third commit - remove old file
-    commit3 = ds.commit(
+    ds.commit(
         message="Remove old sales data file", remove_files=["sales_data.csv"]
     )
     return (ds,)

@@ -1,10 +1,10 @@
-"""File entity for Kirin - represents a versioned file with content-addressed storage."""
+"""File entity for Kirin - represents a versioned file with content-addressed storage."""  # noqa: E501
 
 import os
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import BinaryIO, Optional, TextIO, Union
+from typing import TYPE_CHECKING, BinaryIO, Optional, TextIO, Union
 
 import fsspec
 from loguru import logger
@@ -217,7 +217,10 @@ class File:
 
     def __repr__(self) -> str:
         """Detailed string representation of the file."""
-        return f"File(hash='{self.hash}', name='{self.name}', size={self.size}, content_type='{self.content_type}')"
+        return (
+            f"File(hash='{self.hash}', name='{self.name}', size={self.size}, "
+            f"content_type='{self.content_type}')"
+        )
 
 
 class _TempFileHandle:
@@ -253,7 +256,5 @@ class _TempFileHandle:
 
 
 # Import ContentStore here to avoid circular imports
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
     from .storage import ContentStore

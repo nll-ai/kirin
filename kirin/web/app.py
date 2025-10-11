@@ -474,8 +474,8 @@ async def delete_catalog(
                 raise HTTPException(
                     status_code=400,
                     detail=(
-                        f"Cannot delete catalog with {len(datasets)} existing datasets. "
-                        "Please delete the datasets first."
+                        f"Cannot delete catalog with {len(datasets)} "
+                        "existing datasets. Please delete the datasets first."
                     ),
                 )
         except HTTPException:
@@ -767,17 +767,18 @@ async def create_commit(
             for file_obj in dataset.files.values():
                 total_size += file_obj.size
 
-        info = {
-            "description": dataset.description or "",
-            "commit_count": len(dataset.history()),
-            "current_commit": dataset.current_commit.hash
-            if dataset.current_commit
-            else None,
-            "total_size": total_size,
-            "last_updated": dataset.current_commit.timestamp.isoformat()
-            if dataset.current_commit
-            else None,
-        }
+        # Calculate dataset info for potential future use
+        # dataset_info = {
+        #     "description": dataset.description or "",
+        #     "commit_count": len(dataset.history()),
+        #     "current_commit": dataset.current_commit.hash
+        #     if dataset.current_commit
+        #     else None,
+        #     "total_size": total_size,
+        #     "last_updated": dataset.current_commit.timestamp.isoformat()
+        #     if dataset.current_commit
+        #     else None,
+        # }
 
         # Redirect back to dataset view to refresh the state
         return RedirectResponse(
@@ -937,6 +938,7 @@ async def download_file(catalog_id: str, dataset_name: str, file_name: str):
 
             # Stream the temporary file
             def generate():
+                """Generate file chunks for streaming response."""
                 with open(temp_path, "rb") as f:
                     while chunk := f.read(8192):
                         yield chunk

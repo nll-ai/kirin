@@ -21,14 +21,13 @@ class CatalogConfig:
 
 
 class CatalogManager:
-    """Manages data catalog configurations."""
+    """Manages data catalog configurations.
+
+    Args:
+        config_dir: Directory to store config files (defaults to ~/.kirin)
+    """
 
     def __init__(self, config_dir: Optional[str] = None):
-        """Initialize catalog manager.
-
-        Args:
-            config_dir: Directory to store config files (defaults to ~/.kirin)
-        """
         if config_dir is None:
             config_dir = Path.home() / ".kirin"
         else:

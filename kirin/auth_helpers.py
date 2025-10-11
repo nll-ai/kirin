@@ -67,7 +67,8 @@ def detect_aws_credentials() -> Dict[str, any]:
                 result["source"] = "environment"
 
         logger.debug(
-            f"AWS credentials detected via boto3: {result['source']} profile={profile_name}"
+            f"AWS credentials detected via boto3: {result['source']} "
+            f"profile={profile_name}"
         )
         return result
 
@@ -228,12 +229,17 @@ Option 1: Azure CLI (Recommended)
   az login
 
 Option 2: Connection String
-  export AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=your-account;AccountKey=your-key"
+   export AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;"
+   "AccountName=your-account;AccountKey=your-key"
 
 Option 3: Service Principal
-  az login --service-principal --username <app-id> --password <password> --tenant <tenant-id>
+  az login --service-principal --username <app-id> --password <password> "
+  "--tenant <tenant-id>"
 
 After setup, refresh this page and test the connection."""
 
     else:
-        return f"Unknown backend type: {backend_type}. Please check the backend configuration."
+        return (
+            f"Unknown backend type: {backend_type}. "
+            "Please check the backend configuration."
+        )

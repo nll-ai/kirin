@@ -1,4 +1,4 @@
-"""Dataset entity for Kirin - represents a versioned collection of files with linear history."""
+"""Dataset entity for Kirin - represents a versioned collection of files with linear history."""  # noqa: E501
 
 import tempfile
 from contextlib import contextmanager
@@ -42,6 +42,12 @@ class Dataset:
 
         # Checkout a specific commit
         dataset.checkout(commit_hash)
+
+    Args:
+        root_dir: Root directory for the dataset
+        name: Name of the dataset
+        description: Description of the dataset
+        fs: Filesystem to use (auto-detected if None)
     """
 
     def __init__(
@@ -51,14 +57,6 @@ class Dataset:
         description: str = "",
         fs: Optional[fsspec.AbstractFileSystem] = None,
     ):
-        """Initialize a dataset.
-
-        Args:
-            root_dir: Root directory for the dataset
-            name: Name of the dataset
-            description: Description of the dataset
-            fs: Filesystem to use (auto-detected if None)
-        """
         self.root_dir = str(root_dir)
         self.name = name
         self.description = description
@@ -131,7 +129,8 @@ class Dataset:
         """
         if not add_files and not remove_files:
             raise ValueError(
-                "No changes specified - at least one of add_files or remove_files must be provided"
+                "No changes specified - at least one of add_files or "
+                "remove_files must be provided"
             )
 
         # Start building commit from current state
@@ -427,8 +426,15 @@ class Dataset:
     def __str__(self) -> str:
         """String representation of the dataset."""
         commit_count = self.commit_store.get_commit_count()
-        return f"Dataset(name='{self.name}', commits={commit_count}, current={self.current_commit.short_hash if self.current_commit else 'None'})"
+        current_hash = self.current_commit.short_hash if self.current_commit else "None"
+        return (
+            f"Dataset(name='{self.name}', commits={commit_count}, "
+            f"current={current_hash})"
+        )
 
     def __repr__(self) -> str:
         """Detailed string representation of the dataset."""
-        return f"Dataset(name='{self.name}', description='{self.description}', root_dir='{self.root_dir}')"
+        return (
+            f"Dataset(name='{self.name}', description='{self.description}', "
+            f"root_dir='{self.root_dir}')"
+        )

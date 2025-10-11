@@ -258,3 +258,43 @@ def test_catalog_validation_errors(client):
         "/catalogs/add", data={"name": "Test Catalog", "root_dir": ""}
     )
     assert response.status_code == 422  # Validation error
+
+
+def test_download_file(client, temp_catalog):
+    """Test file download functionality."""
+    # Create a dataset with a file
+    response = client.post(
+        f"/{temp_catalog['name']}/datasets/create",
+        data={"name": "test_dataset", "description": "Test dataset"},
+    )
+    assert response.status_code == 303
+
+    # Add a file to the dataset
+    import os
+    import tempfile
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+        f.write("Test content for download")
+        temp_file_path = f.name
+
+    try:
+        with open(temp_file_path, "rb") as f:
+            response = client.post(
+                f"/{temp_catalog['name']}/test_dataset/commit",
+                files={"files": ("test.txt", f, "text/plain")},
+                data={"message": "Add test file"},
+            )
+        assert response.status_code == 303
+
+        # Test download
+        response = client.get(f"/{temp_catalog['name']}/test_dataset/download/test.txt")
+        assert response.status_code == 200
+        assert (
+            response.headers["Content-Disposition"] == "attachment; filename=test.txt"
+        )
+        # Ensure we read the full response to trigger the generate function
+        content = response.content
+        assert content == b"Test content for download"
+
+    finally:
+        os.unlink(temp_file_path)
