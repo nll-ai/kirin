@@ -56,6 +56,7 @@ profile = "black"
 # See https://docs.astral.sh/ruff/rules/ for a list of rules.
 # See https://docs.astral.sh/ruff/configuration/#using-pyprojecttoml for configuration documentation
 select = ["E", "F", "I"]
+exclude = ["notebooks/*", "scripts/*"]
 
 [tool.setuptools]
 include-package-data = true
@@ -99,6 +100,7 @@ kirin = "kirin.cli:main"
 [tool.coverage.run]
 omit = [
     "tests/*",
+    "notebooks/*",
 ]
 
 [tool.pixi.workspace]

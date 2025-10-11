@@ -30,7 +30,8 @@ def get_gcs_filesystem(
     from loguru import logger
 
     logger.info(
-        f"Creating GCS filesystem with token={token}, project={project}, kwargs={kwargs}"
+        f"Creating GCS filesystem with token={token}, project={project}, "
+        f"kwargs={kwargs}"
     )
 
     config: Dict[str, Any] = {}

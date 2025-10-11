@@ -160,14 +160,12 @@ class CommitBuilder:
     """Builder for creating new commits.
 
     This class helps construct commits by tracking changes from a parent commit.
+
+    Args:
+        parent_commit: Parent commit to base changes on (None for initial commit)
     """
 
     def __init__(self, parent_commit: Optional[Commit] = None):
-        """Initialize the commit builder.
-
-        Args:
-            parent_commit: Parent commit to base changes on (None for initial commit)
-        """
         self.parent_commit = parent_commit
         self.files = dict(parent_commit.files) if parent_commit else {}
         self.added_files = set()

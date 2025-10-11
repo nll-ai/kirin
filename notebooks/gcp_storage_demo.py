@@ -78,7 +78,7 @@ def _(Dataset, Path, tempfile):
 @app.cell
 def _(csv_file, ds, json_file, text_file):
     # Initial commit to GCS
-    commit1 = ds.commit(
+    ds.commit(
         message="Initial commit: Add sales data, notes, and config to GCS",
         add_files=[csv_file, text_file, json_file],
     )
@@ -123,7 +123,7 @@ def _(data_dir):
 @app.cell
 def _(analysis_file, ds, updated_csv):
     # Second commit - add new files to GCS
-    commit2 = ds.commit(
+    ds.commit(
         message="Add new product Widget D and analysis script",
         add_files=[updated_csv, analysis_file],
     )
@@ -133,7 +133,7 @@ def _(analysis_file, ds, updated_csv):
 @app.cell
 def _(ds):
     # Third commit - remove old file
-    commit3 = ds.commit(
+    ds.commit(
         message="Remove old sales data file from GCS", remove_files=["sales_data.csv"]
     )
     return

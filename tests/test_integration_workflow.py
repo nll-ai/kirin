@@ -59,7 +59,8 @@ def test_complete_kirin_linear_workflow():
             ),
             (
                 "research_notes.txt",
-                "Research Notes\n\nHypothesis: Machine learning can improve efficiency\n\n"
+                "Research Notes\n\nHypothesis: Machine learning can improve "
+                "efficiency\n\n"
                 "Methodology:\n1. Data collection\n2. Model training\n3. Validation\n\n"
                 "Results: Positive correlation found",
             ),
@@ -76,7 +77,10 @@ def test_complete_kirin_linear_workflow():
 
         # Commit the initial files
         initial_file_paths = [str(test_dir / f[0]) for f in initial_files]
-        commit_message_1 = "Initial commit: Add data analysis, research notes, and project requirements"
+        commit_message_1 = (
+            "Initial commit: Add data analysis, research notes, and "
+            "project requirements"
+        )
         commit_hash_1 = dataset.commit(commit_message_1, add_files=initial_file_paths)
 
         # Verify initial commit

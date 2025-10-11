@@ -68,7 +68,8 @@ def _get_s3_filesystem_with_credentials(
     - Web identity tokens
 
     Args:
-        aws_profile: Optional AWS profile name. If None, uses AWS_PROFILE env var or 'default'
+        aws_profile: Optional AWS profile name. If None, uses AWS_PROFILE env var
+        or 'default'
 
     Returns:
         Authenticated S3 filesystem
@@ -123,13 +124,16 @@ def _get_s3_filesystem_with_credentials(
     except ProfileNotFound as e:
         logger.error(f"AWS profile '{profile_name}' not found: {e}")
         raise ValueError(
-            f"AWS profile '{profile_name}' not found. Please check your AWS configuration."
+            f"AWS profile '{profile_name}' not found. "
+            "Please check your AWS configuration."
         )
     except NoCredentialsError as e:
         logger.error(f"No AWS credentials found: {e}")
         raise ValueError(
-            "No AWS credentials found. Please run 'aws sso login' or configure AWS credentials. "
-            "See: https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html"
+            "No AWS credentials found. Please run 'aws sso login' or "
+            "configure AWS credentials. See: "
+            "https://docs.aws.amazon.com/cli/latest/userguide/"
+            "cli-configure-files.html"
         )
     except Exception as e:
         logger.error(f"Failed to create S3 filesystem: {e}")

@@ -15,17 +15,15 @@ class ContentStore:
 
     Files are stored at root_dir/data/{hash[:2]}/{hash[2:]} to avoid
     filesystem limitations with large numbers of files in a single directory.
+
+    Args:
+        root_dir: Root directory for content storage
+        fs: Filesystem to use (auto-detected from root_dir if None)
     """
 
     def __init__(
         self, root_dir: Union[str, Path], fs: Optional[fsspec.AbstractFileSystem] = None
     ):
-        """Initialize the content store.
-
-        Args:
-            root_dir: Root directory for content storage
-            fs: Filesystem to use (auto-detected from root_dir if None)
-        """
         self.root_dir = str(root_dir)
         self.fs = fs or get_filesystem(self.root_dir)
         self.data_dir = f"{self.root_dir}/data"

@@ -30,6 +30,12 @@ class CommitStore:
             }
         ]
     }
+
+    Args:
+        root_dir: Root directory for the dataset
+        dataset_name: Name of the dataset
+        fs: Filesystem to use (auto-detected if None)
+        storage: Content store for files (created if None)
     """
 
     def __init__(
@@ -39,14 +45,6 @@ class CommitStore:
         fs: Optional[fsspec.AbstractFileSystem] = None,
         storage: Optional[ContentStore] = None,
     ):
-        """Initialize the commit store.
-
-        Args:
-            root_dir: Root directory for the dataset
-            dataset_name: Name of the dataset
-            fs: Filesystem to use (auto-detected if None)
-            storage: Content store for files (created if None)
-        """
         self.root_dir = str(root_dir)
         self.dataset_name = dataset_name
         self.fs = fs or get_filesystem(self.root_dir)
@@ -64,7 +62,8 @@ class CommitStore:
         self._load_commits()
 
         logger.info(
-            f"Commit store initialized for dataset '{dataset_name}' at {self.dataset_dir}"
+            f"Commit store initialized for dataset '{dataset_name}' "
+            f"at {self.dataset_dir}"
         )
 
     def save_commit(self, commit: Commit) -> None:
@@ -111,7 +110,8 @@ class CommitStore:
         if not self._commits_cache:
             return None
 
-        # Find commit that is not a parent of any other commit (latest in linear history)
+        # Find commit that is not a parent of any other commit
+        # (latest in linear history)
         all_parent_hashes = {
             commit.parent_hash
             for commit in self._commits_cache.values()
@@ -203,7 +203,8 @@ class CommitStore:
                     self._commits_cache[commit.hash] = commit
                 except Exception as e:
                     logger.warning(
-                        f"Failed to load commit {commit_data.get('hash', 'unknown')}: {e}"
+                        f"Failed to load commit "
+                        f"{commit_data.get('hash', 'unknown')}: {e}"
                     )
 
             logger.info(
