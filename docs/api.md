@@ -10,61 +10,123 @@ The main class for working with Kirin datasets.
 from kirin import Dataset
 
 # Create or load a dataset
-dataset = Dataset(root_dir="/path/to/data", dataset_name="my-dataset")
+dataset = Dataset(root_dir="/path/to/data", name="my-dataset")
+```
+
+#### Constructor Parameters
+
+```python
+Dataset(
+    root_dir: Union[str, Path],           # Root directory for the dataset
+    name: str,                           # Name of the dataset
+    description: str = "",               # Description of the dataset
+    fs: Optional[fsspec.AbstractFileSystem] = None,  # Filesystem to use
+    # Cloud authentication parameters
+    aws_profile: Optional[str] = None,   # AWS profile for S3 authentication
+    gcs_token: Optional[Union[str, Path]] = None,  # GCS service account token
+    gcs_project: Optional[str] = None,   # GCS project ID
+    azure_account_name: Optional[str] = None,  # Azure account name
+    azure_account_key: Optional[str] = None,    # Azure account key
+    azure_connection_string: Optional[str] = None,  # Azure connection string
+)
 ```
 
 #### Basic Operations
 
 - `commit(message, add_files=None, remove_files=None)` - Commit changes to the dataset
-- `checkout(commit_hash)` - Switch to a specific commit
-- `file_dict` - Dictionary of files in the current commit
+- `checkout(commit_hash=None)` - Switch to a specific commit (latest if None)
+- `files` - Dictionary of files in the current commit
 - `local_files()` - Context manager for accessing files as local paths
-
-#### Branch Operations
-
-- `create_branch(name, commit_hash=None)` - Create a new branch
-- `list_branches()` - List all branches
-- `get_current_branch()` - Get the current branch name
-- `switch_branch(name)` - Switch to a different branch
-- `delete_branch(name)` - Delete a branch
-- `get_branch_commit(name)` - Get the commit hash a branch points to
+- `history(limit=None)` - Get commit history
+- `get_file(filename)` - Get a file from the current commit
+- `read_file(filename)` - Read file content as text
+- `download_file(filename, target_path)` - Download file to local path
 
 #### Examples
 
 ```python
 # Basic usage
-dataset = Dataset(root_dir="/data", dataset_name="project")
+dataset = Dataset(root_dir="/data", name="project")
 dataset.commit("Initial commit", add_files=["data.csv"])
 
-# Branching
-dataset.create_branch("feature/analysis")
-dataset.switch_branch("feature/analysis")
-dataset.commit("Add analysis script", add_files=["analyze.py"])
+# Cloud storage with authentication
+dataset = Dataset(
+    root_dir="s3://my-bucket/data",
+    name="project",
+    aws_profile="my-profile"
+)
 
-# Switch back to main
-dataset.switch_branch("main")
+# GCS with service account
+dataset = Dataset(
+    root_dir="gs://my-bucket/data",
+    name="project",
+    gcs_token="/path/to/service-account.json",
+    gcs_project="my-project"
+)
+
+# Azure with connection string
+dataset = Dataset(
+    root_dir="az://my-container/data",
+    name="project",
+    azure_connection_string="DefaultEndpointsProtocol=https;..."
+)
 ```
 
-### BranchManager
+### Catalog
 
-Low-level branch management (used internally by Dataset).
+The main class for managing collections of datasets.
 
 ```python
-from kirin.models import BranchManager
+from kirin import Catalog
 
-# Create branch manager
-branch_manager = BranchManager(dataset_dir, filesystem)
+# Create or load a catalog
+catalog = Catalog(root_dir="/path/to/data")
 ```
 
-#### Methods
+#### Constructor Parameters
 
-- `create_branch(name, commit_hash)` - Create a branch
-- `get_branch_commit(name)` - Get branch commit hash
-- `update_branch(name, commit_hash)` - Update branch pointer
-- `delete_branch(name)` - Delete a branch
-- `list_branches()` - List all branches
-- `get_current_branch()` - Get current branch
-- `set_current_branch(name)` - Set current branch
+```python
+Catalog(
+    root_dir: Union[str, fsspec.AbstractFileSystem],  # Root directory for the catalog
+    fs: Optional[fsspec.AbstractFileSystem] = None,  # Filesystem to use
+    # Cloud authentication parameters
+    aws_profile: Optional[str] = None,   # AWS profile for S3 authentication
+    gcs_token: Optional[Union[str, Path]] = None,  # GCS service account token
+    gcs_project: Optional[str] = None,   # GCS project ID
+    azure_account_name: Optional[str] = None,  # Azure account name
+    azure_account_key: Optional[str] = None,    # Azure account key
+    azure_connection_string: Optional[str] = None,  # Azure connection string
+)
+```
+
+#### Basic Operations
+
+- `datasets()` - List all datasets in the catalog
+- `get_dataset(name)` - Get a specific dataset
+- `create_dataset(name, description="")` - Create a new dataset
+- `__len__()` - Number of datasets in the catalog
+
+#### Examples
+
+```python
+# Basic usage
+catalog = Catalog(root_dir="/data")
+datasets = catalog.datasets()
+dataset = catalog.get_dataset("my-dataset")
+
+# Cloud storage with authentication
+catalog = Catalog(
+    root_dir="s3://my-bucket/data",
+    aws_profile="my-profile"
+)
+
+# GCS with service account
+catalog = Catalog(
+    root_dir="gs://my-bucket/data",
+    gcs_token="/path/to/service-account.json",
+    gcs_project="my-project"
+)
+```
 
 ## Web UI
 
@@ -72,78 +134,93 @@ The web UI provides a graphical interface for Kirin operations.
 
 ### Routes
 
-- `/` - Home page for loading datasets
-- `/dataset-view` - Main dataset view
-- `/branches` - Branch management interface
-- `/commit` - Commit interface
-- `/d/{dataset_name}` - Direct dataset access
+- `/` - Home page for catalog management
+- `/catalogs/add` - Add new catalog
+- `/catalog/{catalog_id}` - View catalog and datasets
+- `/catalog/{catalog_id}/{dataset_name}` - View specific dataset
+- `/catalog/{catalog_id}/{dataset_name}/commit` - Commit interface
 
-### Branch Management
+### Catalog Management
 
-Access branch management through the web UI:
+The web UI supports cloud authentication through CatalogConfig:
 
-1. Load a dataset
-2. Click the "Branches" button
-3. Create, switch, or delete branches through the interface
+```python
+from kirin.web.config import CatalogConfig
+
+# Create catalog config with cloud auth
+config = CatalogConfig(
+    id="my-catalog",
+    name="My Catalog",
+    root_dir="s3://my-bucket/data",
+    aws_profile="my-profile"
+)
+
+# Convert to runtime catalog
+catalog = config.to_catalog()
+```
+
+### Cloud Authentication in Web UI
+
+The web UI automatically handles cloud authentication when you:
+
+1. Create a catalog with cloud storage URL (s3://, gs://, az://)
+2. The system will prompt for authentication parameters
+3. Credentials are stored securely in the catalog configuration
 
 ## Storage Format
 
-Kirin uses a Git-like storage format:
+Kirin uses a simplified Git-like storage format:
 
 ```text
 data/
-├── objects/              # Content-addressed file storage
+├── data/                 # Content-addressed file storage
+│   └── {hash[:2]}/{hash[2:]}
 ├── datasets/
 │   └── my-dataset/
-│       ├── refs/heads/  # Branch references
-│       │   ├── main     # Contains commit hash
-│       │   └── feature  # Contains commit hash
-│       ├── HEAD         # Points to current branch
-│       └── {commit}/    # Individual commits
-│           └── commit.json
+│       └── commits.json  # Linear commit history
 ```
 
 ## Error Handling
 
 ### Common Exceptions
 
-- `DatasetNoCommitsError` - No commits found in dataset
-- `ValueError` - Invalid branch operations (branch exists, doesn't exist, etc.)
+- `ValueError` - Invalid operations (file not found, invalid commit hash, etc.)
 - `FileNotFoundError` - File not found in dataset
+- `HTTPException` - Web UI errors (catalog not found, validation errors)
 
 ### Example Error Handling
 
 ```python
 try:
-    dataset.create_branch("feature")
+    dataset.checkout("nonexistent-commit")
 except ValueError as e:
-    print(f"Branch creation failed: {e}")
+    print(f"Checkout failed: {e}")
 
 try:
-    dataset.switch_branch("nonexistent")
-except ValueError as e:
-    print(f"Branch switch failed: {e}")
+    content = dataset.read_file("nonexistent.txt")
+except FileNotFoundError as e:
+    print(f"File not found: {e}")
 ```
 
 ## Best Practices
 
-### Branch Naming
+### Dataset Naming
 
-- Use descriptive names: `feature/user-auth`, `experiment/ml-model`
-- Avoid generic names: `test`, `new`, `temp`
+- Use descriptive names: `user-data`, `ml-experiments`, `production-models`
+- Avoid generic names: `test`, `data`, `temp`
 
 ### Workflow Patterns
 
-- Create feature branches for new work
-- Use experimental branches for testing
-- Keep main branch stable
-- Delete branches when work is complete
+- Commit changes regularly with descriptive messages
+- Use linear commit history for simplicity
+- Keep datasets focused on specific use cases
+- Use catalogs to organize related datasets
 
 ### File Management
 
 - Use `local_files()` context manager for library compatibility
-- Check branch before file operations
-- Commit changes regularly
+- Commit changes after adding/removing files
+- Use descriptive commit messages
 
 ## Advanced Features
 
@@ -159,9 +236,10 @@ with dataset.local_files() as local_files:
 ### Commit History
 
 ```python
-# Get commit history as Mermaid diagram
-mermaid = dataset.commit_history_mermaid()
-print(mermaid)  # Can be rendered in Jupyter
+# Get commit history
+history = dataset.history(limit=10)
+for commit in history:
+    print(f"{commit.hash}: {commit.message}")
 ```
 
 ### File Operations
@@ -179,4 +257,30 @@ dataset.commit("Update dataset",
               remove_files=["old_data.csv"])
 ```
 
-For detailed examples and advanced usage, see the [Branching Documentation](branching.md).
+### Cloud Storage Integration
+
+```python
+# AWS S3 with profile
+dataset = Dataset(
+    root_dir="s3://my-bucket/data",
+    name="my-dataset",
+    aws_profile="production"
+)
+
+# GCS with service account
+dataset = Dataset(
+    root_dir="gs://my-bucket/data",
+    name="my-dataset",
+    gcs_token="/path/to/service-account.json",
+    gcs_project="my-project"
+)
+
+# Azure with connection string
+dataset = Dataset(
+    root_dir="az://my-container/data",
+    name="my-dataset",
+    azure_connection_string="DefaultEndpointsProtocol=https;..."
+)
+```
+
+For detailed examples and cloud storage setup, see the [Cloud Storage Authentication Guide](cloud-storage-auth.md).

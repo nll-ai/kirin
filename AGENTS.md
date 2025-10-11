@@ -735,6 +735,7 @@ When writing tests for the project:
 - **Follow existing test patterns** - Use the same structure and naming conventions as existing tests in the test suite
 - **Use pytest function style only** - Write tests as functions, not classes. Use `def test_function_name():` pattern
 - **No test classes** - Avoid `class TestSomething:` patterns. Use function-based tests with descriptive names
+- **PyTest Style Only** - All tests must be written with PyTest style test functions, NOT UnitTest test style classes
 
 **Pytest-Style Test Functions** (PREFERRED):
 

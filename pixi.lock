@@ -1728,13 +1728,13 @@ packages:
 - pypi: ./
   name: kirin
   version: 0.0.1
-  sha256: 9168203eb260615ac7f37abf24a13ae2dbb7060a135ed7550e932049d524b593
+  sha256: 49534bc752ef471ccd652a1a7bbd54c0a214a36bb475dbd2f12007203f594ea0
   requires_dist:
   - pyprojroot
   - python-dotenv
   - typer
   - json5
-  - fsspec
+  - fsspec>=2025.9.0,<2026
   - s3fs
   - gcsfs
   - fastapi

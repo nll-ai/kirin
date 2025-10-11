@@ -1,6 +1,7 @@
 """Lightweight implementation of a Data Catalog, which is a collection of Datasets."""
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Optional, Union
 
 import fsspec
@@ -16,6 +17,15 @@ class Catalog:
 
     root_dir: Union[str, fsspec.AbstractFileSystem]
     fs: Optional[fsspec.AbstractFileSystem] = None
+    # AWS/S3 authentication
+    aws_profile: Optional[str] = None
+    # GCP/GCS authentication
+    gcs_token: Optional[Union[str, Path]] = None
+    gcs_project: Optional[str] = None
+    # Azure authentication
+    azure_account_name: Optional[str] = None
+    azure_account_key: Optional[str] = None
+    azure_connection_string: Optional[str] = None
 
     def __post_init__(self):
         """Post-initialization function for the Catalog class."""
@@ -25,7 +35,15 @@ class Catalog:
             self.root_dir = self.fs.root_marker
         else:
             self.root_dir = str(self.root_dir)
-            self.fs = self.fs or get_filesystem(self.root_dir)
+            self.fs = self.fs or get_filesystem(
+                self.root_dir,
+                aws_profile=self.aws_profile,
+                gcs_token=self.gcs_token,
+                gcs_project=self.gcs_project,
+                azure_account_name=self.azure_account_name,
+                azure_account_key=self.azure_account_key,
+                azure_connection_string=self.azure_connection_string,
+            )
 
         # Set up datasets directory path
         self.datasets_dir = f"{strip_protocol(self.root_dir)}/datasets"

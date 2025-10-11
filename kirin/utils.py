@@ -1,7 +1,8 @@
 """Utilities for gitdata."""
 
 import os
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union
 
 import fsspec
 from loguru import logger
@@ -30,13 +31,24 @@ def strip_protocol(path: str) -> str:
 
 
 def get_filesystem(
-    path: str, aws_profile: Optional[str] = None
+    path: str,
+    aws_profile: Optional[str] = None,
+    gcs_token: Optional[Union[str, Path]] = None,
+    gcs_project: Optional[str] = None,
+    azure_account_name: Optional[str] = None,
+    azure_account_key: Optional[str] = None,
+    azure_connection_string: Optional[str] = None,
 ) -> fsspec.AbstractFileSystem:
-    """Get filesystem for the given path with AWS credential resolution.
+    """Get filesystem for the given path with cloud provider authentication.
 
     Args:
         path: Path to determine filesystem for
         aws_profile: Optional AWS profile name for S3 authentication
+        gcs_token: Optional GCS token (service account JSON path, 'cloud', or None)
+        gcs_project: Optional GCP project ID
+        azure_account_name: Optional Azure storage account name
+        azure_account_key: Optional Azure storage account key
+        azure_connection_string: Optional Azure connection string
 
     Returns:
         fsspec filesystem instance
@@ -48,6 +60,16 @@ def get_filesystem(
         # For S3, use boto3 to resolve credentials (supports SSO, profiles, etc.)
         if protocol == "s3":
             return _get_s3_filesystem_with_credentials(aws_profile)
+        elif protocol == "gs":
+            return _get_gcs_filesystem_with_credentials(
+                token=gcs_token, project=gcs_project
+            )
+        elif protocol == "az":
+            return _get_azure_filesystem_with_credentials(
+                account_name=azure_account_name,
+                account_key=azure_account_key,
+                connection_string=azure_connection_string,
+            )
         else:
             return fsspec.filesystem(protocol)
     else:
@@ -138,3 +160,43 @@ def _get_s3_filesystem_with_credentials(
     except Exception as e:
         logger.error(f"Failed to create S3 filesystem: {e}")
         raise ValueError(f"Failed to create S3 filesystem: {e}")
+
+
+def _get_gcs_filesystem_with_credentials(
+    token: Optional[Union[str, Path]] = None,
+    project: Optional[str] = None,
+) -> fsspec.AbstractFileSystem:
+    """Create GCS filesystem with credentials.
+
+    Args:
+        token: Optional GCS token (service account JSON path, 'cloud', or None)
+        project: Optional GCP project ID
+
+    Returns:
+        Authenticated GCS filesystem
+    """
+    from .cloud_auth import get_gcs_filesystem
+    return get_gcs_filesystem(token=token, project=project)
+
+
+def _get_azure_filesystem_with_credentials(
+    account_name: Optional[str] = None,
+    account_key: Optional[str] = None,
+    connection_string: Optional[str] = None,
+) -> fsspec.AbstractFileSystem:
+    """Create Azure filesystem with credentials.
+
+    Args:
+        account_name: Optional Azure storage account name
+        account_key: Optional Azure storage account key
+        connection_string: Optional Azure connection string
+
+    Returns:
+        Authenticated Azure filesystem
+    """
+    from .cloud_auth import get_azure_filesystem
+    return get_azure_filesystem(
+        account_name=account_name,
+        account_key=account_key,
+        connection_string=connection_string,
+    )

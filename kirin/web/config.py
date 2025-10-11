@@ -3,11 +3,11 @@
 import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from loguru import logger
 
-from ..utils import get_filesystem
+from ..catalog import Catalog
 
 
 @dataclass
@@ -17,7 +17,31 @@ class CatalogConfig:
     id: str
     name: str
     root_dir: str
+    # AWS/S3 authentication
     aws_profile: Optional[str] = None
+    # GCP/GCS authentication
+    gcs_token: Optional[Union[str, Path]] = None
+    gcs_project: Optional[str] = None
+    # Azure authentication
+    azure_account_name: Optional[str] = None
+    azure_account_key: Optional[str] = None
+    azure_connection_string: Optional[str] = None
+
+    def to_catalog(self) -> Catalog:
+        """Convert this configuration to a runtime Catalog instance.
+
+        Returns:
+            Catalog instance with authenticated filesystem
+        """
+        return Catalog(
+            root_dir=self.root_dir,
+            aws_profile=self.aws_profile,
+            gcs_token=self.gcs_token,
+            gcs_project=self.gcs_project,
+            azure_account_name=self.azure_account_name,
+            azure_account_key=self.azure_account_key,
+            azure_connection_string=self.azure_connection_string,
+        )
 
 
 class CatalogManager:
@@ -123,26 +147,3 @@ class CatalogManager:
         """Clear all catalog configurations (for testing)."""
         self._save_catalogs([])
         logger.info("Cleared all catalogs")
-
-    def create_filesystem(self, catalog: CatalogConfig):
-        """Create a filesystem instance for a catalog.
-
-        Args:
-            catalog: Catalog configuration
-
-        Returns:
-            fsspec filesystem instance
-        """
-        logger.info(f"Creating filesystem for catalog: {catalog.id}")
-        logger.info(f"Root dir: {catalog.root_dir}")
-        if catalog.aws_profile:
-            logger.info(f"Using AWS profile: {catalog.aws_profile}")
-
-        try:
-            # Use Kirin's get_filesystem utility which handles all the complexity
-            fs = get_filesystem(catalog.root_dir, aws_profile=catalog.aws_profile)
-            logger.info(f"Filesystem created successfully: {type(fs)}")
-            return fs
-        except Exception as e:
-            logger.error(f"Failed to create filesystem for {catalog.root_dir}: {e}")
-            raise

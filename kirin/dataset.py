@@ -56,11 +56,28 @@ class Dataset:
         name: str,
         description: str = "",
         fs: Optional[fsspec.AbstractFileSystem] = None,
+        # AWS/S3 authentication
+        aws_profile: Optional[str] = None,
+        # GCP/GCS authentication
+        gcs_token: Optional[Union[str, Path]] = None,
+        gcs_project: Optional[str] = None,
+        # Azure authentication
+        azure_account_name: Optional[str] = None,
+        azure_account_key: Optional[str] = None,
+        azure_connection_string: Optional[str] = None,
     ):
         self.root_dir = str(root_dir)
         self.name = name
         self.description = description
-        self.fs = fs or get_filesystem(self.root_dir)
+        self.fs = fs or get_filesystem(
+            self.root_dir,
+            aws_profile=aws_profile,
+            gcs_token=gcs_token,
+            gcs_project=gcs_project,
+            azure_account_name=azure_account_name,
+            azure_account_key=azure_account_key,
+            azure_connection_string=azure_connection_string,
+        )
 
         # Initialize storage and commit store
         self.storage = ContentStore(self.root_dir, self.fs)

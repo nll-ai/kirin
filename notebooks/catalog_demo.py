@@ -462,7 +462,7 @@ def _(catalog, mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     str_catalog_benefits = ""
     str_catalog_benefits += "**Kirin Catalog Benefits:**\n\n"
@@ -553,7 +553,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     str_use_cases = ""
     str_use_cases += "**Common Catalog Use Cases:**\n\n"
@@ -584,7 +584,7 @@ def _(mo):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     # Demonstrate Catalog with remote storage (GCS example)
     str_remote_catalog = ""
@@ -636,7 +636,13 @@ def _(Catalog, Path):
 
 
 @app.cell
-def _():
+def _(Catalog):
+    ormoni_catalog = Catalog(
+        root_dir="s3://ormoni-data-version-control-test",
+        aws_profile="ormoni-research",
+    )
+    ormoni_ds = ormoni_catalog.get_dataset("test-redirect")
+    ormoni_ds.list_files()
     return
 
 
