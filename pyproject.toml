@@ -72,7 +72,7 @@ dependencies = [
     "python-dotenv",
     "typer",
     "json5",
-    "fsspec",
+    "fsspec>=2025.9.0,<2026",
     "s3fs",  # For S3 support
     "gcsfs",  # For Google Cloud Storage support
     "fastapi",

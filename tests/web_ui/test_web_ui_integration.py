@@ -309,3 +309,124 @@ def test_download_file(client, temp_catalog):
 
     finally:
         os.unlink(temp_file_path)
+
+
+def test_web_ui_uses_catalog_to_catalog_pattern():
+    """Test that web UI uses catalog.to_catalog() pattern."""
+    from unittest.mock import Mock, patch
+
+    from kirin.web.config import CatalogConfig
+
+    # Create a catalog config with cloud auth
+    config = CatalogConfig(
+        id="test-catalog",
+        name="Test Catalog",
+        root_dir="s3://bucket/path",
+        aws_profile="test-profile",
+    )
+
+    # Test that to_catalog() method works
+    with patch("kirin.catalog.get_filesystem") as mock_get_filesystem:
+        mock_fs = Mock()
+        mock_get_filesystem.return_value = mock_fs
+
+        catalog = config.to_catalog()
+
+        # Verify the catalog was created correctly
+        assert catalog.root_dir == "s3://bucket/path"
+        assert catalog.fs == mock_fs
+
+        # Verify get_filesystem was called with AWS profile
+        mock_get_filesystem.assert_called_once_with(
+            "s3://bucket/path",
+            aws_profile="test-profile",
+            gcs_token=None,
+            gcs_project=None,
+            azure_account_name=None,
+            azure_account_key=None,
+            azure_connection_string=None,
+        )
+
+
+def test_web_ui_catalog_manager_has_to_catalog_method():
+    """Test that CatalogManager can create catalogs with to_catalog() method."""
+    from unittest.mock import Mock, patch
+
+    from kirin.web.config import CatalogConfig
+
+    # Create a catalog config
+    config = CatalogConfig(
+        id="test-catalog",
+        name="Test Catalog",
+        root_dir="gs://bucket/path",
+        gcs_token="/path/to/service-account.json",
+        gcs_project="test-project",
+    )
+
+    # Test that to_catalog() method works
+    with patch("kirin.catalog.get_filesystem") as mock_get_filesystem:
+        mock_fs = Mock()
+        mock_get_filesystem.return_value = mock_fs
+
+        catalog = config.to_catalog()
+
+        # Verify the catalog was created correctly
+        assert catalog.root_dir == "gs://bucket/path"
+        assert catalog.fs == mock_fs
+
+        # Verify get_filesystem was called with GCS credentials
+        mock_get_filesystem.assert_called_once_with(
+            "gs://bucket/path",
+            aws_profile=None,
+            gcs_token="/path/to/service-account.json",
+            gcs_project="test-project",
+            azure_account_name=None,
+            azure_account_key=None,
+            azure_connection_string=None,
+        )
+
+
+def test_web_ui_catalog_config_serialization():
+    """Test that CatalogConfig can be serialized with cloud auth parameters."""
+    from dataclasses import asdict
+
+    from kirin.web.config import CatalogConfig
+
+    # Create a catalog config with all cloud auth parameters
+    config = CatalogConfig(
+        id="test-catalog",
+        name="Test Catalog",
+        root_dir="az://container/path",
+        aws_profile="aws-profile",
+        gcs_token="/path/to/service-account.json",
+        gcs_project="gcs-project",
+        azure_account_name="azure-account",
+        azure_account_key="azure-key",
+        azure_connection_string="azure-connection",
+    )
+
+    # Test serialization
+    config_dict = asdict(config)
+
+    # Verify all fields are present
+    assert config_dict["id"] == "test-catalog"
+    assert config_dict["name"] == "Test Catalog"
+    assert config_dict["root_dir"] == "az://container/path"
+    assert config_dict["aws_profile"] == "aws-profile"
+    assert config_dict["gcs_token"] == "/path/to/service-account.json"
+    assert config_dict["gcs_project"] == "gcs-project"
+    assert config_dict["azure_account_name"] == "azure-account"
+    assert config_dict["azure_account_key"] == "azure-key"
+    assert config_dict["azure_connection_string"] == "azure-connection"
+
+    # Test deserialization
+    config_from_dict = CatalogConfig(**config_dict)
+    assert config_from_dict.id == "test-catalog"
+    assert config_from_dict.name == "Test Catalog"
+    assert config_from_dict.root_dir == "az://container/path"
+    assert config_from_dict.aws_profile == "aws-profile"
+    assert config_from_dict.gcs_token == "/path/to/service-account.json"
+    assert config_from_dict.gcs_project == "gcs-project"
+    assert config_from_dict.azure_account_name == "azure-account"
+    assert config_from_dict.azure_account_key == "azure-key"
+    assert config_from_dict.azure_connection_string == "azure-connection"

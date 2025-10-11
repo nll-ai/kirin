@@ -178,3 +178,190 @@ def test_catalog_validation(client):
         "/catalogs/add", data={"name": "Test Catalog", "root_dir": ""}
     )
     assert response.status_code == 422  # Validation error
+
+
+def test_catalog_config_to_catalog_basic():
+    """Test CatalogConfig.to_catalog() method with basic configuration."""
+    from unittest.mock import Mock, patch
+
+    from kirin.web.config import CatalogConfig
+
+    with patch("kirin.catalog.get_filesystem") as mock_get_filesystem:
+        mock_fs = Mock()
+        mock_get_filesystem.return_value = mock_fs
+
+        # Create a basic catalog config
+        config = CatalogConfig(
+            id="test-catalog", name="Test Catalog", root_dir="/path/to/data"
+        )
+
+        # Test to_catalog() method
+        catalog = config.to_catalog()
+
+        # Verify the catalog was created correctly
+        assert catalog.root_dir == "/path/to/data"
+        assert catalog.fs == mock_fs
+
+        # Verify get_filesystem was called with None for all auth params
+        mock_get_filesystem.assert_called_once_with(
+            "/path/to/data",
+            aws_profile=None,
+            gcs_token=None,
+            gcs_project=None,
+            azure_account_name=None,
+            azure_account_key=None,
+            azure_connection_string=None,
+        )
+
+
+def test_catalog_config_to_catalog_with_aws_profile():
+    """Test CatalogConfig.to_catalog() method with AWS profile."""
+    from unittest.mock import Mock, patch
+
+    from kirin.web.config import CatalogConfig
+
+    with patch("kirin.catalog.get_filesystem") as mock_get_filesystem:
+        mock_fs = Mock()
+        mock_get_filesystem.return_value = mock_fs
+
+        # Create a catalog config with AWS profile
+        config = CatalogConfig(
+            id="test-catalog",
+            name="Test Catalog",
+            root_dir="s3://bucket/path",
+            aws_profile="test-profile",
+        )
+
+        # Test to_catalog() method
+        catalog = config.to_catalog()
+
+        # Verify the catalog was created correctly
+        assert catalog.root_dir == "s3://bucket/path"
+        assert catalog.fs == mock_fs
+
+        # Verify get_filesystem was called with AWS profile
+        mock_get_filesystem.assert_called_once_with(
+            "s3://bucket/path",
+            aws_profile="test-profile",
+            gcs_token=None,
+            gcs_project=None,
+            azure_account_name=None,
+            azure_account_key=None,
+            azure_connection_string=None,
+        )
+
+
+def test_catalog_config_to_catalog_with_gcs_credentials():
+    """Test CatalogConfig.to_catalog() method with GCS credentials."""
+    from unittest.mock import Mock, patch
+
+    from kirin.web.config import CatalogConfig
+
+    with patch("kirin.catalog.get_filesystem") as mock_get_filesystem:
+        mock_fs = Mock()
+        mock_get_filesystem.return_value = mock_fs
+
+        # Create a catalog config with GCS credentials
+        config = CatalogConfig(
+            id="test-catalog",
+            name="Test Catalog",
+            root_dir="gs://bucket/path",
+            gcs_token="/path/to/service-account.json",
+            gcs_project="test-project",
+        )
+
+        # Test to_catalog() method
+        catalog = config.to_catalog()
+
+        # Verify the catalog was created correctly
+        assert catalog.root_dir == "gs://bucket/path"
+        assert catalog.fs == mock_fs
+
+        # Verify get_filesystem was called with GCS credentials
+        mock_get_filesystem.assert_called_once_with(
+            "gs://bucket/path",
+            aws_profile=None,
+            gcs_token="/path/to/service-account.json",
+            gcs_project="test-project",
+            azure_account_name=None,
+            azure_account_key=None,
+            azure_connection_string=None,
+        )
+
+
+def test_catalog_config_to_catalog_with_azure_credentials():
+    """Test CatalogConfig.to_catalog() method with Azure credentials."""
+    from unittest.mock import Mock, patch
+
+    from kirin.web.config import CatalogConfig
+
+    with patch("kirin.catalog.get_filesystem") as mock_get_filesystem:
+        mock_fs = Mock()
+        mock_get_filesystem.return_value = mock_fs
+
+        # Create a catalog config with Azure credentials
+        config = CatalogConfig(
+            id="test-catalog",
+            name="Test Catalog",
+            root_dir="az://container/path",
+            azure_account_name="test-account",
+            azure_account_key="test-key",
+            azure_connection_string="test-connection",
+        )
+
+        # Test to_catalog() method
+        catalog = config.to_catalog()
+
+        # Verify the catalog was created correctly
+        assert catalog.root_dir == "az://container/path"
+        assert catalog.fs == mock_fs
+
+        # Verify get_filesystem was called with Azure credentials
+        mock_get_filesystem.assert_called_once_with(
+            "az://container/path",
+            aws_profile=None,
+            gcs_token=None,
+            gcs_project=None,
+            azure_account_name="test-account",
+            azure_account_key="test-key",
+            azure_connection_string="test-connection",
+        )
+
+
+def test_catalog_config_to_catalog_with_mixed_credentials():
+    """Test CatalogConfig.to_catalog() method with mixed credentials."""
+    from unittest.mock import Mock, patch
+
+    from kirin.web.config import CatalogConfig
+
+    with patch("kirin.catalog.get_filesystem") as mock_get_filesystem:
+        mock_fs = Mock()
+        mock_get_filesystem.return_value = mock_fs
+
+        # Create a catalog config with mixed credentials (S3 should use only AWS)
+        config = CatalogConfig(
+            id="test-catalog",
+            name="Test Catalog",
+            root_dir="s3://bucket/path",
+            aws_profile="aws-profile",
+            gcs_token="gcs-token",  # Should be ignored
+            azure_account_name="azure-account",  # Should be ignored
+        )
+
+        # Test to_catalog() method
+        catalog = config.to_catalog()
+
+        # Verify the catalog was created correctly
+        assert catalog.root_dir == "s3://bucket/path"
+        assert catalog.fs == mock_fs
+
+        # Verify get_filesystem was called with all params (filtering happens inside)
+        mock_get_filesystem.assert_called_once_with(
+            "s3://bucket/path",
+            aws_profile="aws-profile",
+            gcs_token="gcs-token",
+            gcs_project=None,
+            azure_account_name="azure-account",
+            azure_account_key=None,
+            azure_connection_string=None,
+        )

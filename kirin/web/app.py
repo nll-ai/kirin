@@ -19,7 +19,6 @@ from fastapi.templating import Jinja2Templates
 from loguru import logger
 from slugify import slugify
 
-from .. import Catalog
 from .config import CatalogConfig, CatalogManager
 
 # Global catalog manager
@@ -240,8 +239,7 @@ async def list_datasets(
 
     try:
         # Create authenticated filesystem and load datasets automatically
-        fs = catalog_manager.create_filesystem(catalog)
-        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
+        kirin_catalog = catalog.to_catalog()
         dataset_names = kirin_catalog.datasets()
 
         # Simple dataset info - no expensive operations
@@ -299,8 +297,7 @@ async def create_dataset(
 
     try:
         # Create authenticated filesystem before creating Catalog
-        fs = catalog_manager.create_filesystem(catalog)
-        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
+        kirin_catalog = catalog.to_catalog()
 
         # Check if dataset exists like notebook
         existing_datasets = kirin_catalog.datasets()
@@ -436,8 +433,7 @@ async def delete_catalog_confirmation(
 
     # Get dataset count for this catalog
     try:
-        fs = catalog_manager.create_filesystem(catalog)
-        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
+        kirin_catalog = catalog.to_catalog()
         dataset_count = len(kirin_catalog.datasets())
     except Exception as e:
         logger.warning(f"Failed to get dataset count for catalog {catalog_id}: {e}")
@@ -467,8 +463,7 @@ async def delete_catalog(
 
         # Check if catalog has datasets
         try:
-            fs = catalog_manager.create_filesystem(catalog)
-            kirin_catalog = Catalog(catalog.root_dir, fs=fs)
+            kirin_catalog = catalog.to_catalog()
             datasets = kirin_catalog.datasets()
             if datasets:
                 raise HTTPException(
@@ -521,8 +516,7 @@ async def view_dataset(
             raise HTTPException(status_code=404, detail="Catalog not found")
 
         # Create authenticated filesystem before creating Catalog
-        fs = catalog_manager.create_filesystem(catalog)
-        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
+        kirin_catalog = catalog.to_catalog()
         dataset = kirin_catalog.get_dataset(dataset_name)
 
         # Get files like notebook: dataset.list_files()
@@ -575,8 +569,7 @@ async def dataset_files_tab(request: Request, catalog_id: str, dataset_name: str
     try:
         # Create authenticated filesystem before creating Catalog
         catalog = catalog_manager.get_catalog(catalog_id)
-        fs = catalog_manager.create_filesystem(catalog)
-        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
+        kirin_catalog = catalog.to_catalog()
         dataset = kirin_catalog.get_dataset(dataset_name)
 
         # Get files like notebook: dataset.list_files()
@@ -623,8 +616,7 @@ async def dataset_history_tab(request: Request, catalog_id: str, dataset_name: s
     try:
         # Create authenticated filesystem before creating Catalog
         catalog = catalog_manager.get_catalog(catalog_id)
-        fs = catalog_manager.create_filesystem(catalog)
-        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
+        kirin_catalog = catalog.to_catalog()
         dataset = kirin_catalog.get_dataset(dataset_name)
 
         # Get commit history like notebook: dataset.history()
@@ -672,8 +664,7 @@ async def commit_form(request: Request, catalog_id: str, dataset_name: str):
     try:
         # Create authenticated filesystem before creating Catalog
         catalog = catalog_manager.get_catalog(catalog_id)
-        fs = catalog_manager.create_filesystem(catalog)
-        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
+        kirin_catalog = catalog.to_catalog()
         dataset = kirin_catalog.get_dataset(dataset_name)
 
         # Get current files for removal selection
@@ -718,8 +709,7 @@ async def create_commit(
     try:
         # Create authenticated filesystem before creating Catalog
         catalog = catalog_manager.get_catalog(catalog_id)
-        fs = catalog_manager.create_filesystem(catalog)
-        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
+        kirin_catalog = catalog.to_catalog()
         dataset = kirin_catalog.get_dataset(dataset_name)
 
         # Handle file uploads
@@ -809,8 +799,7 @@ async def preview_file(
         if not catalog:
             raise HTTPException(status_code=404, detail="Catalog not found")
 
-        fs = catalog_manager.create_filesystem(catalog)
-        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
+        kirin_catalog = catalog.to_catalog()
         dataset = kirin_catalog.get_dataset(dataset_name)
         file_obj = dataset.get_file(file_name)
 
@@ -919,8 +908,7 @@ async def download_file(catalog_id: str, dataset_name: str, file_name: str):
         if not catalog:
             raise HTTPException(status_code=404, detail="Catalog not found")
 
-        fs = catalog_manager.create_filesystem(catalog)
-        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
+        kirin_catalog = catalog.to_catalog()
         dataset = kirin_catalog.get_dataset(dataset_name)
         file_obj = dataset.get_file(file_name)
 
@@ -976,8 +964,7 @@ async def checkout_commit(
         if not catalog:
             raise HTTPException(status_code=404, detail="Catalog not found")
 
-        fs = catalog_manager.create_filesystem(catalog)
-        kirin_catalog = Catalog(catalog.root_dir, fs=fs)
+        kirin_catalog = catalog.to_catalog()
         dataset = kirin_catalog.get_dataset(dataset_name)
 
         try:
