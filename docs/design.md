@@ -519,16 +519,55 @@ The Dataset Layer provides high-level abstractions for managing datasets:
 class Dataset:
     """Represents a logical collection of files with linear history."""
 
-    def __init__(self, root_dir: Union[str, Path], name: str, description: str = ""): ...
+    def __init__(self, root_dir: Union[str, Path], name: str, description: str = "",
+                 fs: Optional[fsspec.AbstractFileSystem] = None): ...
     def commit(self, message: str, add_files: List[Union[str, Path]] = None,
                remove_files: List[str] = None) -> str: ...  # Returns commit hash
-    def checkout(self, commit_hash: str) -> None: ...
+    def checkout(self, commit_hash: Optional[str] = None) -> None: ...  # None = latest commit
     def get_file(self, name: str) -> Optional[File]: ...
     def list_files(self) -> List[str]: ...
+    def has_file(self, name: str) -> bool: ...  # Check if file exists
     def read_file(self, name: str, mode: str = "r") -> Union[str, bytes]: ...
+    def download_file(self, name: str, target_path: Union[str, Path]) -> str: ...  # Download to local path
+    def open_file(self, name: str, mode: str = "rb"): ...  # Open as file handle
+    def local_files(self): ...  # Context manager for local file access
     def history(self, limit: Optional[int] = None) -> List[Commit]: ...
-    def get_info(self) -> dict: ...
+    def get_commit(self, commit_hash: str) -> Optional[Commit]: ...  # Get specific commit
+    def get_commits(self) -> List[Commit]: ...  # Get all commits
+    def is_empty(self) -> bool: ...  # Check if dataset has commits
+    def cleanup_orphaned_files(self) -> int: ...  # Remove unreferenced files
+    def get_info(self) -> dict: ...  # Get dataset information
+    def to_dict(self) -> dict: ...  # Convert to dictionary
 ```
+
+#### 2.1.4 Catalog Layer
+
+The Catalog Layer provides high-level management of multiple datasets:
+
+- Organizes datasets into logical collections
+- Provides dataset discovery and management
+- Enables multi-dataset workflows
+- Supports catalog-level operations
+
+**Key Abstractions:**
+
+```python
+class Catalog:
+    """Represents a collection of datasets."""
+
+    def __init__(self, root_dir: Union[str, Path], fs: Optional[fsspec.AbstractFileSystem] = None): ...
+    def datasets(self) -> List[str]: ...  # List dataset names
+    def get_dataset(self, dataset_name: str) -> Dataset: ...  # Get existing dataset
+    def create_dataset(self, dataset_name: str, description: str = "") -> Dataset: ...  # Create new dataset
+    def __len__(self) -> int: ...  # Number of datasets
+```
+
+**Use Cases:**
+
+- Multi-dataset project management
+- Dataset discovery and browsing
+- Cross-dataset analysis workflows
+- Organizational data governance
 
 ### 2.2 System Flow
 
@@ -560,13 +599,19 @@ The content store is organized as follows:
 <root>/
   ├── data/                     # Content-addressed storage
   │   ├── ab/                  # First two characters of hash
-  │   │   └── cdef1234...       # Rest of the hash
+  │   │   └── cdef1234...       # Rest of the hash (no file extensions)
   │   └── ...
   └── datasets/                 # Dataset storage
       ├── dataset1/             # Dataset directory
       │   └── commits.json       # Linear commit history
       └── ...
 ```
+
+**Critical Storage Design**: Files are stored **without file extensions** in the content-addressed storage system. The original file extensions are preserved as metadata in the `File` entity's `name` attribute and are restored when files are downloaded or accessed. This ensures:
+
+- **Content Integrity**: Files are identified purely by content hash
+- **Deduplication**: Identical content (regardless of original filename) is stored only once
+- **Extension Restoration**: Original filenames are maintained for user experience
 
 ### 3.2 Commit History Format
 
@@ -692,6 +737,61 @@ dataset.commit(
     add_files=["new_file.csv"],
     remove_files=["old_file.csv"]
 )
+
+# Working with Catalogs (multi-dataset management)
+from kirin import Catalog
+
+# Create or access a catalog
+catalog = Catalog(root_dir="/path/to/data")
+
+# List all datasets in the catalog
+dataset_names = catalog.datasets()
+print(f"Available datasets: {dataset_names}")
+
+# Create a new dataset
+new_dataset = catalog.create_dataset("experiment_2024", "ML experiment data")
+
+# Get an existing dataset
+existing_dataset = catalog.get_dataset("my_dataset")
+
+# Multi-dataset workflow
+for dataset_name in catalog.datasets():
+    dataset = catalog.get_dataset(dataset_name)
+    print(f"Dataset {dataset_name}: {len(dataset.files)} files")
+
+    # Process each dataset
+    with dataset.local_files() as local_files:
+        for filename, local_path in local_files.items():
+            # Analyze files from each dataset
+            print(f"Processing {filename} from {dataset_name}")
+
+# Authentication helpers for cloud storage
+from kirin import get_s3_filesystem, get_gcs_filesystem
+
+# S3 with AWS profile
+s3_fs = get_s3_filesystem(profile="my-aws-profile")
+s3_dataset = Dataset(root_dir="s3://my-bucket/datasets", name="cloud_dataset", fs=s3_fs)
+
+# GCS with service account
+gcs_fs = get_gcs_filesystem(token="/path/to/service-account.json")
+gcs_dataset = Dataset(root_dir="gs://my-bucket/datasets", name="gcs_dataset", fs=gcs_fs)
+
+# Advanced file operations
+dataset = Dataset(root_dir="/path/to/data", name="advanced_dataset")
+
+# Check if dataset is empty
+if not dataset.is_empty():
+    # Get dataset information
+    info = dataset.get_info()
+    print(f"Dataset info: {info}")
+
+    # Clean up orphaned files
+    removed_count = dataset.cleanup_orphaned_files()
+    print(f"Removed {removed_count} orphaned files")
+
+    # Convert to dictionary for serialization
+    dataset_dict = dataset.to_dict()
+    print(f"Serialized dataset: {dataset_dict}")
 ```
 
 ### 4.2 Cloud Storage Support
@@ -713,6 +813,78 @@ from kirin import get_s3_filesystem
 fs = get_s3_filesystem(profile="my-profile")
 dataset = Dataset(root_dir="s3://my-bucket/datasets", name="my_dataset", fs=fs)
 ```
+
+### 4.3 Web UI
+
+Kirin includes a comprehensive web interface built with FastAPI and HTMX:
+
+**Architecture:**
+
+- **Backend**: FastAPI application with Jinja2 templates
+- **Frontend**: HTMX for dynamic interactions without JavaScript frameworks
+- **Styling**: shadcn/ui design system with CSS custom properties
+- **Configuration**: CatalogManager for managing multiple data catalogs
+
+**Key Features:**
+
+- **Catalog Management**: Create, configure, and manage multiple data catalogs
+- **Dataset Browsing**: View datasets, commits, and file history
+- **File Operations**: Upload files, remove files, and commit changes
+- **Commit History**: Browse commit history with detailed file information
+- **File Preview**: View file contents directly in the browser
+- **Cloud Integration**: Support for S3, GCS, Azure, and other cloud storage backends
+
+**Routes and Functionality:**
+
+```python
+# Main application routes
+@app.get("/")  # Catalog listing
+@app.get("/{catalog_id}")  # Dataset listing for catalog
+@app.get("/{catalog_id}/{dataset}")  # Dataset view with files and history
+@app.post("/{catalog_id}/{dataset}/commit")  # Commit file changes
+@app.get("/{catalog_id}/{dataset}/files/{filename}")  # File preview
+```
+
+**Configuration System:**
+
+- **CatalogManager**: Manages catalog configurations stored in `~/.kirin/config.json`
+- **AWS Profile Integration**: Automatic detection of AWS profiles
+- **Cloud Authentication**: Support for various authentication methods
+- **SSL Certificate Management**: Automatic setup for isolated Python environments
+
+### 4.4 Authentication Helpers
+
+Kirin provides comprehensive authentication helpers for cloud storage:
+
+**Cloud Storage Authentication:**
+
+```python
+from kirin import get_s3_filesystem, get_gcs_filesystem, get_azure_filesystem
+
+# S3 with profile
+fs = get_s3_filesystem(profile="my-profile")
+dataset = Dataset(root_dir="s3://my-bucket/datasets", name="my_dataset", fs=fs)
+
+# GCS with service account
+fs = get_gcs_filesystem(token="/path/to/key.json")
+dataset = Dataset(root_dir="gs://my-bucket/datasets", name="my_dataset", fs=fs)
+
+# Azure with connection string
+fs = get_azure_filesystem(connection_string="...")
+dataset = Dataset(root_dir="az://my-container/datasets", name="my_dataset", fs=fs)
+```
+
+**Keyring Integration:**
+
+- **Credential Storage**: Secure storage of cloud credentials using keyring
+- **Automatic Retrieval**: Credentials are automatically retrieved when needed
+- **Multi-Provider Support**: Works with AWS, GCS, Azure, and other providers
+
+**SSL Certificate Management:**
+
+- **Automatic Setup**: `python -m kirin.setup_ssl` for isolated environments
+- **Environment Detection**: Automatically detects pixi, uv, conda environments
+- **Certificate Copying**: Copies system certificates to Python environment
 
 ## 5. Performance Considerations
 
@@ -741,37 +913,59 @@ To improve performance when hashing large files:
 - Parallel chunk processing for multi-core systems
 - Optional content-based chunking for improved deduplication
 
-## 6. Future Extensions
+## 6. Current Implementation Status
 
-### 6.1 CLI Interface
+### 6.1 Implemented Features
 
-A command-line interface could be developed to mirror Git's familiar commands:
+**Core Architecture (Complete):**
+
+- ✅ Content-addressed storage with fsspec backends
+- ✅ Linear commit history without branching
+- ✅ Dataset and File entities with full API
+- ✅ Catalog system for multi-dataset management
+- ✅ Web UI with FastAPI and HTMX
+- ✅ Authentication helpers for cloud storage
+- ✅ SSL certificate management for isolated environments
+
+**CLI Interface (Implemented):**
+The command-line interface is available through the `kirin.cli` module:
 
 ```bash
-# Initialize dataset
-kirin init my_dataset
+# Start web UI
+kirin ui
 
-# Add files and commit
-kirin commit my_dataset -a file1.csv file2.json -m "Initial commit"
-
-# Show history
-kirin log my_dataset
-
-# Checkout version
-kirin checkout my_dataset <commit-hash>
+# Or use the gitdata command (when installed via uv)
+gitdata ui
 ```
 
-### 6.2 Integration with ML Frameworks
+**Web UI (Complete):**
 
+- ✅ Catalog management interface
+- ✅ Dataset browsing and file operations
+- ✅ File upload and removal
+- ✅ Commit history visualization
+- ✅ File preview functionality
+- ✅ Cloud storage integration
+
+### 6.2 Future Extensions
+
+**Integration with ML Frameworks:**
 Direct integration with popular ML frameworks like PyTorch and TensorFlow can streamline data loading.
 
-### 6.3 Native Format Handlers
-
+**Native Format Handlers:**
 Format-specific handlers could be developed to enable operations directly on file contents:
 
 - Parquet/Arrow operations for columnar data
 - HDF5/Zarr for array data
 - SQLite for tabular data
+
+**Enhanced CLI:**
+
+Additional CLI commands could be developed for:
+
+- Dataset initialization and management
+- Batch operations across multiple datasets
+- Integration with CI/CD pipelines
 
 ## 7. Conclusion
 
