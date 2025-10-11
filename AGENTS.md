@@ -1093,6 +1093,35 @@ fd -e md | xargs markdownlint
 - Build artifacts from old architecture
 - Temporary development files
 
+## Bug Fix Requirements
+
+### Tests and Documentation for Every Bug Fix
+
+**CRITICAL**: For every bug fix we introduce, make sure to add tests and documentation. This ensures:
+
+- **Regression Prevention**: Tests catch if the bug returns
+- **Validation**: Tests prove the fix actually works
+- **Documentation**: Clear record of what was fixed and why
+- **Future Maintenance**: Other developers understand the fix
+
+**Required Process**:
+1. **Write Tests First** - Create tests that reproduce the bug and verify the fix
+2. **Add Documentation** - Update relevant docs to explain the fix
+3. **Verify Tests Pass** - Ensure all tests pass with the fix
+4. **Update Examples** - If applicable, update usage examples
+
+**Test Requirements**:
+- **Reproduce Bug**: Test should fail before fix, pass after fix
+- **Edge Cases**: Test related scenarios that might break
+- **Integration**: Test the fix in context of full system
+- **Performance**: If fix affects performance, add performance tests
+
+**Documentation Requirements**:
+- **Bug Description**: What was broken and why
+- **Fix Explanation**: How the fix works
+- **Prevention**: How to avoid similar bugs
+- **Examples**: Show correct usage patterns
+
 ## Solution Design Approach
 
 ### Propose Solutions First, Then Discuss
