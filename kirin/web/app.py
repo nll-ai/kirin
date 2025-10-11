@@ -242,17 +242,22 @@ async def list_datasets(
         kirin_catalog = catalog.to_catalog()
         dataset_names = kirin_catalog.datasets()
 
-        # Simple dataset info - no expensive operations
+        # Load actual dataset info for accurate commit counts
         datasets = []
         for dataset_name in dataset_names:
+            dataset = kirin_catalog.get_dataset(dataset_name)
             datasets.append(
                 {
                     "name": dataset_name,
-                    "description": "",  # Will load when viewing
-                    "commit_count": 0,  # Will load when viewing
-                    "current_commit": None,  # Will load when viewing
-                    "total_size": 0,  # Will load when viewing
-                    "last_updated": None,  # Will load when viewing
+                    "description": dataset.description,
+                    "commit_count": len(dataset.history()),
+                    "current_commit": dataset.current_commit.hash
+                    if dataset.current_commit
+                    else None,
+                    "total_size": 0,  # Can calculate if needed
+                    "last_updated": dataset.current_commit.timestamp.isoformat()
+                    if dataset.current_commit
+                    else None,
                 }
             )
 
