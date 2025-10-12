@@ -3,18 +3,23 @@ name: Run tests on pull requests
 on:
   pull_request:
     paths:
+      - 'kirin/**/*.py'
+      - 'kirin/web/**/*.html'
+      - 'kirin/web/**/*.css'
       - 'tests/**/*.py'
-      - 'gitdata/**/*.py'
+      - 'scripts/**/*.py'
       - 'pyproject.toml'
       - '.github/workflows/pr-tests.yaml'
       - 'pixi.lock'
-      - 'environment.yml'
   push:
     branches:
       - main
     paths:
+      - 'kirin/**/*.py'
+      - 'kirin/web/**/*.html'
+      - 'kirin/web/**/*.css'
       - 'tests/**/*.py'
-      - 'gitdata/**/*.py'
+      - 'scripts/**/*.py'
       - 'pyproject.toml'
       - '.github/workflows/pr-tests.yaml'
       - 'pixi.lock'
