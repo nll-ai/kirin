@@ -1,7 +1,54 @@
 <!-- Files Tab Content -->
-<div class="space-y-4">
+<div class="space-y-6">
+    <!-- Python Access Code -->
+    <div class="code-snippet collapsed" id="files-code-snippet">
+        <div class="code-snippet-header">
+            <div class="code-snippet-title code-snippet-toggle" onclick="toggleCodeSnippet('files-code-snippet')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6,9 12,15 18,9"></polyline>
+                </svg>
+                Python Access Code
+            </div>
+            <button class="copy-btn" onclick="copyCode('files-code')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                Copy
+            </button>
+        </div>
+        <div class="code-snippet-content">
+            <pre><code id="files-code">from kirin import Dataset
+
+dataset = Dataset(
+    root_dir="{{ catalog.root_dir }}",
+    name="{{ dataset_name }}"{% if catalog.aws_profile %},
+    aws_profile="{{ catalog.aws_profile }}"{% endif %}{% if catalog.gcs_token %},
+    gcs_token="{{ catalog.gcs_token }}"{% endif %}{% if catalog.gcs_project %},
+    gcs_project="{{ catalog.gcs_project }}"{% endif %}{% if catalog.azure_account_name %},
+    azure_account_name="{{ catalog.azure_account_name }}"{% endif %}{% if catalog.azure_account_key %},
+    azure_account_key="{{ catalog.azure_account_key }}"{% endif %}{% if catalog.azure_connection_string %},
+    azure_connection_string="{{ catalog.azure_connection_string }}"{% endif %}
+)
+
+{% if checkout_commit %}
+# Checkout to specific commit
+dataset.checkout("{{ checkout_commit }}")
+{% elif current_commit %}
+# Checkout to latest commit (HEAD)
+dataset.checkout("{{ current_commit }}")
+{% else %}
+# Checkout to latest commit (HEAD)
+dataset.checkout()
+
+# Or checkout to a specific commit
+# dataset.checkout("commit_hash")
+{% endif %}</code></pre>
+        </div>
+    </div>
 
     <!-- Files List -->
+    <div class="space-y-4">
     {% if files %}
     <div class="space-y-2">
         {% for file in files %}
@@ -93,3 +140,46 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+// Code snippet functionality
+function toggleCodeSnippet(snippetId) {
+    const snippet = document.getElementById(snippetId);
+    snippet.classList.toggle('collapsed');
+}
+
+async function copyCode(codeId) {
+    const codeElement = document.getElementById(codeId);
+    const code = codeElement.textContent;
+
+    try {
+        await navigator.clipboard.writeText(code);
+
+        // Visual feedback
+        const button = event.target.closest('.copy-btn');
+        const originalText = button.innerHTML;
+        button.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20,6 9,17 4,12"></polyline>
+            </svg>
+            Copied!
+        `;
+        button.classList.add('copied');
+
+        // Reset after 2 seconds
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('copied');
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy code: ', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = code;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+    }
+}
+</script>

@@ -118,6 +118,7 @@ tests = { features = ["tests"], solve-group = "default" }
 [tool.pixi.feature.tests.tasks]
 test = "pytest --durations=10 --tb=short -v"
 
+
 [tool.pixi.tasks]
 setup-ssl = "python -m kirin.setup_ssl"
 
@@ -125,3 +126,4 @@ setup-ssl = "python -m kirin.setup_ssl"
 loguru = ">=0.7.3,<0.8"
 marimo = ">=0.16.5,<0.17"
 keyring = ">=25.6.0,<26"
+ipython = "*"

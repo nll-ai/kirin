@@ -793,3 +793,113 @@ body {
 .hidden {
   display: none;
 }
+
+/* Code snippet styles */
+.code-snippet {
+  position: relative;
+  background-color: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
+  overflow: hidden;
+}
+
+.code-snippet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: hsl(var(--muted));
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.code-snippet-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--foreground));
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.code-snippet-title svg {
+  width: 16px;
+  height: 16px;
+  color: hsl(var(--muted-foreground));
+}
+
+.code-snippet-content {
+  padding: 0;
+  background-color: hsl(var(--background));
+}
+
+.code-snippet pre {
+  margin: 0;
+  padding: 1rem;
+  background-color: hsl(var(--muted) / 0.3);
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: hsl(var(--foreground));
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.code-snippet code {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+.copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  background-color: transparent;
+  border: 1px solid hsl(var(--border));
+  border-radius: calc(var(--radius) - 2px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copy-btn:hover {
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--muted));
+  border-color: hsl(var(--border));
+}
+
+.copy-btn:active {
+  transform: translateY(1px);
+}
+
+.copy-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.copy-btn.copied {
+  color: hsl(var(--primary));
+  background-color: hsl(var(--primary) / 0.1);
+  border-color: hsl(var(--primary));
+}
+
+/* Collapsible code snippet */
+.code-snippet.collapsed .code-snippet-content {
+  display: none;
+}
+
+.code-snippet-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+
+.code-snippet-toggle svg {
+  transition: transform 0.2s ease;
+}
+
+.code-snippet.collapsed .code-snippet-toggle svg {
+  transform: rotate(-90deg);
+}

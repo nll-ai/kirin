@@ -460,6 +460,8 @@ All error responses include user-friendly HTML with appropriate styling using th
 - **After catalog operations**: Redirect to `/{catalog}` to show updated catalog state
 - **After dataset operations**: Redirect to `/{catalog}` to show updated dataset list
 
+**Web UI Design Pattern**: The design pattern for the web UI is that CRUD operations redirect to views. This ensures users see the results of their actions immediately and provides a consistent navigation flow.
+
 **Implementation Pattern**:
 
 ```python
