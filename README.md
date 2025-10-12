@@ -19,25 +19,33 @@ Made with ❤️ by Eric J. Ma (@ericmjl).
 ## Quick Start
 
 ```python
-from kirin import Dataset, File, Commit
+from kirin import Catalog, Dataset, File, Commit
+from pathlib import Path
 
-# Local storage
-ds = Dataset(root_dir="/path/to/data", name="my_dataset")
+# Create a catalog (works with local and cloud storage)
+catalog = Catalog(root_dir="/path/to/data")  # Local storage
+catalog = Catalog(root_dir="s3://my-bucket")  # S3 storage
+catalog = Catalog(root_dir="gs://my-bucket")  # GCS storage
 
-# Cloud storage (auto-detects from URI!)
-ds = Dataset(root_dir="s3://my-bucket/datasets", name="my_dataset")
-ds = Dataset(root_dir="gs://my-bucket/datasets", name="my_dataset")
+# Get or create a dataset
+ds = catalog.get_dataset("my_dataset")
 
 # Commit files
 commit_hash = ds.commit(message="Initial commit", add_files=["file1.csv"])
+
+# Checkout the latest commit
+ds.checkout()
 
 # Access files from current commit
 files = ds.files
 print(f"Files in current commit: {list(files.keys())}")
 
-# Read a file
-content = ds.read_file("file1.csv", mode="r")  # text mode
-binary_content = ds.read_file("file1.csv", mode="rb")  # binary mode
+# Work with files locally
+with ds.local_files() as local_files:
+    # Access files as local paths
+    csv_path = local_files["file1.csv"]
+    content = Path(csv_path).read_text()  # text mode
+    binary_content = Path(csv_path).read_bytes()  # binary mode
 
 # Checkout a specific commit
 ds.checkout(commit_hash)
@@ -54,11 +62,12 @@ If you get authentication errors, see the [Cloud Storage Authentication
 Guide](docs/cloud-storage-auth.md) or use helper functions:
 
 ```python
-from kirin import Dataset, get_gcs_filesystem
+from kirin import Catalog, get_gcs_filesystem
 
 # GCS with service account
 fs = get_gcs_filesystem(token='/path/to/key.json')
-ds = Dataset(root_dir="gs://my-bucket/datasets", name="my_dataset", fs=fs)
+catalog = Catalog(root_dir="gs://my-bucket", fs=fs)
+ds = catalog.get_dataset("my_dataset")
 ```
 
 ## Advanced Usage
@@ -66,26 +75,40 @@ ds = Dataset(root_dir="gs://my-bucket/datasets", name="my_dataset", fs=fs)
 ### Working with Files
 
 ```python
-# Get a specific file
-file_obj = ds.get_file("data.csv")
-if file_obj:
-    print(f"File size: {file_obj.size} bytes")
-    print(f"Content hash: {file_obj.short_hash}")
+from kirin import Catalog
+from pathlib import Path
+
+# Create catalog and get dataset
+catalog = Catalog(root_dir="s3://my-bucket")
+ds = catalog.get_dataset("my_dataset")
+ds.checkout()
+
+# Work with files locally (recommended approach)
+with ds.local_files() as local_files:
+    # Access files as local paths
+    csv_path = local_files["data.csv"]
 
     # Read file content
-    content = file_obj.read_text()
+    content = Path(csv_path).read_text()
 
-    # Download to local path
-    file_obj.download_to("/tmp/data.csv")
+    # Get file info
+    file_size = Path(csv_path).stat().st_size
+    print(f"File size: {file_size} bytes")
 
     # Open as file handle
-    with file_obj.open("r") as f:
+    with open(csv_path, "r") as f:
         data = f.read()
 ```
 
 ### Working with Commits
 
 ```python
+from kirin import Catalog
+
+# Create catalog and get dataset
+catalog = Catalog(root_dir="gs://my-bucket")
+ds = catalog.get_dataset("my_dataset")
+
 # Get specific commit
 commit = ds.get_commit(commit_hash)
 if commit:
@@ -98,12 +121,28 @@ if commit:
 ### Local File Access
 
 ```python
-# Download all files to temporary directory
+from kirin import Catalog
+from pathlib import Path
+import pandas as pd
+
+# Create catalog and get dataset
+catalog = Catalog(root_dir="s3://my-bucket")
+ds = catalog.get_dataset("my_dataset")
+ds.checkout()
+
+# Work with all files locally (recommended pattern)
 with ds.local_files() as local_files:
     for filename, local_path in local_files.items():
         print(f"{filename} -> {local_path}")
-        # Process files locally
-        df = pd.read_csv(local_path)
+
+        # Process files with standard Python libraries
+        if filename.endswith('.csv'):
+            df = pd.read_csv(local_path)
+        elif filename.endswith('.txt'):
+            text = Path(local_path).read_text()
+        elif filename.endswith('.json'):
+            import json
+            data = json.loads(Path(local_path).read_text())
 ```
 
 ## Documentation
