@@ -54,29 +54,27 @@ def test_add_catalog_form_loads(client):
 
 def test_add_catalog_success(client, temp_catalog):
     """Test successful catalog creation."""
-    response = client.post("/catalogs/add", data=temp_catalog)
+    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
     assert response.status_code == 200
     assert "Test Catalog" in response.text
-    assert "added successfully" in response.text
 
 
 def test_add_catalog_duplicate_name(client, temp_catalog):
     """Test that duplicate catalog names are handled gracefully."""
     # Create first catalog
-    response = client.post("/catalogs/add", data=temp_catalog)
+    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
     assert response.status_code == 200
 
     # Try to create another catalog with same name
     response = client.post("/catalogs/add", data=temp_catalog)
-    assert response.status_code == 200
+    assert response.status_code == 400
     assert "already exists" in response.text
-    assert "Go to Existing Catalog" in response.text
 
 
 def test_edit_catalog_form_loads(client, temp_catalog):
     """Test that edit catalog form loads with pre-populated values."""
     # First create a catalog
-    response = client.post("/catalogs/add", data=temp_catalog)
+    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
     assert response.status_code == 200
 
     # Test edit form loads (catalog ID will be generated from name)
@@ -90,7 +88,7 @@ def test_edit_catalog_form_loads(client, temp_catalog):
 def test_update_catalog_success(client, temp_catalog):
     """Test successful catalog update."""
     # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog)
+    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
     assert response.status_code == 200
 
     # Update catalog
@@ -98,16 +96,17 @@ def test_update_catalog_success(client, temp_catalog):
         "name": "Updated Test Catalog",
         "root_dir": temp_catalog["root_dir"],
     }
-    response = client.post("/catalog/test-catalog/edit", data=updated_data)
+    response = client.post(
+        "/catalog/test-catalog/edit", data=updated_data, follow_redirects=True
+    )
     assert response.status_code == 200
     assert "Updated Test Catalog" in response.text
-    assert "updated successfully" in response.text
 
 
 def test_delete_catalog_confirmation_loads(client, temp_catalog):
     """Test that delete confirmation page loads."""
     # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog)
+    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
     assert response.status_code == 200
 
     # Test delete confirmation loads
@@ -121,13 +120,12 @@ def test_delete_catalog_confirmation_loads(client, temp_catalog):
 def test_delete_catalog_success(client, temp_catalog):
     """Test successful catalog deletion."""
     # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog)
+    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
     assert response.status_code == 200
 
     # Delete catalog
-    response = client.post("/catalog/test-catalog/delete")
+    response = client.post("/catalog/test-catalog/delete", follow_redirects=True)
     assert response.status_code == 200
-    assert "deleted successfully" in response.text
     # The success message will contain the catalog name, but the catalog list
     # should be empty
     assert "No data catalogs configured" in response.text
@@ -151,7 +149,9 @@ def test_catalog_with_cloud_urls(client):
     ]
 
     for catalog_data in cloud_catalogs:
-        response = client.post("/catalogs/add", data=catalog_data)
+        response = client.post(
+            "/catalogs/add", data=catalog_data, follow_redirects=True
+        )
         assert response.status_code == 200
         assert catalog_data["name"] in response.text
         assert catalog_data["root_dir"] in response.text

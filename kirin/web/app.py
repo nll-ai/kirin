@@ -187,14 +187,7 @@ async def add_catalog(
         catalog_manager.add_catalog(catalog)
 
         # Redirect to catalog list
-        return templates.TemplateResponse(
-            "catalogs.html",
-            {
-                "request": request,
-                "catalogs": catalog_manager.list_catalogs(),
-                "success": f"Catalog '{name}' added successfully",
-            },
-        )
+        return RedirectResponse(url="/", status_code=302)
 
     except HTTPException:
         raise
@@ -202,21 +195,12 @@ async def add_catalog(
         # Handle "already exists" error gracefully
         if "already exists" in str(e):
             logger.warning(f"Catalog '{name}' already exists: {e}")
-            return templates.TemplateResponse(
-                "catalog_form.html",
-                {
-                    "request": request,
-                    "error": (
-                        f"A catalog with the name '{name}' already exists. "
-                        "Please choose a different name or go to the existing catalog."
-                    ),
-                    "existing_catalog_id": catalog_id,
-                    "form_data": {
-                        "name": name,
-                        "root_dir": root_dir,
-                        "aws_profile": aws_profile,
-                    },
-                },
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"A catalog with the name '{name}' already exists. "
+                    "Please choose a different name or go to the existing catalog."
+                ),
             )
         else:
             logger.error(f"Validation error adding catalog: {e}")
@@ -404,14 +388,7 @@ async def update_catalog(
         # No more caching - direct creation like notebook
 
         # Redirect to catalog list
-        return templates.TemplateResponse(
-            "catalogs.html",
-            {
-                "request": request,
-                "catalogs": catalog_manager.list_catalogs(),
-                "success": f"Catalog '{name}' updated successfully",
-            },
-        )
+        return RedirectResponse(url="/", status_code=302)
 
     except HTTPException:
         raise
@@ -491,14 +468,7 @@ async def delete_catalog(
         # No more caching - direct creation like notebook
 
         # Redirect to catalog list
-        return templates.TemplateResponse(
-            "catalogs.html",
-            {
-                "request": request,
-                "catalogs": catalog_manager.list_catalogs(),
-                "success": f"Catalog '{catalog.name}' deleted successfully",
-            },
-        )
+        return RedirectResponse(url="/", status_code=302)
 
     except HTTPException:
         raise
@@ -560,6 +530,10 @@ async def view_dataset(
                 "dataset_info": info,
                 "files": files,
                 "active_tab": tab,
+                "catalog": catalog,
+                "current_commit": dataset.current_commit.hash
+                if dataset.current_commit and dataset.current_commit.hash
+                else None,
             },
         )
 
@@ -598,6 +572,10 @@ async def dataset_files_tab(request: Request, catalog_id: str, dataset_name: str
                 "catalog_id": catalog_id,
                 "dataset_name": dataset_name,
                 "files": files,
+                "catalog": catalog,
+                "current_commit": dataset.current_commit.hash
+                if dataset.current_commit and dataset.current_commit.hash
+                else None,
             },
         )
 
@@ -646,6 +624,10 @@ async def dataset_history_tab(request: Request, catalog_id: str, dataset_name: s
                 "catalog_id": catalog_id,
                 "dataset_name": dataset_name,
                 "commits": commits,
+                "catalog": catalog,
+                "current_commit": dataset.current_commit.hash
+                if dataset.current_commit and dataset.current_commit.hash
+                else None,
             },
         )
 
@@ -691,6 +673,10 @@ async def commit_form(request: Request, catalog_id: str, dataset_name: str):
                 "catalog_id": catalog_id,
                 "dataset_name": dataset_name,
                 "files": files,
+                "catalog": catalog,
+                "current_commit": dataset.current_commit.hash
+                if dataset.current_commit and dataset.current_commit.hash
+                else None,
             },
         )
 
@@ -795,7 +781,11 @@ async def create_commit(
     response_class=HTMLResponse,
 )
 async def preview_file(
-    request: Request, catalog_id: str, dataset_name: str, file_name: str
+    request: Request,
+    catalog_id: str,
+    dataset_name: str,
+    file_name: str,
+    checkout: str = None,
 ):
     """Preview a file (text only)."""
     try:
@@ -850,6 +840,8 @@ async def preview_file(
                     "is_binary": True,
                     "content_type": content_type,
                     "truncated": False,
+                    "catalog": catalog,
+                    "checkout_commit": checkout,
                 },
             )
 
@@ -879,6 +871,8 @@ async def preview_file(
                     "is_binary": True,
                     "content_type": content_type,
                     "truncated": False,
+                    "catalog": catalog,
+                    "checkout_commit": checkout,
                 },
             )
 
@@ -893,6 +887,8 @@ async def preview_file(
                 "content": preview_content,
                 "is_binary": False,
                 "truncated": len(lines) > 1000,
+                "catalog": catalog,
+                "checkout_commit": checkout,
             },
         )
 
@@ -1016,6 +1012,7 @@ async def checkout_commit(
                 "checkout_commit": commit_hash,
                 "checkout_message": commit.message,
                 "checkout_timestamp": commit.timestamp.isoformat(),
+                "catalog": catalog,
             },
         )
 

@@ -37,7 +37,7 @@
     <div class="tabs">
         <div class="tab-list">
             <button class="tab {% if active_tab == 'files' %}active{% endif %}"
-                    hx-get="/backend/{{ backend_id }}/{{ dataset_name }}/files"
+                    hx-get="/catalog/{{ catalog_id }}/{{ dataset_name }}/files"
                     hx-target="#tab-content"
                     hx-indicator="#loading">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -76,6 +76,7 @@
             {% endif %}
         </div>
     </div>
+
 
     <!-- Tab Content -->
     <div id="tab-content" class="tab-content">
@@ -135,6 +136,56 @@ document.addEventListener('htmx:afterRequest', function(event) {
             </button>
         </div>
         <div class="modal-body">
+            <!-- Python Code Snippet in Modal -->
+            <div class="code-snippet collapsed" id="modal-code-snippet">
+                <div class="code-snippet-header">
+                    <div class="code-snippet-title code-snippet-toggle" onclick="toggleCodeSnippet('modal-code-snippet')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6,9 12,15 18,9"></polyline>
+                        </svg>
+                        Python Access Code
+                    </div>
+                    <button class="copy-btn" onclick="copyCode('modal-code')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        Copy
+                    </button>
+                </div>
+                <div class="code-snippet-content">
+                    <pre><code id="modal-code">from kirin import Dataset
+
+dataset = Dataset(
+    root_dir="{{ catalog.root_dir }}",
+    name="{{ dataset_name }}"{% if catalog.aws_profile %},
+    aws_profile="{{ catalog.aws_profile }}"{% endif %}{% if catalog.gcs_token %},
+    gcs_token="{{ catalog.gcs_token }}"{% endif %}{% if catalog.gcs_project %},
+    gcs_project="{{ catalog.gcs_project }}"{% endif %}{% if catalog.azure_account_name %},
+    azure_account_name="{{ catalog.azure_account_name }}"{% endif %}{% if catalog.azure_account_key %},
+    azure_account_key="{{ catalog.azure_account_key }}"{% endif %}{% if catalog.azure_connection_string %},
+    azure_connection_string="{{ catalog.azure_connection_string }}"{% endif %}
+)
+
+{% if checkout_commit %}
+# Checkout to specific commit
+dataset.checkout("{{ checkout_commit }}")
+{% elif current_commit %}
+# Checkout to latest commit (HEAD)
+dataset.checkout("{{ current_commit }}")
+{% else %}
+# Checkout to latest commit (HEAD)
+dataset.checkout()
+{% endif %}
+
+# Access files as local paths
+with dataset.local_files() as local_files:
+    file_path = local_files["<span id='modal-filename'>filename</span>"]
+    # Process file at file_path
+    # Note: Files are temporary and will be deleted when exiting this context</code></pre>
+                </div>
+            </div>
+
             <div id="preview-content">
                 <!-- Content will be loaded here -->
             </div>
@@ -157,6 +208,12 @@ function openPreview(fileName) {
     title.textContent = fileName;
     downloadLink.href = `/catalog/{{ catalog_id }}/{{ dataset_name }}/file/${fileName}/download`;
 
+    // Update filename in code snippet
+    const modalFilename = document.getElementById('modal-filename');
+    if (modalFilename) {
+        modalFilename.textContent = fileName;
+    }
+
     // Show loading state
     content.innerHTML = `
         <div class="text-center py-8">
@@ -170,7 +227,12 @@ function openPreview(fileName) {
     document.body.style.overflow = 'hidden';
 
     // Load preview content
-    fetch(`/catalog/{{ catalog_id }}/{{ dataset_name }}/file/${fileName}/preview`)
+    const checkoutParam = {% if checkout_commit %}'{{ checkout_commit }}'{% else %}null{% endif %};
+    const previewUrl = checkoutParam
+        ? `/catalog/{{ catalog_id }}/{{ dataset_name }}/file/${fileName}/preview?checkout=${checkoutParam}`
+        : `/catalog/{{ catalog_id }}/{{ dataset_name }}/file/${fileName}/preview`;
+
+    fetch(previewUrl)
         .then(response => response.text())
         .then(html => {
             // Extract just the content from the response
@@ -210,5 +272,46 @@ document.addEventListener('keydown', function(event) {
         closePreview();
     }
 });
+
+// Code snippet functionality
+function toggleCodeSnippet(snippetId) {
+    const snippet = document.getElementById(snippetId);
+    snippet.classList.toggle('collapsed');
+}
+
+async function copyCode(codeId) {
+    const codeElement = document.getElementById(codeId);
+    const code = codeElement.textContent;
+
+    try {
+        await navigator.clipboard.writeText(code);
+
+        // Visual feedback
+        const button = event.target.closest('.copy-btn');
+        const originalText = button.innerHTML;
+        button.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20,6 9,17 4,12"></polyline>
+            </svg>
+            Copied!
+        `;
+        button.classList.add('copied');
+
+        // Reset after 2 seconds
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('copied');
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy code: ', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = code;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+    }
+}
 </script>
 {% endblock %}
