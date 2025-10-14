@@ -1,0 +1,1114 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://ericmjl.github.io/kirin/ui-design-choices/">
+      
+      
+        <link rel="prev" href="../hashfs-evaluation/">
+      
+      
+        <link rel="next" href="../bug-fixes/catalog-commit-count-bug/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
+    
+    
+      
+        <title>File Removal UI Design Choices - kirin</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.4af4bdda.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../apidocs.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#file-removal-ui-design-choices" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="kirin" class="md-header__button md-logo" aria-label="kirin" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M96 0C43 0 0 43 0 96v320c0 53 43 96 96 96h320c17.7 0 32-14.3 32-32s-14.3-32-32-32v-64c17.7 0 32-14.3 32-32V32c0-17.7-14.3-32-32-32H96m0 384h256v64H96c-17.7 0-32-14.3-32-32s14.3-32 32-32m32-240c0-8.8 7.2-16 16-16h192c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16m16 48h192c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16s7.2-16 16-16"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            kirin
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              File Removal UI Design Choices
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/ericmjl/kirin" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ericmjl/kirin
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="kirin" class="md-nav__button md-logo" aria-label="kirin" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M96 0C43 0 0 43 0 96v320c0 53 43 96 96 96h320c17.7 0 32-14.3 32-32s-14.3-32-32-32v-64c17.7 0 32-14.3 32-32V32c0-17.7-14.3-32-32-32H96m0 384h256v64H96c-17.7 0-32-14.3-32-32s14.3-32 32-32m32-240c0-8.8 7.2-16 16-16h192c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16m16 48h192c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16s7.2-16 16-16"/></svg>
+
+    </a>
+    kirin
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/ericmjl/kirin" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ericmjl/kirin
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kirin Documentation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-hashfs-evaluation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ADR-001: HashFS Integration Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kirin API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cloud-storage-auth/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cloud Storage Authentication Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../design/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kirin: Simplified Content-Addressed Storage for Data Versioning
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ecosystem-diligence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ecosystem Due Diligence
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hashfs-evaluation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HashFS Integration Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    File Removal UI Design Choices
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    File Removal UI Design Choices
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#visual-hierarchy-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      Visual Hierarchy &amp; Layout
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Visual Hierarchy &amp; Layout">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#card-based-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Card-Based Design
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#horizontal-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      Horizontal Layout
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interactive-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interactive Design
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interactive Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checkbox-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checkbox Design
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hover-selection-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hover &amp; Selection States
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#color-typography" class="md-nav__link">
+    <span class="md-ellipsis">
+      Color &amp; Typography
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Color &amp; Typography">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#color-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      Color System
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typography-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Typography Hierarchy
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#animation-transitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Animation &amp; Transitions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Animation &amp; Transitions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#smooth-interactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Smooth Interactions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#micro-interactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Micro-interactions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessibility-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Accessibility Considerations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Accessibility Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#focus-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Focus Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visual-clarity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Visual Clarity
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-system-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Design System Integration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design System Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#css-custom-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSS Custom Properties
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Component Classes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Bug fixes
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Bug fixes
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bug-fixes/catalog-commit-count-bug/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Catalog Landing Page Commit Count Bug Fix
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#visual-hierarchy-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      Visual Hierarchy &amp; Layout
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Visual Hierarchy &amp; Layout">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#card-based-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Card-Based Design
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#horizontal-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      Horizontal Layout
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interactive-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interactive Design
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Interactive Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#checkbox-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checkbox Design
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hover-selection-states" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hover &amp; Selection States
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#color-typography" class="md-nav__link">
+    <span class="md-ellipsis">
+      Color &amp; Typography
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Color &amp; Typography">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#color-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      Color System
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#typography-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      Typography Hierarchy
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#animation-transitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Animation &amp; Transitions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Animation &amp; Transitions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#smooth-interactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Smooth Interactions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#micro-interactions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Micro-interactions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accessibility-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      Accessibility Considerations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Accessibility Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#focus-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Focus Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#visual-clarity" class="md-nav__link">
+    <span class="md-ellipsis">
+      Visual Clarity
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-system-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      Design System Integration
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Design System Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#css-custom-properties" class="md-nav__link">
+    <span class="md-ellipsis">
+      CSS Custom Properties
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#component-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Component Classes
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="file-removal-ui-design-choices">File Removal UI Design Choices</h1>
+<h2 id="visual-hierarchy-layout">Visual Hierarchy &amp; Layout</h2>
+<h3 id="card-based-design">Card-Based Design</h3>
+<p>We chose a card-based design for file removal items to create clear visual
+separation and hierarchy. Each file item is presented as an individual card
+with:</p>
+<ul>
+<li><strong>Background</strong>: Clean white/card background using <code>hsl(var(--card))</code></li>
+<li><strong>Subtle shadows</strong>: <code>box-shadow: 0 1px 2px hsl(var(--border) / 0.1)</code> for
+  depth</li>
+<li><strong>Rounded corners</strong>: 8px border radius for modern, friendly appearance</li>
+<li><strong>Generous padding</strong>: 1rem vertical, 1.25rem horizontal for breathing room</li>
+</ul>
+<p>This approach makes each file feel like a distinct, interactive element rather
+than just text in a list.</p>
+<h3 id="horizontal-layout">Horizontal Layout</h3>
+<p>We implemented a strict horizontal layout with:</p>
+<ul>
+<li><strong>Flexbox alignment</strong>: <code>display: flex</code>, <code>flex-direction: row</code>,
+  <code>align-items: center</code></li>
+<li><strong>Consistent spacing</strong>: 1rem gap between checkbox, icon, and text</li>
+<li><strong>Proper element sizing</strong>: Checkbox and icon are <code>flex-shrink: 0</code> to maintain
+  size</li>
+</ul>
+<p>This creates a clean, scannable interface where users can quickly identify and
+select files.</p>
+<h2 id="interactive-design">Interactive Design</h2>
+<h3 id="checkbox-design">Checkbox Design</h3>
+<p>We chose a larger, more prominent checkbox design:</p>
+<ul>
+<li><strong>Size</strong>: 24px × 24px (larger than standard 16px) for better visibility</li>
+<li><strong>Color</strong>: Red accent color (<code>hsl(var(--destructive))</code>) to signal destructive
+  action</li>
+<li><strong>Focus states</strong>: Red outline for accessibility compliance</li>
+<li><strong>Smooth transitions</strong>: 0.2s ease for all state changes</li>
+</ul>
+<p>The larger size and red color immediately communicate that this is a removal
+action, reducing user confusion.</p>
+<h3 id="hover-selection-states">Hover &amp; Selection States</h3>
+<p>We implemented sophisticated interaction feedback:</p>
+<ul>
+<li><strong>Hover effects</strong>: Subtle lift animation (<code>translateY(-1px)</code>) with enhanced
+  shadows</li>
+<li><strong>Checked state</strong>: Red-tinted background with red border and icon</li>
+<li><strong>Smooth transitions</strong>: All interactions animate smoothly for polished feel</li>
+</ul>
+<p>These states provide clear visual feedback about user actions and system state.</p>
+<h2 id="color-typography">Color &amp; Typography</h2>
+<h3 id="color-system">Color System</h3>
+<p>We leveraged the existing design system colors:</p>
+<ul>
+<li><strong>Destructive actions</strong>: Red color scheme for removal operations</li>
+<li><strong>Muted elements</strong>: File icons use muted colors that brighten on interaction</li>
+<li><strong>Consistent theming</strong>: All colors use CSS custom properties for consistency</li>
+</ul>
+<h3 id="typography-hierarchy">Typography Hierarchy</h3>
+<p>We refined the text presentation:</p>
+<ul>
+<li><strong>Filename</strong>: 0.95rem, medium weight, proper line height for readability</li>
+<li><strong>File size</strong>: 0.8rem, muted color, with proper spacing from filename</li>
+<li><strong>Color contrast</strong>: Ensured proper contrast ratios for accessibility</li>
+</ul>
+<h2 id="animation-transitions">Animation &amp; Transitions</h2>
+<h3 id="smooth-interactions">Smooth Interactions</h3>
+<p>We implemented consistent 0.2s ease transitions for:</p>
+<ul>
+<li><strong>Hover states</strong>: Background, border, and shadow changes</li>
+<li><strong>Selection states</strong>: Color and opacity changes</li>
+<li><strong>Focus states</strong>: Outline and accent color changes</li>
+</ul>
+<p>This creates a polished, professional feel that responds immediately to user
+input.</p>
+<h3 id="micro-interactions">Micro-interactions</h3>
+<p>We added subtle animations:</p>
+<ul>
+<li><strong>Lift effect</strong>: Items slightly rise on hover for depth perception</li>
+<li><strong>Color transitions</strong>: Icons and backgrounds smoothly change color</li>
+<li><strong>Shadow evolution</strong>: Shadows grow and change color based on state</li>
+</ul>
+<p>These micro-interactions provide delightful feedback without being distracting.</p>
+<h2 id="accessibility-considerations">Accessibility Considerations</h2>
+<h3 id="focus-management">Focus Management</h3>
+<p>We ensured proper keyboard navigation:</p>
+<ul>
+<li><strong>Focus outlines</strong>: Red outline on checkbox focus for visibility</li>
+<li><strong>Proper tab order</strong>: Logical navigation through interactive elements</li>
+<li><strong>Color contrast</strong>: Sufficient contrast ratios for all text elements</li>
+</ul>
+<h3 id="visual-clarity">Visual Clarity</h3>
+<p>We prioritized clear visual communication:</p>
+<ul>
+<li><strong>Larger touch targets</strong>: 24px checkbox for easier interaction</li>
+<li><strong>Clear state indication</strong>: Obvious visual difference between
+  checked/unchecked</li>
+<li><strong>Consistent spacing</strong>: Predictable layout for screen readers</li>
+</ul>
+<h2 id="design-system-integration">Design System Integration</h2>
+<h3 id="css-custom-properties">CSS Custom Properties</h3>
+<p>We used the existing design system variables:</p>
+<ul>
+<li><strong>Color tokens</strong>: <code>--destructive</code>, <code>--card</code>, <code>--border</code>, <code>--foreground</code></li>
+<li><strong>Consistent theming</strong>: All colors adapt to light/dark themes</li>
+<li><strong>Maintainable code</strong>: Easy to update colors across the entire system</li>
+</ul>
+<h3 id="component-classes">Component Classes</h3>
+<p>We created reusable component classes:</p>
+<ul>
+<li><strong><code>.file-remove-item</code></strong>: Main container styling</li>
+<li><strong><code>.file-remove-checkbox</code></strong>: Checkbox-specific styling</li>
+<li><strong>Modular approach</strong>: Easy to apply to other similar interfaces</li>
+</ul>
+<p>This approach ensures consistency and maintainability across the application.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/ericmjl" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["instant", "tabs"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+        <script src="../config.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,2404 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://ericmjl.github.io/kirin/design/">
+      
+      
+        <link rel="prev" href="../cloud-storage-auth/">
+      
+      
+        <link rel="next" href="../ecosystem-diligence/">
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.9">
+    
+    
+      
+        <title>Kirin: Simplified Content-Addressed Storage for Data Versioning - kirin</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.4af4bdda.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+      <link rel="stylesheet" href="../apidocs.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#kirin-simplified-content-addressed-storage-for-data-versioning" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="kirin" class="md-header__button md-logo" aria-label="kirin" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M96 0C43 0 0 43 0 96v320c0 53 43 96 96 96h320c17.7 0 32-14.3 32-32s-14.3-32-32-32v-64c17.7 0 32-14.3 32-32V32c0-17.7-14.3-32-32-32H96m0 384h256v64H96c-17.7 0-32-14.3-32-32s14.3-32 32-32m32-240c0-8.8 7.2-16 16-16h192c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16m16 48h192c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16s7.2-16 16-16"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            kirin
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Kirin: Simplified Content-Addressed Storage for Data Versioning
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/ericmjl/kirin" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ericmjl/kirin
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="kirin" class="md-nav__button md-logo" aria-label="kirin" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M96 0C43 0 0 43 0 96v320c0 53 43 96 96 96h320c17.7 0 32-14.3 32-32s-14.3-32-32-32v-64c17.7 0 32-14.3 32-32V32c0-17.7-14.3-32-32-32H96m0 384h256v64H96c-17.7 0-32-14.3-32-32s14.3-32 32-32m32-240c0-8.8 7.2-16 16-16h192c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16m16 48h192c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16s7.2-16 16-16"/></svg>
+
+    </a>
+    kirin
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/ericmjl/kirin" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ericmjl/kirin
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kirin Documentation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-hashfs-evaluation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    ADR-001: HashFS Integration Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kirin API Reference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cloud-storage-auth/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cloud Storage Authentication Guide
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Kirin: Simplified Content-Addressed Storage for Data Versioning
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Kirin: Simplified Content-Addressed Storage for Data Versioning
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#design-document" class="md-nav__link">
+    <span class="md-ellipsis">
+      Design Document
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Introduction
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Introduction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-problem-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.1 Problem Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-design-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.2 Design Goals
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-jobs-to-be-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3 Jobs to be Done
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.3 Jobs to be Done">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#131-data-scientist-ml-engineer" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.1 Data Scientist / ML Engineer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#132-data-engineer" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.2 Data Engineer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#133-data-team-manager-lead" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.3 Data Team Manager / Lead
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#134-mlops-engineer" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.4 MLOps Engineer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#135-laboratory-scientist" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.5 Laboratory Scientist
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-feature-to-job-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.4 Feature-to-Job Mapping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-user-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.5 User Workflows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.5 User Workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#model-development-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Model Development Workflow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-pipeline-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Pipeline Workflow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#laboratory-research-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Laboratory Research Workflow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#laboratory-comparative-analysis-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Laboratory Comparative Analysis Workflow
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-system-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. System Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. System Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-core-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1 Core Components
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.1 Core Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#211-storage-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1.1 Storage Layer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#212-versioning-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1.2 Versioning Layer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#213-dataset-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1.3 Dataset Layer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#214-catalog-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1.4 Catalog Layer
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-system-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.2 System Flow
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-data-structures-and-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Data Structures and Storage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Data Structures and Storage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-content-store-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 Content Store Layout
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-commit-history-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.2 Commit History Format
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-api-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. API Design
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. API Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-python-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.1 Python API
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-cloud-storage-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.2 Cloud Storage Support
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-web-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.3 Web UI
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-authentication-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.4 Authentication Helpers
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Performance Considerations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Performance Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-zero-copy-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.1 Zero-Copy Architecture
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.2 Caching
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-lazy-loading" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.3 Lazy Loading
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-optimized-hashing" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.4 Optimized Hashing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-current-implementation-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Current Implementation Status
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Current Implementation Status">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-implemented-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.1 Implemented Features
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-future-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.2 Future Extensions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ecosystem-diligence/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ecosystem Due Diligence
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hashfs-evaluation/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HashFS Integration Evaluation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ui-design-choices/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    File Removal UI Design Choices
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Bug fixes
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Bug fixes
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bug-fixes/catalog-commit-count-bug/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Catalog Landing Page Commit Count Bug Fix
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#design-document" class="md-nav__link">
+    <span class="md-ellipsis">
+      Design Document
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. Introduction
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Introduction">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#11-problem-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.1 Problem Statement
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#12-design-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.2 Design Goals
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#13-jobs-to-be-done" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3 Jobs to be Done
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.3 Jobs to be Done">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#131-data-scientist-ml-engineer" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.1 Data Scientist / ML Engineer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#132-data-engineer" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.2 Data Engineer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#133-data-team-manager-lead" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.3 Data Team Manager / Lead
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#134-mlops-engineer" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.4 MLOps Engineer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#135-laboratory-scientist" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.3.5 Laboratory Scientist
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#14-feature-to-job-mapping" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.4 Feature-to-Job Mapping
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#15-user-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      1.5 User Workflows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1.5 User Workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#model-development-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Model Development Workflow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#data-pipeline-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Data Pipeline Workflow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#laboratory-research-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Laboratory Research Workflow
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#laboratory-comparative-analysis-workflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      Laboratory Comparative Analysis Workflow
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-system-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. System Architecture
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. System Architecture">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-core-components" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1 Core Components
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2.1 Core Components">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#211-storage-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1.1 Storage Layer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#212-versioning-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1.2 Versioning Layer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#213-dataset-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1.3 Dataset Layer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#214-catalog-layer" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.1.4 Catalog Layer
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-system-flow" class="md-nav__link">
+    <span class="md-ellipsis">
+      2.2 System Flow
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-data-structures-and-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Data Structures and Storage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Data Structures and Storage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-content-store-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.1 Content Store Layout
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-commit-history-format" class="md-nav__link">
+    <span class="md-ellipsis">
+      3.2 Commit History Format
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-api-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. API Design
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. API Design">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-python-api" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.1 Python API
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-cloud-storage-support" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.2 Cloud Storage Support
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-web-ui" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.3 Web UI
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-authentication-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      4.4 Authentication Helpers
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-performance-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Performance Considerations
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Performance Considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-zero-copy-architecture" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.1 Zero-Copy Architecture
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-caching" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.2 Caching
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-lazy-loading" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.3 Lazy Loading
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-optimized-hashing" class="md-nav__link">
+    <span class="md-ellipsis">
+      5.4 Optimized Hashing
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-current-implementation-status" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Current Implementation Status
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Current Implementation Status">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#61-implemented-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.1 Implemented Features
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#62-future-extensions" class="md-nav__link">
+    <span class="md-ellipsis">
+      6.2 Future Extensions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-conclusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Conclusion
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="kirin-simplified-content-addressed-storage-for-data-versioning">Kirin: Simplified Content-Addressed Storage for Data Versioning</h1>
+<h2 id="design-document">Design Document</h2>
+<h2 id="1-introduction">1. Introduction</h2>
+<p>Kirin is a simplified tool for version-controlling data using content-addressed
+storage.
+The primary goals are to enable file versioning and file set versioning with a
+linear
+commit history that is backend-agnostic, serverless, and focuses on ergonomic
+Python API.</p>
+<h3 id="11-problem-statement">1.1 Problem Statement</h3>
+<p>Data versioning is a critical need in machine learning and data science
+workflows. Current solutions often:</p>
+<ul>
+<li>Are tied to specific storage backends</li>
+<li>Lack the flexibility of Git's content-addressed model</li>
+<li>Require server infrastructure</li>
+<li>Do not track data usage effectively</li>
+<li>Are difficult to integrate with existing workflows and tools</li>
+<li>Fail to maintain lineage between derived files and their sources</li>
+<li>Inefficiently copy data when performing operations, leading to excessive
+  memory usage and slow performance</li>
+</ul>
+<h3 id="12-design-goals">1.2 Design Goals</h3>
+<p>Kirin aims to provide a simplified, robust solution with the following
+properties:</p>
+<ol>
+<li><strong>Backend-agnostic storage</strong>: Support any storage backend (local filesystem,
+   S3, Dropbox, Google Drive, SharePoint, etc.)</li>
+<li><strong>Content-addressed storage</strong>: Use hashing to ensure data integrity and
+   deduplication</li>
+<li><strong>Linear commit history</strong>: Simple, linear versioning without branching
+   complexity</li>
+<li><strong>Serverless architecture</strong>: No need for dedicated servers; all logic
+   runs client-side</li>
+<li><strong>Ergonomic Python API</strong>: Focus on ease of use and developer experience</li>
+<li><strong>File versioning</strong>: Track changes to individual files over time</li>
+<li><strong>Zero-copy operations</strong>: Minimize data copying through memory mapping and
+   streaming operations whenever possible</li>
+<li><strong>Clean API</strong>: Provide a programmatic API optimized for Python workflows</li>
+</ol>
+<h3 id="13-jobs-to-be-done">1.3 Jobs to be Done</h3>
+<p>Using Clayton Christensen's "Jobs to be Done" framework, we can identify the key
+user personas and the specific jobs they need to accomplish with Kirin:</p>
+<h4 id="131-data-scientist-ml-engineer">1.3.1 Data Scientist / ML Engineer</h4>
+<p><strong>Jobs to be Done:</strong></p>
+<ol>
+<li><strong>Track Experiment Data</strong>: "I need to keep track of which datasets were used
+   in which experiments so I can reproduce my results."</li>
+<li>Kirin enables this through content-addressed storage and automatic lineage
+   tracking.</li>
+<li>
+<p>Example: "When my model performed exceptionally well, I could trace back
+   exactly which version of the dataset was used and recreate the conditions."</p>
+</li>
+<li>
+<p><strong>Find and Use the Right Data Version</strong>: "I need to identify and access
+   specific versions of datasets for training models."</p>
+</li>
+<li>Kirin's versioning system with explicit commits makes this possible.</li>
+<li>
+<p>Example: "I needed to compare model performance on data from Q1 vs Q2, and
+   Kirin let me checkout each version effortlessly."</p>
+</li>
+<li>
+<p><strong>Collaborate with Team Members</strong>: "I need to share datasets with colleagues
+   in a way that ensures we're all using the same exact data."</p>
+</li>
+<li>The content-addressed storage ensures data integrity across team members.</li>
+<li>
+<p>Example: "My colleague in another country could reproduce my analysis
+   because Kirin guaranteed we had identical datasets."</p>
+</li>
+<li>
+<p><strong>Document Data Transformations</strong>: "I need to track how raw data is
+   transformed into model-ready data."</p>
+</li>
+<li>The lineage tracking captures the entire transformation pipeline.</li>
+<li>Example: "When questioned about our preprocessing steps, I could show the
+   exact sequence of transformations from raw to processed data."</li>
+</ol>
+<h4 id="132-data-engineer">1.3.2 Data Engineer</h4>
+<p><strong>Jobs to be Done:</strong></p>
+<ol>
+<li><strong>Manage Data Pipelines</strong>: "I need to ensure data pipelines produce consistent, traceable outputs."</li>
+<li>Kirin's automatic tracking of inputs and outputs creates a clear audit trail.</li>
+<li>
+<p>Example: "When a downstream process broke, I could trace back through the pipeline to identify which transformation introduced the issue."</p>
+</li>
+<li>
+<p><strong>Optimize Storage Usage</strong>: "I need to handle large datasets efficiently without wasting storage."</p>
+</li>
+<li>Content-addressed storage with deduplication and zero-copy operations reduces storage overhead.</li>
+<li>
+<p>Example: "Despite having multiple versions of our 500GB dataset, we only used 600GB of storage because Kirin only stored the changed portions."</p>
+</li>
+<li>
+<p><strong>Support Multiple Storage Solutions</strong>: "I need to work with data across various storage systems our organization uses."</p>
+</li>
+<li>The backend-agnostic design allows seamless work across storage solutions.</li>
+<li>
+<p>Example: "We migrated from local storage to S3 without changing our workflows because Kirin abstracted away the storage layer."</p>
+</li>
+<li>
+<p><strong>Ensure Data Governance</strong>: "I need to track who accesses what data and how it's used."</p>
+</li>
+<li>Usage tracking provides comprehensive audit logs.</li>
+<li>Example: "For compliance reporting, I could generate a complete report of which teams accessed sensitive datasets."</li>
+</ol>
+<h4 id="133-data-team-manager-lead">1.3.3 Data Team Manager / Lead</h4>
+<p><strong>Jobs to be Done:</strong></p>
+<ol>
+<li><strong>Ensure Reproducibility</strong>: "I need to guarantee that our team's work is reproducible for scientific integrity and audit purposes."</li>
+<li>End-to-end versioning and lineage tracking supports full reproducibility.</li>
+<li>
+<p>Example: "When preparing a paper for submission, we could include Kirin references that allowed reviewers to verify our results."</p>
+</li>
+<li>
+<p><strong>Manage Technical Debt</strong>: "I need to understand data dependencies to prevent cascading failures when data changes."</p>
+</li>
+<li>Lineage visualization helps identify dependencies.</li>
+<li>
+<p>Example: "Before making a major change to our core dataset, I could see all downstream analyses that would be affected."</p>
+</li>
+<li>
+<p><strong>Accelerate Onboarding</strong>: "I need new team members to quickly understand our data ecosystem."</p>
+</li>
+<li>Data catalogs and lineage visualization provide a map of available data and relationships.</li>
+<li>
+<p>Example: "New hires could browse our data catalog to understand available datasets and how they relate to each other."</p>
+</li>
+<li>
+<p><strong>Support Regulatory Compliance</strong>: "I need to demonstrate data provenance for regulatory compliance."</p>
+</li>
+<li>Complete tracking of data origins and transformations provides necessary documentation.</li>
+<li>Example: "During an audit, we could show the complete history of how customer data was processed and anonymized."</li>
+</ol>
+<h4 id="134-mlops-engineer">1.3.4 MLOps Engineer</h4>
+<p><strong>Jobs to be Done:</strong></p>
+<ol>
+<li><strong>Deploy Models with Data Dependencies</strong>: "I need to package models with their exact data dependencies."</li>
+<li>Content-addressed references ensure exact data versions are specified.</li>
+<li>
+<p>Example: "When deploying to production, our CI/CD pipeline could pull the exact data version used in validation."</p>
+</li>
+<li>
+<p><strong>Monitor Data Drift</strong>: "I need to compare production data against training data to detect drift."</p>
+</li>
+<li>Versioned datasets make it easy to compare current data with historical versions.</li>
+<li>
+<p>Example: "Our monitoring system could compare daily production inputs against the original training data to detect shifts."</p>
+</li>
+<li>
+<p><strong>Implement Data-Centric CI/CD</strong>: "I need automated tests that verify data quality across pipeline stages."</p>
+</li>
+<li>Lineage tracking enables validation at each transformation step.</li>
+<li>
+<p>Example: "Our CI pipeline ran tests against each version of the data to ensure transformations preserved key statistical properties."</p>
+</li>
+<li>
+<p><strong>Roll Back Data When Needed</strong>: "I need to quickly revert to previous data versions if issues arise."</p>
+</li>
+<li>Version control provides the ability to checkout any previous state.</li>
+<li>Example: "When we discovered an issue with the latest data processing, we could roll back to the previous version in minutes while debugging."</li>
+</ol>
+<h4 id="135-laboratory-scientist">1.3.5 Laboratory Scientist</h4>
+<p><strong>Jobs to be Done:</strong></p>
+<ol>
+<li><strong>Ensure Experimental Reproducibility</strong>: "I need to document and version all data associated with my laboratory experiments."</li>
+<li>Content-addressed storage ensures data integrity and versioning for all experimental outputs.</li>
+<li>
+<p>Example: "Six months after publication, we could precisely reconstruct our experimental dataset when responding to reviewer questions."</p>
+</li>
+<li>
+<p><strong>Track Sample Lineage</strong>: "I need to track how samples and their derivatives are processed through multiple analyses."</p>
+</li>
+<li>File lineage features provide a complete chain of custody for samples through the analytical pipeline.</li>
+<li>
+<p>Example: "When an unusual pattern appeared in our final results, we could trace it back to the original sample and specific processing steps."</p>
+</li>
+<li>
+<p><strong>Manage Collaborative Research</strong>: "I need to share experimental data with collaborators while maintaining version control."</p>
+</li>
+<li>Dataset versioning and backend-agnostic storage facilitate secure collaboration.</li>
+<li>
+<p>Example: "Our collaborators at another institution could access the exact data versions we used, ensuring consistent analysis across research groups."</p>
+</li>
+<li>
+<p><strong>Document Methods and Parameters</strong>: "I need to record the exact parameters used for each instrument and analysis."</p>
+</li>
+<li>Transformation tracking records all processing parameters alongside the data.</li>
+<li>Example: "Years later, we could verify the exact instrument settings and analysis parameters used to generate each data file."</li>
+</ol>
+<h3 id="14-feature-to-job-mapping">1.4 Feature-to-Job Mapping</h3>
+<p>The table below maps Kirin features to the specific jobs they help users
+accomplish:</p>
+<table>
+<thead>
+<tr>
+<th>Kirin Feature</th>
+<th>Primary Jobs Addressed</th>
+<th>Key User Personas</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Content-Addressed Storage</strong></td>
+<td>• Track Experiment Data<br/>• Find and Use the Right Data Version<br/>• Collaborate with Team Members<br/>• Ensure Reproducibility<br/>• Ensure Experimental Reproducibility</td>
+<td>Data Scientist, ML Engineer, Team Lead, Laboratory Scientist</td>
+</tr>
+<tr>
+<td><strong>Automatic Lineage Tracking</strong></td>
+<td>• Document Data Transformations<br/>• Manage Data Pipelines<br/>• Track Sample Lineage<br/>• Manage Technical Debt</td>
+<td>Data Scientist, Data Engineer, Laboratory Scientist</td>
+</tr>
+<tr>
+<td><strong>Backend-Agnostic Storage</strong></td>
+<td>• Support Multiple Storage Solutions<br/>• Optimize Storage Usage<br/>• Manage Collaborative Research</td>
+<td>Data Engineer, MLOps Engineer, Laboratory Scientist</td>
+</tr>
+<tr>
+<td><strong>Dataset Versioning</strong></td>
+<td>• Deploy Models with Data Dependencies<br/>• Roll Back Data When Needed<br/>• Monitor Data Drift<br/>• Ensure Experimental Reproducibility</td>
+<td>MLOps Engineer, Data Engineer, Laboratory Scientist</td>
+</tr>
+<tr>
+<td><strong>Usage Tracking</strong></td>
+<td>• Document Data Usage<br/>• Ensure Data Governance<br/>• Support Regulatory Compliance<br/>• Document Methods and Parameters</td>
+<td>Team Lead, Laboratory Scientist</td>
+</tr>
+<tr>
+<td><strong>Zero-Copy Operations</strong></td>
+<td>• Optimize Storage Usage<br/>• Handle Large Datasets</td>
+<td>Data Engineer, MLOps Engineer</td>
+</tr>
+<tr>
+<td><strong>Data Catalog</strong></td>
+<td>• Accelerate Onboarding<br/>• Find the Right Data Version<br/>• Manage Collaborative Research</td>
+<td>Team Lead, Data Scientist, Laboratory Scientist</td>
+</tr>
+<tr>
+<td><strong>Path-Based API</strong></td>
+<td>• Implement Data-Centric CI/CD<br/>• Manage Data Pipelines</td>
+<td>MLOps Engineer, Data Engineer</td>
+</tr>
+</tbody>
+</table>
+<h3 id="15-user-workflows">1.5 User Workflows</h3>
+<p>To illustrate how Kirin supports common workflows, here are examples of how different users accomplish their tasks:</p>
+<h4 id="model-development-workflow">Model Development Workflow</h4>
+<p>A data scientist developing a new model:</p>
+<ol>
+<li><strong>Discover and Access Data</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Browse the catalog to find relevant datasets</span>
+<span class="n">datasets</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">list_datasets</span><span class="p">(</span><span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;customer&quot;</span><span class="p">,</span> <span class="s2">&quot;transactions&quot;</span><span class="p">])</span>
+
+<span class="c1"># Checkout a specific version for reproducibility</span>
+<span class="n">transactions</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">get_dataset</span><span class="p">(</span><span class="s2">&quot;transactions&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">checkout</span><span class="p">(</span><span class="s2">&quot;2023-q2&quot;</span><span class="p">)</span>
+</code></pre></div>
+<ol>
+<li><strong>Prepare and Transform Data</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># All transformations are automatically tracked</span>
+<span class="k">with</span> <span class="n">repo</span><span class="o">.</span><span class="n">track_processing</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Preprocess transactions&quot;</span><span class="p">):</span>
+    <span class="c1"># Read input data</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;transactions/daily.csv&quot;</span><span class="p">))</span>
+
+    <span class="c1"># Transform data</span>
+    <span class="n">df_clean</span> <span class="o">=</span> <span class="n">clean_transactions</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+    <span class="c1"># Save processed version</span>
+    <span class="n">df_clean</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;transactions/clean.csv&quot;</span><span class="p">))</span>
+</code></pre></div>
+<ol>
+<li><strong>Train Model with Version Awareness</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Train using specific data versions, capturing exact data dependencies</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">train_model</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;transactions/clean.csv&quot;</span><span class="p">))</span>
+
+<span class="c1"># Record model with data lineage</span>
+<span class="k">with</span> <span class="n">repo</span><span class="o">.</span><span class="n">track_processing</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Train transaction model&quot;</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;models/transaction_classifier.pkl&quot;</span><span class="p">))</span>
+</code></pre></div>
+<ol>
+<li><strong>Document and Share Results</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Get full lineage information for reporting</span>
+<span class="n">data_lineage</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">get_file_ancestors</span><span class="p">(</span><span class="s2">&quot;models/transaction_classifier.pkl&quot;</span><span class="p">)</span>
+
+<span class="c1"># Generate visualizations of data flow</span>
+<span class="n">repo</span><span class="o">.</span><span class="n">visualize_lineage</span><span class="p">(</span><span class="s2">&quot;models/transaction_classifier.pkl&quot;</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s2">&quot;report.svg&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h4 id="data-pipeline-workflow">Data Pipeline Workflow</h4>
+<p>A data engineer building an ETL pipeline:</p>
+<ol>
+<li><strong>Set Up Extract Stage</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Extract from source and track provenance</span>
+<span class="k">with</span> <span class="n">repo</span><span class="o">.</span><span class="n">track_processing</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Extract from OLTP&quot;</span><span class="p">):</span>
+    <span class="n">extract_data_from_source</span><span class="p">(</span>
+        <span class="n">source_db</span><span class="o">=</span><span class="s2">&quot;production_db&quot;</span><span class="p">,</span>
+        <span class="n">output_path</span><span class="o">=</span><span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;raw/daily_extract.parquet&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+</code></pre></div>
+<ol>
+<li><strong>Implement Transform Stage</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Transform with full tracking</span>
+<span class="k">with</span> <span class="n">repo</span><span class="o">.</span><span class="n">track_processing</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Transform daily data&quot;</span><span class="p">):</span>
+    <span class="c1"># Use zero-copy operations for large files</span>
+    <span class="k">with</span> <span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;raw/daily_extract.parquet&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">open_stream</span><span class="p">()</span> <span class="k">as</span> <span class="n">stream</span><span class="p">:</span>
+        <span class="c1"># Process incrementally</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">transform_stream</span><span class="p">(</span><span class="n">stream</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">to_parquet</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;transformed/daily.parquet&quot;</span><span class="p">))</span>
+</code></pre></div>
+<ol>
+<li><strong>Execute Load Stage</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Load with tracking</span>
+<span class="k">with</span> <span class="n">repo</span><span class="o">.</span><span class="n">track_processing</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Load to data warehouse&quot;</span><span class="p">):</span>
+    <span class="n">load_to_warehouse</span><span class="p">(</span>
+        <span class="n">source</span><span class="o">=</span><span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;transformed/daily.parquet&quot;</span><span class="p">),</span>
+        <span class="n">target</span><span class="o">=</span><span class="s2">&quot;warehouse.daily_facts&quot;</span>
+    <span class="p">)</span>
+</code></pre></div>
+<ol>
+<li><strong>Verify Pipeline Integrity</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Verify the complete lineage from source to destination</span>
+<span class="n">lineage</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">get_file_ancestors</span><span class="p">(</span><span class="s2">&quot;transformed/daily.parquet&quot;</span><span class="p">)</span>
+
+<span class="c1"># Check for data quality at each stage</span>
+<span class="k">for</span> <span class="n">stage</span> <span class="ow">in</span> <span class="n">lineage</span><span class="p">:</span>
+    <span class="n">validate_data_quality</span><span class="p">(</span><span class="n">stage</span><span class="p">)</span>
+</code></pre></div>
+<h4 id="laboratory-research-workflow">Laboratory Research Workflow</h4>
+<p>A laboratory scientist conducting experimental research:</p>
+<ol>
+<li><strong>Capture Experimental Data</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Create a dataset for the experiment with metadata</span>
+<span class="n">experiment</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span>
+    <span class="s2">&quot;experiment_2023_06&quot;</span><span class="p">,</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Protein binding kinetics experiment&quot;</span><span class="p">,</span>
+    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;researcher&quot;</span><span class="p">:</span> <span class="s2">&quot;Dr. Smith&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;equipment&quot;</span><span class="p">:</span> <span class="s2">&quot;Mass Spectrometer Model XYZ&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;temperature&quot;</span><span class="p">:</span> <span class="s2">&quot;22C&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;protocol_version&quot;</span><span class="p">:</span> <span class="s2">&quot;v2.3&quot;</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="c1"># Commit raw instrument output files</span>
+<span class="n">experiment</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">add_files</span><span class="o">=</span><span class="p">[</span>
+        <span class="s2">&quot;spectrometer/run_001.raw&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;spectrometer/run_002.raw&quot;</span>
+    <span class="p">],</span>
+    <span class="n">commit_message</span><span class="o">=</span><span class="s2">&quot;Initial spectrometer runs&quot;</span>
+<span class="p">)</span>
+</code></pre></div>
+<ol>
+<li><strong>Process and Analyze Experimental Data</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># All analysis steps are automatically tracked</span>
+<span class="k">with</span> <span class="n">repo</span><span class="o">.</span><span class="n">track_processing</span><span class="p">(</span>
+    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Mass spec data processing&quot;</span><span class="p">,</span>
+    <span class="n">parameters</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;baseline_correction&quot;</span><span class="p">:</span> <span class="s2">&quot;adaptive&quot;</span><span class="p">,</span> <span class="s2">&quot;peak_detection&quot;</span><span class="p">:</span> <span class="s2">&quot;centroid&quot;</span><span class="p">}</span>
+<span class="p">):</span>
+    <span class="c1"># Read raw data</span>
+    <span class="n">raw_data</span> <span class="o">=</span> <span class="n">read_spectrometer_data</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;spectrometer/run_001.raw&quot;</span><span class="p">))</span>
+
+    <span class="c1"># Process data with analysis software</span>
+    <span class="n">processed_data</span> <span class="o">=</span> <span class="n">process_spectrometer_data</span><span class="p">(</span><span class="n">raw_data</span><span class="p">)</span>
+
+    <span class="c1"># Save processed results</span>
+    <span class="n">processed_data</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;processed/peaks_001.csv&quot;</span><span class="p">))</span>
+
+    <span class="c1"># Generate visualization</span>
+    <span class="n">plot_spectrum</span><span class="p">(</span><span class="n">processed_data</span><span class="p">)</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;figures/spectrum_001.png&quot;</span><span class="p">))</span>
+</code></pre></div>
+<ol>
+<li><strong>Generate Publication-Ready Results</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Combine and analyze processed data</span>
+<span class="k">with</span> <span class="n">repo</span><span class="o">.</span><span class="n">track_processing</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Binding kinetics analysis&quot;</span><span class="p">):</span>
+    <span class="c1"># Load all processed runs</span>
+    <span class="n">runs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">file_path</span> <span class="ow">in</span> <span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;processed&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="s2">&quot;peaks_*.csv&quot;</span><span class="p">):</span>
+        <span class="n">runs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">file_path</span><span class="p">))</span>
+
+    <span class="c1"># Calculate binding kinetics</span>
+    <span class="n">kinetics</span> <span class="o">=</span> <span class="n">calculate_binding_parameters</span><span class="p">(</span><span class="n">runs</span><span class="p">)</span>
+
+    <span class="c1"># Save final results</span>
+    <span class="n">kinetics</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;results/binding_kinetics.csv&quot;</span><span class="p">))</span>
+
+    <span class="c1"># Generate publication figure</span>
+    <span class="n">create_publication_figure</span><span class="p">(</span><span class="n">kinetics</span><span class="p">)</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span>
+        <span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;figures/figure_3_binding_curve.png&quot;</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span>
+    <span class="p">)</span>
+</code></pre></div>
+<ol>
+<li><strong>Document and Share Research</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Generate complete provenance for publication</span>
+<span class="n">lineage</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">get_file_ancestors</span><span class="p">(</span><span class="s2">&quot;results/binding_kinetics.csv&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create research package for collaborators</span>
+<span class="n">package</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">create_snapshot</span><span class="p">(</span>
+    <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;results/*&quot;</span><span class="p">,</span> <span class="s2">&quot;figures/*&quot;</span><span class="p">,</span> <span class="s2">&quot;processed/*&quot;</span><span class="p">],</span>
+    <span class="n">include_lineage</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">output</span><span class="o">=</span><span class="s2">&quot;research_package.zip&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Generate methods section with exact parameters</span>
+<span class="n">methods_text</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">generate_methods_text</span><span class="p">(</span>
+    <span class="s2">&quot;results/binding_kinetics.csv&quot;</span><span class="p">,</span>
+    <span class="n">template</span><span class="o">=</span><span class="s2">&quot;templates/methods_section.md&quot;</span>
+<span class="p">)</span>
+</code></pre></div>
+<h4 id="laboratory-comparative-analysis-workflow">Laboratory Comparative Analysis Workflow</h4>
+<p>A laboratory scientist comparing results across multiple experiments:</p>
+<ol>
+<li><strong>Identify Relevant Experiments</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Find all experiments with a specific characteristic</span>
+<span class="n">experiments</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">search_datasets</span><span class="p">(</span>
+    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;protocol_version&quot;</span><span class="p">:</span> <span class="s2">&quot;v2.*&quot;</span><span class="p">},</span>
+    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;protein-binding&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># Create a collection of related experiments</span>
+<span class="n">collection</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">create_collection</span><span class="p">(</span>
+    <span class="s2">&quot;binding_kinetics_comparison&quot;</span><span class="p">,</span>
+    <span class="n">datasets</span><span class="o">=</span><span class="p">[</span><span class="n">exp</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">exp</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">]</span>
+<span class="p">)</span>
+</code></pre></div>
+<ol>
+<li><strong>Standardize and Compare Results</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Process data from multiple experiments with standard methods</span>
+<span class="k">with</span> <span class="n">repo</span><span class="o">.</span><span class="n">track_processing</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Comparative analysis&quot;</span><span class="p">):</span>
+    <span class="c1"># Collect results from each experiment</span>
+    <span class="n">all_results</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">collection</span><span class="o">.</span><span class="n">datasets</span><span class="p">:</span>
+        <span class="c1"># Access the specific version used in the experiment</span>
+        <span class="n">kinetics_file</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">get_file</span><span class="p">(</span><span class="s2">&quot;results/binding_kinetics.csv&quot;</span><span class="p">)</span>
+        <span class="n">all_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">kinetics_file</span><span class="p">))</span>
+
+    <span class="c1"># Perform comparative analysis</span>
+    <span class="n">comparison</span> <span class="o">=</span> <span class="n">compare_experimental_results</span><span class="p">(</span><span class="n">all_results</span><span class="p">)</span>
+
+    <span class="c1"># Save comparative results</span>
+    <span class="n">comparison</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;comparative/binding_comparison.csv&quot;</span><span class="p">))</span>
+
+    <span class="c1"># Generate comparison visualization</span>
+    <span class="n">plot_comparison</span><span class="p">(</span><span class="n">comparison</span><span class="p">)</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span>
+        <span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;comparative/binding_comparison.png&quot;</span><span class="p">)</span>
+    <span class="p">)</span>
+</code></pre></div>
+<ol>
+<li><strong>Validate Protocol Improvements</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Analyze protocol version impact</span>
+<span class="n">protocol_impact</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">analyze_metadata_impact</span><span class="p">(</span>
+    <span class="n">collection</span><span class="o">=</span><span class="n">collection</span><span class="p">,</span>
+    <span class="n">target_file</span><span class="o">=</span><span class="s2">&quot;results/binding_kinetics.csv&quot;</span><span class="p">,</span>
+    <span class="n">groupby</span><span class="o">=</span><span class="s2">&quot;protocol_version&quot;</span><span class="p">,</span>
+    <span class="n">metrics</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;affinity&quot;</span><span class="p">,</span> <span class="s2">&quot;specificity&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># Generate protocol evolution report</span>
+<span class="n">generate_protocol_report</span><span class="p">(</span>
+    <span class="n">protocol_impact</span><span class="p">,</span>
+    <span class="n">output</span><span class="o">=</span><span class="n">repo</span><span class="o">.</span><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;reports/protocol_evolution.pdf&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+</code></pre></div>
+<h2 id="2-system-architecture">2. System Architecture</h2>
+<h3 id="21-core-components">2.1 Core Components</h3>
+<h4 id="211-storage-layer">2.1.1 Storage Layer</h4>
+<p>The Storage Layer uses fsspec for backend-agnostic storage. It provides a unified interface for:</p>
+<ul>
+<li>Reading/writing files</li>
+<li>Listing files</li>
+<li>Getting file metadata</li>
+<li>Streaming data access</li>
+<li>Memory-mapped access where supported</li>
+</ul>
+<p><strong>Key Abstractions:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">ContentStore</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Manages content-addressed storage.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">store_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># Returns content hash</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">store_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># Store content bytes</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">retrieve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content_hash</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># Retrieve by hash</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">exists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content_hash</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># Check existence</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">open_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content_hash</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">IO</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]:</span> <span class="o">...</span>
+</code></pre></div>
+<p>Built-in fsspec backends:</p>
+<ul>
+<li>Local filesystem</li>
+<li>S3</li>
+<li>GCS</li>
+<li>Azure Blob Storage</li>
+<li>Dropbox</li>
+<li>Google Drive</li>
+</ul>
+<h4 id="212-versioning-layer">2.1.2 Versioning Layer</h4>
+<p>The Versioning Layer manages the linear version history of files and file sets:</p>
+<ul>
+<li>Tracks changes to individual files</li>
+<li>Manages collections of files as atomic units</li>
+<li>Maintains a linear commit history (no branching)</li>
+<li>Simple parent-child relationships between commits</li>
+</ul>
+<p><strong>Key Abstractions:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">File</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a versioned file with content-addressed storage.&quot;&quot;&quot;</span>
+
+    <span class="nb">hash</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">size</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">content_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_text</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">encoding</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">BinaryIO</span><span class="p">,</span> <span class="n">TextIO</span><span class="p">]:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> <span class="o">...</span>
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Commit</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents an immutable snapshot of files at a point in time.&quot;&quot;&quot;</span>
+
+    <span class="nb">hash</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span>
+    <span class="n">parent_hash</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>  <span class="c1"># Linear history - single parent</span>
+    <span class="n">files</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">File</span><span class="p">]</span>  <span class="c1"># filename -&gt; File mapping</span>
+</code></pre></div>
+<h4 id="213-dataset-layer">2.1.3 Dataset Layer</h4>
+<p>The Dataset Layer provides high-level abstractions for managing datasets:</p>
+<ul>
+<li>Organizes files into logical datasets</li>
+<li>Maintains linear commit history</li>
+<li>Provides simple file operations</li>
+<li>Enables dataset discovery</li>
+</ul>
+<p><strong>Key Abstractions:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Dataset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a logical collection of files with linear history.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                 <span class="n">fs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">fsspec</span><span class="o">.</span><span class="n">AbstractFileSystem</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">add_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+               <span class="n">remove_files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># Returns commit hash</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">checkout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commit_hash</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># None = latest commit</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">File</span><span class="p">]:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_files</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">has_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># Check if file exists</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">read_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">]:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">download_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># Download to local path</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">open_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mode</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;rb&quot;</span><span class="p">):</span> <span class="o">...</span>  <span class="c1"># Open as file handle</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">local_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>  <span class="c1"># Context manager for local file access</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">history</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Commit</span><span class="p">]:</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_commit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commit_hash</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Commit</span><span class="p">]:</span> <span class="o">...</span>  <span class="c1"># Get specific commit</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_commits</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Commit</span><span class="p">]:</span> <span class="o">...</span>  <span class="c1"># Get all commits</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_empty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># Check if dataset has commits</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cleanup_orphaned_files</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># Remove unreferenced files</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_info</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># Get dataset information</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># Convert to dictionary</span>
+</code></pre></div>
+<h4 id="214-catalog-layer">2.1.4 Catalog Layer</h4>
+<p>The Catalog Layer provides high-level management of multiple datasets:</p>
+<ul>
+<li>Organizes datasets into logical collections</li>
+<li>Provides dataset discovery and management</li>
+<li>Enables multi-dataset workflows</li>
+<li>Supports catalog-level operations</li>
+</ul>
+<p><strong>Key Abstractions:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Catalog</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a collection of datasets.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Path</span><span class="p">],</span> <span class="n">fs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">fsspec</span><span class="o">.</span><span class="n">AbstractFileSystem</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span> <span class="o">...</span>  <span class="c1"># List dataset names</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dataset</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># Get existing dataset</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dataset</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># Create new dataset</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span> <span class="o">...</span>  <span class="c1"># Number of datasets</span>
+</code></pre></div>
+<p><strong>Use Cases:</strong></p>
+<ul>
+<li>Multi-dataset project management</li>
+<li>Dataset discovery and browsing</li>
+<li>Cross-dataset analysis workflows</li>
+<li>Organizational data governance</li>
+</ul>
+<h3 id="22-system-flow">2.2 System Flow</h3>
+<ol>
+<li><strong>Data Ingestion Flow</strong>:</li>
+<li>User provides files to be tracked</li>
+<li>Files are hashed and stored in content store</li>
+<li>A commit is created with references to file versions</li>
+<li>
+<p>The commit is recorded in the linear history</p>
+</li>
+<li>
+<p><strong>Data Access Flow</strong>:</p>
+</li>
+<li>User requests a specific version of a file or dataset</li>
+<li>System resolves the logical path to a content hash</li>
+<li>Content is retrieved from the storage backend</li>
+<li>
+<p>Content is provided to the user</p>
+</li>
+<li>
+<p><strong>Data Processing Flow</strong>:</p>
+</li>
+<li>User accesses input data files</li>
+<li>Processing is performed</li>
+<li>Output files are stored in Kirin</li>
+<li>New commit is created with updated files</li>
+</ol>
+<h2 id="3-data-structures-and-storage">3. Data Structures and Storage</h2>
+<h3 id="31-content-store-layout">3.1 Content Store Layout</h3>
+<p>The content store is organized as follows:</p>
+<div class="highlight"><pre><span></span><code>&lt;root&gt;/
+  ├── data/                     # Content-addressed storage
+  │   ├── ab/                  # First two characters of hash
+  │   │   └── cdef1234...       # Rest of the hash (no file extensions)
+  │   └── ...
+  └── datasets/                 # Dataset storage
+      ├── dataset1/             # Dataset directory
+      │   └── commits.json       # Linear commit history
+      └── ...
+</code></pre></div>
+<p><strong>Critical Storage Design</strong>: Files are stored <strong>without file extensions</strong> in the content-addressed storage system. The original file extensions are preserved as metadata in the <code>File</code> entity's <code>name</code> attribute and are restored when files are downloaded or accessed. This ensures:</p>
+<ul>
+<li><strong>Content Integrity</strong>: Files are identified purely by content hash</li>
+<li><strong>Deduplication</strong>: Identical content (regardless of original filename) is stored only once</li>
+<li><strong>Extension Restoration</strong>: Original filenames are maintained for user experience</li>
+</ul>
+<h3 id="32-commit-history-format">3.2 Commit History Format</h3>
+<p>Each dataset maintains a single JSON file with linear commit history:</p>
+<div class="highlight"><pre><span></span><code><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;dataset_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;my_dataset&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;commits&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;hash&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abc123...&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Initial commit&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T12:00:00&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;parent_hash&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;files&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;data.csv&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nt">&quot;hash&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;def456...&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;data.csv&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1024</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;content_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;text/csv&quot;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;hash&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;ghi789...&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Add processed data&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2024-01-01T13:00:00&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;parent_hash&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;abc123...&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;files&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">&quot;data.csv&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nt">&quot;hash&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;def456...&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;data.csv&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1024</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;content_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;text/csv&quot;</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">        </span><span class="nt">&quot;processed.csv&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nt">&quot;hash&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;jkl012...&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;processed.csv&quot;</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;size&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">2048</span><span class="p">,</span>
+<span class="w">          </span><span class="nt">&quot;content_type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;text/csv&quot;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">]</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="4-api-design">4. API Design</h2>
+<h3 id="41-python-api">4.1 Python API</h3>
+<p>The Python API is designed for simplicity and ease of use:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Basic usage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">kirin</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">File</span><span class="p">,</span> <span class="n">Commit</span>
+
+<span class="c1"># Initialize dataset</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/data&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">)</span>
+
+<span class="c1"># Commit files</span>
+<span class="n">commit_hash</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Initial commit&quot;</span><span class="p">,</span>
+    <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;file1.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;file2.json&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># Access files from current commit</span>
+<span class="n">files</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">files</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Files: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">files</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Read a file</span>
+<span class="n">content</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="s2">&quot;file1.csv&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;r&quot;</span><span class="p">)</span>  <span class="c1"># text mode</span>
+<span class="n">binary_content</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="s2">&quot;file1.csv&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;rb&quot;</span><span class="p">)</span>  <span class="c1"># binary mode</span>
+
+<span class="c1"># Get a specific file object</span>
+<span class="n">file_obj</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get_file</span><span class="p">(</span><span class="s2">&quot;file1.csv&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">file_obj</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File size: </span><span class="si">{</span><span class="n">file_obj</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> bytes&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Content hash: </span><span class="si">{</span><span class="n">file_obj</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Read file content</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="n">file_obj</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
+
+    <span class="c1"># Download to local path</span>
+    <span class="n">file_obj</span><span class="o">.</span><span class="n">download_to</span><span class="p">(</span><span class="s2">&quot;/tmp/file1.csv&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Open as file handle</span>
+    <span class="k">with</span> <span class="n">file_obj</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+<span class="c1"># Checkout a specific commit</span>
+<span class="n">dataset</span><span class="o">.</span><span class="n">checkout</span><span class="p">(</span><span class="n">commit_hash</span><span class="p">)</span>
+
+<span class="c1"># Get commit history</span>
+<span class="n">history</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">history</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">commit</span> <span class="ow">in</span> <span class="n">history</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">commit</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">commit</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Get specific commit</span>
+<span class="n">commit</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get_commit</span><span class="p">(</span><span class="n">commit_hash</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">commit</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Commit: </span><span class="si">{</span><span class="n">commit</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Message: </span><span class="si">{</span><span class="n">commit</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Files: </span><span class="si">{</span><span class="n">commit</span><span class="o">.</span><span class="n">list_files</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total size: </span><span class="si">{</span><span class="n">commit</span><span class="o">.</span><span class="n">get_total_size</span><span class="p">()</span><span class="si">}</span><span class="s2"> bytes&quot;</span><span class="p">)</span>
+
+<span class="c1"># Local file access for processing</span>
+<span class="k">with</span> <span class="n">dataset</span><span class="o">.</span><span class="n">local_files</span><span class="p">()</span> <span class="k">as</span> <span class="n">local_files</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">local_path</span> <span class="ow">in</span> <span class="n">local_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">local_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># Process files locally</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">local_path</span><span class="p">)</span>
+
+<span class="c1"># Remove files in a commit</span>
+<span class="n">dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Remove old file&quot;</span><span class="p">,</span>
+    <span class="n">remove_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;old_file.csv&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># Add and remove files in same commit</span>
+<span class="n">dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Update dataset&quot;</span><span class="p">,</span>
+    <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;new_file.csv&quot;</span><span class="p">],</span>
+    <span class="n">remove_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;old_file.csv&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># Working with Catalogs (multi-dataset management)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">kirin</span><span class="w"> </span><span class="kn">import</span> <span class="n">Catalog</span>
+
+<span class="c1"># Create or access a catalog</span>
+<span class="n">catalog</span> <span class="o">=</span> <span class="n">Catalog</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/data&quot;</span><span class="p">)</span>
+
+<span class="c1"># List all datasets in the catalog</span>
+<span class="n">dataset_names</span> <span class="o">=</span> <span class="n">catalog</span><span class="o">.</span><span class="n">datasets</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Available datasets: </span><span class="si">{</span><span class="n">dataset_names</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create a new dataset</span>
+<span class="n">new_dataset</span> <span class="o">=</span> <span class="n">catalog</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span><span class="s2">&quot;experiment_2024&quot;</span><span class="p">,</span> <span class="s2">&quot;ML experiment data&quot;</span><span class="p">)</span>
+
+<span class="c1"># Get an existing dataset</span>
+<span class="n">existing_dataset</span> <span class="o">=</span> <span class="n">catalog</span><span class="o">.</span><span class="n">get_dataset</span><span class="p">(</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">)</span>
+
+<span class="c1"># Multi-dataset workflow</span>
+<span class="k">for</span> <span class="n">dataset_name</span> <span class="ow">in</span> <span class="n">catalog</span><span class="o">.</span><span class="n">datasets</span><span class="p">():</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">catalog</span><span class="o">.</span><span class="n">get_dataset</span><span class="p">(</span><span class="n">dataset_name</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset </span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">files</span><span class="p">)</span><span class="si">}</span><span class="s2"> files&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Process each dataset</span>
+    <span class="k">with</span> <span class="n">dataset</span><span class="o">.</span><span class="n">local_files</span><span class="p">()</span> <span class="k">as</span> <span class="n">local_files</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">local_path</span> <span class="ow">in</span> <span class="n">local_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># Analyze files from each dataset</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Processing </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Authentication helpers for cloud storage</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">kirin</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_s3_filesystem</span><span class="p">,</span> <span class="n">get_gcs_filesystem</span>
+
+<span class="c1"># S3 with AWS profile</span>
+<span class="n">s3_fs</span> <span class="o">=</span> <span class="n">get_s3_filesystem</span><span class="p">(</span><span class="n">profile</span><span class="o">=</span><span class="s2">&quot;my-aws-profile&quot;</span><span class="p">)</span>
+<span class="n">s3_dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;s3://my-bucket/datasets&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;cloud_dataset&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">s3_fs</span><span class="p">)</span>
+
+<span class="c1"># GCS with service account</span>
+<span class="n">gcs_fs</span> <span class="o">=</span> <span class="n">get_gcs_filesystem</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="s2">&quot;/path/to/service-account.json&quot;</span><span class="p">)</span>
+<span class="n">gcs_dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;gs://my-bucket/datasets&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;gcs_dataset&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">gcs_fs</span><span class="p">)</span>
+
+<span class="c1"># Advanced file operations</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/data&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;advanced_dataset&quot;</span><span class="p">)</span>
+
+<span class="c1"># Check if dataset is empty</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">dataset</span><span class="o">.</span><span class="n">is_empty</span><span class="p">():</span>
+    <span class="c1"># Get dataset information</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get_info</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Dataset info: </span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Clean up orphaned files</span>
+    <span class="n">removed_count</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">cleanup_orphaned_files</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Removed </span><span class="si">{</span><span class="n">removed_count</span><span class="si">}</span><span class="s2"> orphaned files&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Convert to dictionary for serialization</span>
+    <span class="n">dataset_dict</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Serialized dataset: </span><span class="si">{</span><span class="n">dataset_dict</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="42-cloud-storage-support">4.2 Cloud Storage Support</h3>
+<p>Kirin supports multiple cloud storage backends through fsspec:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># S3</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;s3://my-bucket/datasets&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">)</span>
+
+<span class="c1"># Google Cloud Storage</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;gs://my-bucket/datasets&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">)</span>
+
+<span class="c1"># Azure Blob Storage</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;az://my-container/datasets&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">)</span>
+
+<span class="c1"># With custom filesystem</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">kirin</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_s3_filesystem</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="n">get_s3_filesystem</span><span class="p">(</span><span class="n">profile</span><span class="o">=</span><span class="s2">&quot;my-profile&quot;</span><span class="p">)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;s3://my-bucket/datasets&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="43-web-ui">4.3 Web UI</h3>
+<p>Kirin includes a comprehensive web interface built with FastAPI and HTMX:</p>
+<p><strong>Architecture:</strong></p>
+<ul>
+<li><strong>Backend</strong>: FastAPI application with Jinja2 templates</li>
+<li><strong>Frontend</strong>: HTMX for dynamic interactions without JavaScript frameworks</li>
+<li><strong>Styling</strong>: shadcn/ui design system with CSS custom properties</li>
+<li><strong>Configuration</strong>: CatalogManager for managing multiple data catalogs</li>
+</ul>
+<p><strong>Key Features:</strong></p>
+<ul>
+<li><strong>Catalog Management</strong>: Create, configure, and manage multiple data catalogs</li>
+<li><strong>Dataset Browsing</strong>: View datasets, commits, and file history</li>
+<li><strong>File Operations</strong>: Upload files, remove files, and commit changes</li>
+<li><strong>Commit History</strong>: Browse commit history with detailed file information</li>
+<li><strong>File Preview</strong>: View file contents directly in the browser</li>
+<li><strong>Cloud Integration</strong>: Support for S3, GCS, Azure, and other cloud storage backends</li>
+</ul>
+<p><strong>Routes and Functionality:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Main application routes</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>  <span class="c1"># Catalog listing</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{catalog_id}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Dataset listing for catalog</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{catalog_id}</span><span class="s2">/</span><span class="si">{dataset}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Dataset view with files and history</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{catalog_id}</span><span class="s2">/</span><span class="si">{dataset}</span><span class="s2">/commit&quot;</span><span class="p">)</span>  <span class="c1"># Commit file changes</span>
+<span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/</span><span class="si">{catalog_id}</span><span class="s2">/</span><span class="si">{dataset}</span><span class="s2">/files/</span><span class="si">{filename}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># File preview</span>
+</code></pre></div>
+<p><strong>Configuration System:</strong></p>
+<ul>
+<li><strong>CatalogManager</strong>: Manages catalog configurations stored in <code>~/.kirin/config.json</code></li>
+<li><strong>AWS Profile Integration</strong>: Automatic detection of AWS profiles</li>
+<li><strong>Cloud Authentication</strong>: Support for various authentication methods</li>
+<li><strong>SSL Certificate Management</strong>: Automatic setup for isolated Python environments</li>
+</ul>
+<h3 id="44-authentication-helpers">4.4 Authentication Helpers</h3>
+<p>Kirin provides comprehensive authentication helpers for cloud storage:</p>
+<p><strong>Cloud Storage Authentication:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">kirin</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_s3_filesystem</span><span class="p">,</span> <span class="n">get_gcs_filesystem</span><span class="p">,</span> <span class="n">get_azure_filesystem</span>
+
+<span class="c1"># S3 with profile</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="n">get_s3_filesystem</span><span class="p">(</span><span class="n">profile</span><span class="o">=</span><span class="s2">&quot;my-profile&quot;</span><span class="p">)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;s3://my-bucket/datasets&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+
+<span class="c1"># GCS with service account</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="n">get_gcs_filesystem</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="s2">&quot;/path/to/key.json&quot;</span><span class="p">)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;gs://my-bucket/datasets&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+
+<span class="c1"># Azure with connection string</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="n">get_azure_filesystem</span><span class="p">(</span><span class="n">connection_string</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;az://my-container/datasets&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Keyring Integration:</strong></p>
+<ul>
+<li><strong>Credential Storage</strong>: Secure storage of cloud credentials using keyring</li>
+<li><strong>Automatic Retrieval</strong>: Credentials are automatically retrieved when needed</li>
+<li><strong>Multi-Provider Support</strong>: Works with AWS, GCS, Azure, and other providers</li>
+</ul>
+<p><strong>SSL Certificate Management:</strong></p>
+<ul>
+<li><strong>Automatic Setup</strong>: <code>python -m kirin.setup_ssl</code> for isolated environments</li>
+<li><strong>Environment Detection</strong>: Automatically detects pixi, uv, conda environments</li>
+<li><strong>Certificate Copying</strong>: Copies system certificates to Python environment</li>
+</ul>
+<h2 id="5-performance-considerations">5. Performance Considerations</h2>
+<h3 id="51-zero-copy-architecture">5.1 Zero-Copy Architecture</h3>
+<p>Kirin is designed with a zero-copy philosophy wherever possible:</p>
+<ul>
+<li><strong>Memory-mapped files</strong>: When working with local files, memory mapping is used to avoid loading entire files into memory</li>
+<li><strong>Streaming operations</strong>: For operations on large files, streaming interfaces are provided to process data incrementally</li>
+<li><strong>Direct transfers</strong>: When copying between storage backends, data is streamed directly without loading into application memory</li>
+<li><strong>Reference-based operations</strong>: Operations like checkouts use references instead of copying file content</li>
+</ul>
+<h3 id="52-caching">5.2 Caching</h3>
+<p>Local caching of frequently accessed files will improve performance when working with remote storage backends.</p>
+<h3 id="53-lazy-loading">5.3 Lazy Loading</h3>
+<p>Content will be loaded only when needed, reducing unnecessary network traffic.</p>
+<h3 id="54-optimized-hashing">5.4 Optimized Hashing</h3>
+<p>To improve performance when hashing large files:</p>
+<ul>
+<li>Incremental hashing is used for streaming data</li>
+<li>Parallel chunk processing for multi-core systems</li>
+<li>Optional content-based chunking for improved deduplication</li>
+</ul>
+<h2 id="6-current-implementation-status">6. Current Implementation Status</h2>
+<h3 id="61-implemented-features">6.1 Implemented Features</h3>
+<p><strong>Core Architecture (Complete):</strong></p>
+<ul>
+<li>✅ Content-addressed storage with fsspec backends</li>
+<li>✅ Linear commit history without branching</li>
+<li>✅ Dataset and File entities with full API</li>
+<li>✅ Catalog system for multi-dataset management</li>
+<li>✅ Web UI with FastAPI and HTMX</li>
+<li>✅ Authentication helpers for cloud storage</li>
+<li>✅ SSL certificate management for isolated environments</li>
+</ul>
+<p><strong>CLI Interface (Implemented):</strong>
+The command-line interface is available through the <code>kirin.cli</code> module:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Start web UI</span>
+kirin<span class="w"> </span>ui
+
+<span class="c1"># Or use the gitdata command (when installed via uv)</span>
+gitdata<span class="w"> </span>ui
+</code></pre></div>
+<p><strong>Web UI (Complete):</strong></p>
+<ul>
+<li>✅ Catalog management interface</li>
+<li>✅ Dataset browsing and file operations</li>
+<li>✅ File upload and removal</li>
+<li>✅ Commit history visualization</li>
+<li>✅ File preview functionality</li>
+<li>✅ Cloud storage integration</li>
+</ul>
+<h3 id="62-future-extensions">6.2 Future Extensions</h3>
+<p><strong>Integration with ML Frameworks:</strong>
+Direct integration with popular ML frameworks like PyTorch and TensorFlow can streamline data loading.</p>
+<p><strong>Native Format Handlers:</strong>
+Format-specific handlers could be developed to enable operations directly on file contents:</p>
+<ul>
+<li>Parquet/Arrow operations for columnar data</li>
+<li>HDF5/Zarr for array data</li>
+<li>SQLite for tabular data</li>
+</ul>
+<p><strong>Enhanced CLI:</strong></p>
+<p>Additional CLI commands could be developed for:</p>
+<ul>
+<li>Dataset initialization and management</li>
+<li>Batch operations across multiple datasets</li>
+<li>Integration with CI/CD pipelines</li>
+</ul>
+<h2 id="7-conclusion">7. Conclusion</h2>
+<p>Kirin's simplified architecture provides a robust, flexible system for data versioning that meets the specified requirements:</p>
+<ol>
+<li>It supports multiple storage backends through fsspec</li>
+<li>It uses content-addressed storage for integrity and deduplication</li>
+<li>It provides linear commit history without branching complexity</li>
+<li>It operates in a serverless manner</li>
+<li>It focuses on ergonomic Python API design</li>
+<li>It employs zero-copy operations wherever possible, optimizing for performance and resource efficiency</li>
+</ol>
+<p>This design document outlines a simplified path forward that prioritizes ease of use and maintainability while providing the core functionality needed for data versioning.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        <div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/ericmjl" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8M97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["instant", "tabs"], "search": "../assets/javascripts/workers/search.f8cc74c7.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.c8b220af.min.js"></script>
+      
+        <script src="../config.js"></script>
+      
+    
+  </body>
+</html>
