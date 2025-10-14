@@ -88,6 +88,77 @@ Guidelines for AI agents working on the Kirin project.
 
 **Example Usage**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```python
 from kirin import Dataset, File, Commit
 
@@ -106,6 +177,77 @@ ds.checkout(commit_hash)
 
 # Get history
 history = ds.history(limit=10)
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 ## Design System & CSS Architecture
@@ -152,6 +294,77 @@ This project uses **shadcn/ui** as the design system for all user interface comp
 
 **Template Structure Guidelines**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```html
 {% extends "base.html" %}
 {% block title %}Page Title{% endblock %}
@@ -187,6 +400,77 @@ This project uses **shadcn/ui** as the design system for all user interface comp
 {% endblock %}
 ```
 
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
+```
+
 **Styling Guidelines**:
 1. **Always use the CSS custom properties** instead of hardcoded colors
 2. **Follow the established component patterns** from existing templates
@@ -212,6 +496,77 @@ This project uses **shadcn/ui** as the design system for all user interface comp
 
 **Examples**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```html
 <!-- Good: Using shadcn/ui patterns -->
 <div class="panel">
@@ -228,6 +583,77 @@ This project uses **shadcn/ui** as the design system for all user interface comp
     <h2 class="text-xl font-semibold mb-4">Title</h2>
     <button class="bg-blue-600 text-white px-4 py-2 rounded-md">Action</button>
 </div>
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 ## Development Guidelines
@@ -260,6 +686,77 @@ The pre-commit hooks will automatically handle these formatting issues, so focus
 
 **Implementation Pattern**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```python
 # ✅ CORRECT - Use loguru
 from loguru import logger
@@ -271,6 +768,77 @@ logger.info("PERF: Operation completed in 0.123s")
 # ❌ WRONG - Don't use standard logging
 import logging
 logger = logging.getLogger(__name__)
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 The web UI configures loguru with a specific format that includes:
@@ -320,6 +888,77 @@ The application is configured to serve static files from the `/gitdata/static/` 
 
 **Examples**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```bash
 # Check pyproject.toml first to see available features
 # Then add dependencies to the correct feature
@@ -327,6 +966,77 @@ pixi add -f tests --pypi httpx
 
 # Run tests with test dependencies
 pixi run -e tests python test_ui.py
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 **Key Points**:
@@ -349,12 +1059,154 @@ The web UI uses a caching system to improve performance when displaying commits.
   - Successful file removals
   - Any commit operation that modifies the dataset
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```python
 # Always clear cache after successful commits
 cache_key = (current_dataset.dataset_name, current_dataset.root_dir)
 if cache_key in commit_cache:
     del commit_cache[cache_key]
     logger.info(f"Cleared commit cache for dataset: {current_dataset.dataset_name}")
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 **Failure to invalidate cache** results in stale commit lists where new commits don't appear in the UI, even though they exist in the dataset.
@@ -378,6 +1230,77 @@ The commit endpoint supports multiple operation types:
 
 When processing file uploads, the system uses temporary directories that must be properly managed:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```python
 temp_dir = tempfile.mkdtemp()
 try:
@@ -389,6 +1312,77 @@ finally:
         shutil.rmtree(temp_dir)
 ```
 
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
+```
+
 **Critical**: The commit operation must happen **before** the temporary directory cleanup, otherwise files will be deleted before the commit can access them.
 
 ### Template Escaping for Special Characters
@@ -398,6 +1392,77 @@ finally:
 **Problem**: Filenames with special characters (spaces, quotes, etc.) can break JavaScript when used in inline `onclick` attributes.
 
 **Solution**: Use data attributes instead of inline JavaScript for complex strings:
+
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
 
 ```html
 <!-- ❌ WRONG - Inline JavaScript with special characters -->
@@ -412,6 +1477,77 @@ finally:
         class="btn btn-ghost btn-sm">
 ```
 
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
+```
+
 **Key Principles**:
 - **Use data attributes**: Store complex strings in `data-*` attributes, not inline JavaScript
 - **HTML escaping for data attributes**: Use `|e` filter for HTML attribute values
@@ -419,6 +1555,77 @@ finally:
 - **Avoid inline JavaScript**: Complex strings with spaces/special chars break HTML parsing
 
 **Example Implementation**:
+
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
 
 ```html
 <!-- Template -->
@@ -431,6 +1638,77 @@ function openPreview(fileName) {
     // fileName comes from this.dataset.filename
     // No need for additional escaping
 }
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 **Why This Works**:
@@ -464,6 +1742,77 @@ All error responses include user-friendly HTML with appropriate styling using th
 
 **Implementation Pattern**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```python
 # ✅ CORRECT - Redirect after successful operations
 @app.post("/{catalog}/{dataset}/commit")
@@ -479,6 +1828,77 @@ async def commit_files(catalog: str, dataset: str, ...):
 
 # ❌ WRONG - Return JSON or stay on same page
 return {"status": "success", "commit_hash": commit_hash}
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 **Benefits**:
@@ -515,6 +1935,77 @@ return {"status": "success", "commit_hash": commit_hash}
 
 **Required Pattern**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```bash
 # Navigate to scripts directory
 cd scripts
@@ -522,6 +2013,77 @@ cd scripts
 # Run any script using uv run
 uv run create_dummy_dataset.py
 uv run other_script.py
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 **Key Requirements**:
@@ -537,6 +2099,77 @@ uv run other_script.py
 
 **Examples**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```bash
 # ✅ CORRECT - Standard script execution
 cd scripts
@@ -549,11 +2182,153 @@ uv run scripts/create_dummy_dataset.py
 python scripts/create_dummy_dataset.py
 ```
 
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
+```
+
 ### Script Metadata Requirements
 
 **MANDATORY**: All Python scripts must include PEP723-style inline script metadata for dependency management. This ensures scripts can be run with proper dependency resolution.
 
 **Required Pattern**:
+
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
 
 ```python
 # /// script
@@ -568,6 +2343,77 @@ python scripts/create_dummy_dataset.py
 # [tool.uv.sources]
 # gitdata = { path = "../", editable = true }
 # ///
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 **Key Requirements**:
@@ -601,6 +2447,77 @@ When creating Marimo notebooks, follow these patterns for reliable execution:
 
 **Simple Cell Pattern (RECOMMENDED)**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```python
 # All cells use simple _() naming
 @app.cell
@@ -624,6 +2541,77 @@ def _(dataset, temp_dir):
     return
 ```
 
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
+```
+
 **Key Requirements**:
 - **Simple Cell Names** - Use `_()` for all cells to avoid complexity
 - **No Test Functions** - Execute workflow steps directly in cells
@@ -634,12 +2622,154 @@ def _(dataset, temp_dir):
 
 **Notebook Validation**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```bash
 # Check notebook for issues
 uvx marimo check notebooks/prototype.py
 
 # Run the notebook
 uvx marimo run notebooks/prototype.py
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 **MANDATORY**: Always run `uvx marimo check /path/to/notebook.py` whenever we edit a notebook.
@@ -678,6 +2808,77 @@ uvx marimo run notebooks/prototype.py
 
 **Required Pattern**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```python
 # ✅ CORRECT - String concatenation pattern
 str_content = ""
@@ -685,11 +2886,224 @@ str_content += "**Section Title:**\n"
 str_content += f"- **Item 1**: {variable1}\n"
 str_content += f"- **Item 2**: {variable2}\n"
 str_content += "\n**Subsection:**\n"
-str_content += "```python\n"
+str_content += "```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
+```python\n"
 str_content += "code_example()\n"
-str_content += "```\n"
+str_content += "```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
+```\n"
 
 mo.md(str_content)
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 **Why This Pattern**:
@@ -699,6 +3113,77 @@ mo.md(str_content)
 - **Consistent**: Works reliably across different Marimo versions
 
 **Avoid These Patterns**:
+
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
 
 ```python
 # ❌ WRONG - Multi-line f-strings
@@ -714,6 +3199,77 @@ for item in items:
 
 # ❌ WRONG - Complex string formatting
 mo.md(f"**Title**: {complex_expression if condition else 'default'}")
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 **Best Practices**:
@@ -741,6 +3297,77 @@ When writing tests for the project:
 
 **Pytest-Style Test Functions** (PREFERRED):
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```python
 # ✅ CORRECT - Pytest function style
 def test_local_state_initialization():
@@ -759,6 +3386,77 @@ def test_branch_operations():
 class TestLocalStateManager:
     def test_local_state_initialization(self):
         # Test implementation...
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 **Benefits of pytest-style functions**:
@@ -834,11 +3532,153 @@ class TestLocalStateManager:
 
 **Example Progress Report**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```text
 ✅ Fixed Dataset API issues: commit_message → message, file_dict → files
 ✅ Fixed CommitStore API issues: name → dataset_name, removed obsolete methods
 ✅ Fixed File Access API issues: get_file_content → read_file, download_file signature
 📊 Results: 45 failed → 26 failed, 182 passing → 202 passing
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 ### Obsolete Test Removal
@@ -856,6 +3696,77 @@ class TestLocalStateManager:
 
 **Example**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```python
 # ❌ REMOVE - Tests for non-existent functionality
 def test_resolve_commit_hash():
@@ -866,6 +3777,77 @@ def test_resolve_commit_hash():
 def test_branch_operations():
     # Branching was removed in architecture simplification
     pass
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 ### Test Maintenance Best Practices
@@ -907,11 +3889,153 @@ def test_branch_operations():
 
 **Example Reference Format**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```text
 This implementation follows the design document's approach for [specific feature]
 as outlined in section [X.Y] of docs/design.md, which specifies [specific design
 decision]. However, real usage has revealed [specific issue], suggesting we may
 need to update the design document to reflect [proposed change].
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 This process ensures the design document remains a living document that accurately reflects both the intended architecture and the lessons learned from actual implementation and usage.
@@ -929,17 +4053,301 @@ This process ensures the design document remains a living document that accurate
 ### The Solution
 
 **Automatic Setup (Recommended)**:
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```bash
 # Works with any Python environment - detects automatically
 python -m kirin.setup_ssl
 ```
 
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
+```
+
 **Manual Setup** (if automatic setup fails):
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```bash
 # The automatic setup script handles this automatically
 # But if you need to do it manually, use the Python executable path:
 python -c "import sys; print('Python path:', sys.executable)"
 # Then create ssl directory next to that path and copy certificates
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 **For Global Tool Installs**:
@@ -963,6 +4371,77 @@ python -c "import sys; print('Python path:', sys.executable)"
 
 ### Verification
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```bash
 # Check SSL paths in any Python environment
 python -c "import ssl; print(ssl.get_default_verify_paths())"
@@ -972,6 +4451,77 @@ python -c "import requests; r = requests.get('https://storage.googleapis.com'); 
 
 # Or use the automatic setup
 python -m kirin.setup_ssl
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 ## Documentation Standards
@@ -988,6 +4538,77 @@ python -m kirin.setup_ssl
 
 **Examples**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```markdown
 <!-- Good: Concise and clear -->
 - **Always use loguru**: Import with `from loguru import logger`
@@ -997,6 +4618,77 @@ python -m kirin.setup_ssl
 - **You should always use loguru**: You should import it with
   `from loguru import logger`
 - **You should never use standard logging**: You should not use `import logging`
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 ### Markdown Style Guidelines
@@ -1026,6 +4718,77 @@ All Markdown documentation in the project must follow **Markdownlint** rules for
 
 **Validation**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```bash
 # Install markdownlint using pixi (recommended)
 pixi global install markdownlint-cli
@@ -1038,6 +4801,77 @@ markdownlint docs/*.md
 
 # Check specific file
 markdownlint docs/design.md
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 **Required Workflow**: Run markdownlint on any Markdown file that is created or edited before committing changes.
@@ -1053,12 +4887,154 @@ markdownlint docs/design.md
 
 **BULK LINTING**: When working on multiple Markdown files, run markdownlint on all files at once to identify issues across the entire documentation set:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```bash
 # Lint all Markdown files in the repository
 markdownlint AGENTS.md README.md docs/*.md
 
 # Or use fd to find all Markdown files
 fd -e md | xargs markdownlint
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 **PRIORITY FIXES**: Focus on critical issues first:
@@ -1144,11 +5120,153 @@ fd -e md | xargs markdownlint
 
 **Example**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```text
 User: "Let's design the file metadata structure"
 Assistant: "Here's my proposed approach: [detailed solution]"
 User: "I see issues with X, Y, Z. What about this alternative?"
 Assistant: "Good points! Here's the revised approach: [updated solution]"
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```
 
 ## GitHub Issue Creation Guidelines
@@ -1170,6 +5288,77 @@ Assistant: "Good points! Here's the revised approach: [updated solution]"
 
 **Example**:
 
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```bash
 # Instead of creating a file first, write content directly:
 gh issue create \
@@ -1187,4 +5376,75 @@ Implement File entity with...
 - [ ] File entity created
 - [ ] Metadata properties defined
 - [ ] Tests written"
+```
+
+## Documentation Template Standards
+
+### Jinja2 Template Format for User-Filled Values
+
+**CRITICAL**: For consistency and clarity, all user-filled values in documentation must be wrapped in Jinja2 template brackets `{{ }}`. This makes it super obvious that users need to fill these out.
+
+**Required Pattern**:
+- **User values**: `{{ variable_name }}` - Use descriptive variable names
+- **Consistent naming**: Use the same variable names across all docs
+- **Clear context**: Variable names should be self-explanatory
+
+**Common Variables**:
+- `{{ bucket_name }}` - S3/GCS bucket names
+- `{{ container_name }}` - Azure container names
+- `{{ dataset_name }}` - Dataset names
+- `{{ project_id }}` - GCP project IDs
+- `{{ aws_profile }}` - AWS profile names
+- `{{ username }}` - User names
+- `{{ account_id }}` - AWS account IDs
+- `{{ data_path }}` - Local file paths
+
+**Examples**:
+
+```python
+# ✅ CORRECT - Jinja2 template format
+catalog = Catalog(
+    root_dir="s3://{{ bucket_name }}/data",
+    aws_profile="{{ aws_profile }}"
+)
+
+dataset = Dataset(
+    root_dir="gs://{{ bucket_name }}/data",
+    name="{{ dataset_name }}",
+    gcs_project="{{ project_id }}"
+)
+```
+
+```bash
+# ✅ CORRECT - CLI commands with templates
+aws s3 ls s3://{{ bucket_name }}
+gsutil ls gs://{{ bucket_name }}
+az storage blob list --container-name {{ container_name }}
+```
+
+```json
+# ✅ CORRECT - JSON with templates
+{
+  "Principal": {
+    "AWS": "arn:aws:iam::{{ account_id }}:user/{{ username }}"
+  },
+  "Resource": [
+    "arn:aws:s3:::{{ bucket_name }}",
+    "arn:aws:s3:::{{ bucket_name }}/*"
+  ]
+}
+```
+
+**Benefits**:
+- **Super obvious**: Users immediately see what they need to change
+- **Consistent**: Same variable names across all documentation
+- **Template-ready**: Can be used with actual templating systems
+- **Clear context**: Variable names explain what the value represents
+
+**Implementation**:
+- **All user-filled values** must use `{{ }}` format
+- **No hardcoded examples** like "my-bucket", "my-account", etc.
+- **Descriptive variable names** that explain the purpose
+- **Consistent naming** across all documentation files
+
 ```

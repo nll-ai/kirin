@@ -68,7 +68,7 @@ dataset = Dataset(
 dataset = Dataset(
     root_dir="az://my-container/data",
     name="project",
-    azure_connection_string="DefaultEndpointsProtocol=https;..."
+    azure_connection_string=os.getenv("AZURE_CONNECTION_STRING")
 )
 ```
 
@@ -279,8 +279,8 @@ dataset = Dataset(
 dataset = Dataset(
     root_dir="az://my-container/data",
     name="my-dataset",
-    azure_connection_string="DefaultEndpointsProtocol=https;..."
+    azure_connection_string=os.getenv("AZURE_CONNECTION_STRING")
 )
 ```
 
-For detailed examples and cloud storage setup, see the [Cloud Storage Authentication Guide](cloud-storage-auth.md).
+For detailed examples and cloud storage setup, see the [Cloud Storage Authentication Guide](../cloud-storage-auth.md).
