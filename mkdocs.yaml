@@ -16,6 +16,27 @@ theme:
 # We customize the navigation by hand to control the order
 # in which pages show up.
 
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Quickstart: getting-started/quickstart.md
+      - Installation: getting-started/installation.md
+      - Core Concepts: getting-started/core-concepts.md
+  - Guides:
+      - Basic Usage: guides/basic-usage.md
+      - Cloud Storage: guides/cloud-storage.md
+      - Working with Files: guides/working-with-files.md
+      - Commit Management: guides/commit-management.md
+  - Web UI:
+      - Overview: web-ui/overview.md
+      - Catalog Management: web-ui/catalog-management.md
+  - Reference:
+      - API Reference: reference/api.md
+      - Storage Format: reference/storage-format.md
+  - Architecture:
+      - Overview: architecture/overview.md
+  - Cloud Storage Auth: cloud-storage-auth.md
+
 plugins:
   - search
   - mkdocstrings:

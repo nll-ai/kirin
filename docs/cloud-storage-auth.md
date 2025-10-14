@@ -56,7 +56,7 @@ from kirin import Catalog, Dataset
 # Using connection string
 catalog = Catalog(
     root_dir="az://my-container/data",
-    azure_connection_string="DefaultEndpointsProtocol=https;..."
+    azure_connection_string=os.getenv("AZURE_CONNECTION_STRING")
 )
 
 # Using account name and key

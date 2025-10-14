@@ -121,6 +121,7 @@ test = "pytest --durations=10 --tb=short -v"
 
 [tool.pixi.feature.docs.tasks]
 build-docs = "mkdocs build --clean"
+serve-docs = "mkdocs serve"
 
 
 [tool.pixi.tasks]

@@ -27,6 +27,11 @@ class Dataset:
     access files from that version, or checkout the latest commit by calling
     checkout() without arguments.
 
+    **Important:** New commits can only be created when checked out to the
+    latest commit. This ensures linear history without divergent branches.
+    If you've checked out an older commit, you must first checkout() to the
+    latest commit before making new commits.
+
     Example:
         # Create a dataset
         dataset = Dataset(root_dir="/path/to/data", name="my_dataset")
@@ -34,14 +39,12 @@ class Dataset:
         # Commit some files
         commit_hash = dataset.commit(message="Initial commit", add_files=["file1.csv"])
 
-        # Checkout the latest commit (no arguments needed)
-        dataset.checkout()
-
-        # Access files from current commit
-        content = dataset.read_file("file1.csv")
-
-        # Checkout a specific commit
+        # Checkout an older commit to view files
         dataset.checkout(commit_hash)
+
+        # Must checkout to latest before committing again
+        dataset.checkout()  # Move to latest
+        dataset.commit(message="New commit", add_files=["file2.csv"])
 
     Args:
         root_dir: Root directory for the dataset
@@ -141,7 +144,7 @@ class Dataset:
             Hash of the new commit
 
         Raises:
-            ValueError: If no changes are specified
+            ValueError: If no changes are specified or if not on latest commit
             FileNotFoundError: If a file to add doesn't exist
         """
         if not add_files and not remove_files:
@@ -149,6 +152,18 @@ class Dataset:
                 "No changes specified - at least one of add_files or "
                 "remove_files must be provided"
             )
+
+        # Ensure we're on the latest commit before allowing new commits
+        latest_commit = self.commit_store.get_latest_commit()
+        if latest_commit is not None:  # Only check if commits exist
+            if (
+                self.current_commit is None
+                or self.current_commit.hash != latest_commit.hash
+            ):
+                raise ValueError(
+                    "Cannot commit: currently checked out to non-latest commit. "
+                    "Use checkout() to move to the latest commit first."
+                )
 
         # Start building commit from current state
         builder = CommitBuilder(self.current_commit)

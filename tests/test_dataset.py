@@ -286,3 +286,26 @@ def test_dataset_with_mixed_auth_params(tmp_path):
             azure_connection_string=None,
         )
         assert dataset.fs == mock_fs
+
+
+def test_cannot_commit_on_non_latest_commit(dataset_two_commits):
+    """Test that committing on a non-latest commit raises an error."""
+    # Get the first commit hash (oldest commit)
+    history = dataset_two_commits.history()
+    first_commit_hash = history[-1].hash  # Oldest commit
+
+    # Checkout the old commit
+    dataset_two_commits.checkout(first_commit_hash)
+
+    # Try to commit - should fail
+    with pytest.raises(ValueError, match="latest commit"):
+        dataset_two_commits.commit(message="This should fail", add_files=[dummy_file()])
+
+    # Checkout to latest
+    dataset_two_commits.checkout()
+
+    # Now commit should work
+    commit_hash = dataset_two_commits.commit(
+        message="This should work", add_files=[dummy_file()]
+    )
+    assert commit_hash is not None
