@@ -393,6 +393,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/c3/ca/1ea2fd13ff9f8955b85e7956872fdb7050c4ace8a2306a6d177edb9cf7fe/google_crc32c-1.7.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/82/35/b8d3baf8c46695858cb9d8835a53baa1eeb9906ddaf2f728a5f5b640fd1e/google_resumable_media-2.7.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/86/f1/62a193f0227cf15a920390abe675f386dec35f7ae3ffe6da582d3ade42c7/googleapis_common_protos-1.70.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/2a/b1/9ff6578d789a89812ff21e4e0f80ffae20a65d5dd84e7a17873fe3b365be/griffe-1.14.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/31/b4/b9b800c45527aadd64d5b442f9b932b00648617eb5d63d2c7a6587b7cafc/jmespath-1.0.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/aa/42/797895b952b682c3dafe23b1834507ee7f02f4d6299b65aaa61425763278/json5-0.10.0-py3-none-any.whl
@@ -401,9 +402,12 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2c/19/04f9b178c2d8a15b076c8b5140708fa6ffc5601fb6f1e975537072df5b2a/mergedeep-1.3.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/22/5b/dbc6a8cddc9cfa9c4971d59fb12bb8d42e161b7e7f8cc89e49137c5b279c/mkdocs-1.6.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/9f/4d/7123b6fa2278000688ebd338e2a06d16870aaf9eceae6ba047ea05f92df1/mkdocs_autorefs-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9f/d4/029f984e8d3f3b6b726bd33cafc473b75e9e44c0f7e80a5b29abc466bdea/mkdocs_get_deps-0.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/db/7c/ea5a671b2ff5d0e3f3108a7f7d75b541d683e4969aaead2a8f3e59e0fc27/mkdocs_material-9.6.9-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5b/54/662a4743aa81d9582ee9339d4ffa3c8fd40a4965e033d77b9da9774d3960/mkdocs_material_extensions-1.3.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/7b/2c/f0dc4e1ee7f618f5bff7e05898d20bf8b6e7fa612038f768bfa295f136a4/mkdocstrings-0.30.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/d5/8f/ce008599d9adebf33ed144e7736914385e8537f5fc686fdb7cceb8c22431/mkdocstrings_python-1.18.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/80/e5/5e22c5bf96a64bdd43518b1834c6d95a4922cc2066b7d8e467dae9b6cee6/multidict-6.6.4-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/be/9c/92789c596b8df838baa98fa71844d84283302f7604ed565dafe5a6b5041a/oauthlib-3.3.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/90/96/04b8e52da071d28f5e21a805b19cb9390aa17a47462ac87f5e2696b9566d/paginate-0.5.7-py2.py3-none-any.whl
@@ -533,6 +537,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/8b/72/b8d785e9184ba6297a8620c8a37cf6e39b81a8ca01bb0796d7cbb28b3386/google_crc32c-1.7.1-cp313-cp313-macosx_12_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/82/35/b8d3baf8c46695858cb9d8835a53baa1eeb9906ddaf2f728a5f5b640fd1e/google_resumable_media-2.7.2-py2.py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/86/f1/62a193f0227cf15a920390abe675f386dec35f7ae3ffe6da582d3ade42c7/googleapis_common_protos-1.70.0-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/2a/b1/9ff6578d789a89812ff21e4e0f80ffae20a65d5dd84e7a17873fe3b365be/griffe-1.14.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/31/b4/b9b800c45527aadd64d5b442f9b932b00648617eb5d63d2c7a6587b7cafc/jmespath-1.0.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/aa/42/797895b952b682c3dafe23b1834507ee7f02f4d6299b65aaa61425763278/json5-0.10.0-py3-none-any.whl
@@ -541,9 +546,12 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/2c/19/04f9b178c2d8a15b076c8b5140708fa6ffc5601fb6f1e975537072df5b2a/mergedeep-1.3.4-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/22/5b/dbc6a8cddc9cfa9c4971d59fb12bb8d42e161b7e7f8cc89e49137c5b279c/mkdocs-1.6.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/9f/4d/7123b6fa2278000688ebd338e2a06d16870aaf9eceae6ba047ea05f92df1/mkdocs_autorefs-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/9f/d4/029f984e8d3f3b6b726bd33cafc473b75e9e44c0f7e80a5b29abc466bdea/mkdocs_get_deps-0.2.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/db/7c/ea5a671b2ff5d0e3f3108a7f7d75b541d683e4969aaead2a8f3e59e0fc27/mkdocs_material-9.6.9-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/5b/54/662a4743aa81d9582ee9339d4ffa3c8fd40a4965e033d77b9da9774d3960/mkdocs_material_extensions-1.3.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/7b/2c/f0dc4e1ee7f618f5bff7e05898d20bf8b6e7fa612038f768bfa295f136a4/mkdocstrings-0.30.1-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/d5/8f/ce008599d9adebf33ed144e7736914385e8537f5fc686fdb7cceb8c22431/mkdocstrings_python-1.18.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/eb/c6/f5e97e5d99a729bc2aa58eb3ebfa9f1e56a9b517cc38c60537c81834a73f/multidict-6.6.4-cp313-cp313-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/be/9c/92789c596b8df838baa98fa71844d84283302f7604ed565dafe5a6b5041a/oauthlib-3.3.1-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/90/96/04b8e52da071d28f5e21a805b19cb9390aa17a47462ac87f5e2696b9566d/paginate-0.5.7-py2.py3-none-any.whl
@@ -1616,6 +1624,13 @@ packages:
   - protobuf>=3.20.2,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<7.0.0
   - grpcio>=1.44.0,<2.0.0 ; extra == 'grpc'
   requires_python: '>=3.7'
+- pypi: https://files.pythonhosted.org/packages/2a/b1/9ff6578d789a89812ff21e4e0f80ffae20a65d5dd84e7a17873fe3b365be/griffe-1.14.0-py3-none-any.whl
+  name: griffe
+  version: 1.14.0
+  sha256: 0e9d52832cccf0f7188cfe585ba962d2674b241c01916d780925df34873bceb0
+  requires_dist:
+  - colorama>=0.4
+  requires_python: '>=3.9'
 - conda: https://conda.anaconda.org/conda-forge/noarch/h11-0.16.0-pyhd8ed1ab_0.conda
   sha256: f64b68148c478c3bfc8f8d519541de7d2616bf59d44485a5271041d40c061887
   md5: 4b69232755285701bc86a5afe4d9933a
@@ -1873,7 +1888,7 @@ packages:
 - pypi: ./
   name: kirin
   version: 0.0.1
-  sha256: 0e4c92095b07804a2b86ca1396c14aae4687b46b4ef0735444f6d29fdb622738
+  sha256: 8b0149b708cc5837844492e071549992349d73d8dffe004a8909e86cec095560
   requires_dist:
   - pyprojroot
   - python-dotenv
@@ -1893,6 +1908,7 @@ packages:
   - httpx ; extra == 'tests'
   - mkdocs-material ; extra == 'docs'
   - mkdocs ; extra == 'docs'
+  - mkdocstrings[python] ; extra == 'docs'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/ld_impl_linux-64-2.43-h712a8e2_4.conda
   sha256: db73f38155d901a610b2320525b9dd3b31e4949215c870685fd92ea61b5ce472
@@ -2319,6 +2335,15 @@ packages:
   - pyyaml==5.1 ; extra == 'min-versions'
   - watchdog==2.0 ; extra == 'min-versions'
   requires_python: '>=3.8'
+- pypi: https://files.pythonhosted.org/packages/9f/4d/7123b6fa2278000688ebd338e2a06d16870aaf9eceae6ba047ea05f92df1/mkdocs_autorefs-1.4.3-py3-none-any.whl
+  name: mkdocs-autorefs
+  version: 1.4.3
+  sha256: 469d85eb3114801d08e9cc55d102b3ba65917a869b893403b8987b601cf55dc9
+  requires_dist:
+  - markdown>=3.3
+  - markupsafe>=2.0.1
+  - mkdocs>=1.1
+  requires_python: '>=3.9'
 - pypi: https://files.pythonhosted.org/packages/9f/d4/029f984e8d3f3b6b726bd33cafc473b75e9e44c0f7e80a5b29abc466bdea/mkdocs_get_deps-0.2.0-py3-none-any.whl
   name: mkdocs-get-deps
   version: 0.2.0
@@ -2358,6 +2383,32 @@ packages:
   version: 1.3.1
   sha256: adff8b62700b25cb77b53358dad940f3ef973dd6db797907c49e3c2ef3ab4e31
   requires_python: '>=3.8'
+- pypi: https://files.pythonhosted.org/packages/7b/2c/f0dc4e1ee7f618f5bff7e05898d20bf8b6e7fa612038f768bfa295f136a4/mkdocstrings-0.30.1-py3-none-any.whl
+  name: mkdocstrings
+  version: 0.30.1
+  sha256: 41bd71f284ca4d44a668816193e4025c950b002252081e387433656ae9a70a82
+  requires_dist:
+  - jinja2>=2.11.1
+  - markdown>=3.6
+  - markupsafe>=1.1
+  - mkdocs>=1.6
+  - mkdocs-autorefs>=1.4
+  - pymdown-extensions>=6.3
+  - importlib-metadata>=4.6 ; python_full_version < '3.10'
+  - mkdocstrings-crystal>=0.3.4 ; extra == 'crystal'
+  - mkdocstrings-python-legacy>=0.2.1 ; extra == 'python-legacy'
+  - mkdocstrings-python>=1.16.2 ; extra == 'python'
+  requires_python: '>=3.9'
+- pypi: https://files.pythonhosted.org/packages/d5/8f/ce008599d9adebf33ed144e7736914385e8537f5fc686fdb7cceb8c22431/mkdocstrings_python-1.18.2-py3-none-any.whl
+  name: mkdocstrings-python
+  version: 1.18.2
+  sha256: 944fe6deb8f08f33fa936d538233c4036e9f53e840994f6146e8e94eb71b600d
+  requires_dist:
+  - mkdocstrings>=0.30
+  - mkdocs-autorefs>=1.4
+  - griffe>=1.13
+  - typing-extensions>=4.0 ; python_full_version < '3.11'
+  requires_python: '>=3.9'
 - conda: https://conda.anaconda.org/conda-forge/noarch/more-itertools-10.8.0-pyhd8ed1ab_0.conda
   sha256: fabe81c8f8f3e1d0ef227fc1306526c76189b3f1175f12302c707e0972dd707c
   md5: d7620a15dc400b448e1c88a981b23ddd
