@@ -18,15 +18,6 @@ theme:
 
 plugins:
   - search
-  - mknotebooks:
-      execute: true
-      write_markdown: true
-      allow_errors: false
-      timeout: 1200
-      binder: true
-      binder_service_name: "gh"
-      binder_branch: "master"
-      binder_ui: "lab"
   - mkdocstrings:
       default_handler: python
       handlers:
