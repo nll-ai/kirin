@@ -20,9 +20,7 @@ jobs:
           environments: docs
 
       - name: Build docs
-        run: |
-          pixi run cli-docs
-          pixi run build-docs
+        run: pixi run build-docs
 
       - name: Deploy website
         uses: peaceiris/actions-gh-pages@v4
