@@ -118,6 +118,9 @@ tests = { features = ["tests"], solve-group = "default" }
 [tool.pixi.feature.tests.tasks]
 test = "pytest --durations=10 --tb=short -v"
 
+[tool.pixi.feature.docs.tasks]
+build-docs = "mkdocs build --clean"
+
 
 [tool.pixi.tasks]
 setup-ssl = "python -m kirin.setup_ssl"

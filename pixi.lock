@@ -1873,7 +1873,7 @@ packages:
 - pypi: ./
   name: kirin
   version: 0.0.1
-  sha256: 05ddb6fd04fc5aec60fe15f04b1b85c1413a4262d3a499d6368f949f85788ce3
+  sha256: 0e4c92095b07804a2b86ca1396c14aae4687b46b4ef0735444f6d29fdb622738
   requires_dist:
   - pyprojroot
   - python-dotenv
