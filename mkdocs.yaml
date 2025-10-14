@@ -1,5 +1,5 @@
 site_name: "kirin"
-site_url: https://ericmjl.github.io/kirin
+site_url: https://nll-ai.github.io/kirin
 
 docs_dir: docs/
 
@@ -43,8 +43,8 @@ extra_css:
 extra_javascript:
   - config.js
 
-repo_name: "ericmjl/kirin"
-repo_url: "https://github.com/ericmjl/kirin"
+repo_name: "nll-ai/kirin"
+repo_url: "https://github.com/nll-ai/kirin"
 
 extra:
   social:
