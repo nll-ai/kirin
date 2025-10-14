@@ -1150,3 +1150,41 @@ Assistant: "Here's my proposed approach: [detailed solution]"
 User: "I see issues with X, Y, Z. What about this alternative?"
 Assistant: "Good points! Here's the revised approach: [updated solution]"
 ```
+
+## GitHub Issue Creation Guidelines
+
+### Plan Mode Issue Body Content
+
+**CRITICAL**: When in plan mode and creating a GitHub issue, create the issue body content directly instead of using a file. This approach:
+
+- **Streamlines workflow** - Avoids unnecessary file creation and management
+- **Direct content creation** - Write issue body content directly in the tool call
+- **Cleaner process** - No temporary files to clean up after issue creation
+- **Faster execution** - Direct content creation is more efficient
+
+**Required Pattern**:
+1. **Analyze requirements** - Understand what the issue needs to document
+2. **Create content directly** - Write the issue body content in the tool call parameters
+3. **Use markdown formatting** - Structure the content with proper markdown for GitHub
+4. **Include all necessary details** - Ensure the issue body contains all required information
+
+**Example**:
+
+```bash
+# Instead of creating a file first, write content directly:
+gh issue create \
+  --title "Implement file metadata structure" \
+  --body "## Problem
+
+Current file handling lacks proper metadata...
+
+## Solution
+
+Implement File entity with...
+
+## Acceptance Criteria
+
+- [ ] File entity created
+- [ ] Metadata properties defined
+- [ ] Tests written"
+```
