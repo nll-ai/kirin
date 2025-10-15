@@ -19,17 +19,23 @@ def find_free_port() -> int:
     return port
 
 
-def ui() -> None:
+def ui(
+    host: str = typer.Option(
+        "localhost", help="Host to bind to (use 0.0.0.0 for Docker)"
+    ),
+    port: int = typer.Option(None, help="Port to bind to (random if not specified)"),
+) -> None:
     """Launch the Kirin web interface."""
-    port = find_free_port()
-    logger.info(f"Using random port: {port}")
+    if port is None:
+        port = find_free_port()
+        logger.info(f"Using random port: {port}")
 
-    logger.info(f"Starting Kirin web interface on 127.0.0.1:{port}")
+    logger.info(f"Starting Kirin web interface on {host}:{port}")
     logger.info("PERF: Web interface starting with auto-reload enabled")
 
     uvicorn.run(
         "kirin.web.app:app",
-        host="127.0.0.1",
+        host=host,
         port=port,
         reload=True,  # Auto-reload enabled per user preference
         log_level="info",
