@@ -9,6 +9,7 @@ Configuration and management of data catalogs in the web UI.
 For local filesystem storage:
 
 **Benefits:**
+
 - **Simple setup**: No authentication required
 - **Fast access**: Direct filesystem access
 - **Easy backup**: Standard file operations
@@ -19,12 +20,14 @@ For local filesystem storage:
 #### AWS S3 Configuration
 
 **Setup Steps:**
+
 1. **Configure AWS credentials** in your environment
 2. **Create S3 bucket** with appropriate permissions
 3. **Set up IAM policies** for bucket access
 4. **Test connection** in the web UI
 
 **Web UI Configuration:**
+
 - **Catalog Name**: Friendly name for the catalog
 - **Root Directory**: S3 URL (e.g., `s3://my-bucket/data`)
 - **AWS Profile**: Optional AWS profile name (auto-detected from environment)
@@ -32,24 +35,28 @@ For local filesystem storage:
 #### Google Cloud Storage Configuration
 
 **Setup Steps:**
+
 1. **Authenticate with GCP** using `gcloud auth application-default login`
 2. **Create bucket** in GCP console
 3. **Set up bucket permissions**
 4. **Test connection** in the web UI
 
 **Web UI Configuration:**
+
 - **Catalog Name**: Friendly name for the catalog
 - **Root Directory**: GCS URL (e.g., `gs://my-bucket/data`)
 
 #### Azure Blob Storage Configuration
 
 **Setup Steps:**
+
 1. **Authenticate with Azure** using `az login`
 2. **Create storage account** in Azure portal
 3. **Create container** for data storage
 4. **Test connection** in the web UI
 
 **Web UI Configuration:**
+
 - **Catalog Name**: Friendly name for the catalog
 - **Root Directory**: Azure URL (e.g., `az://my-container/data`)
 
@@ -59,7 +66,7 @@ For local filesystem storage:
 
 Structure your catalogs by purpose:
 
-```
+```text
 s3-production: s3://production-bucket/data
 gcs-production: gs://production-bucket/data
 
@@ -106,7 +113,9 @@ export AWS_DEFAULT_REGION="us-west-2"
 
 #### Using IAM Roles
 
-For AWS EC2, ECS, or Lambda instances that have an associated IAM role, no explicit credentials are required. The web UI will automatically use the IAM role provided to the instance for authentication.
+For AWS EC2, ECS, or Lambda instances that have an associated IAM role, no
+explicit credentials are required. The web UI will automatically use the IAM
+role provided to the instance for authentication.
 
 ### GCP Authentication
 
@@ -209,7 +218,9 @@ export AZURE_STORAGE_ACCOUNT_KEY="mykey"
 
 #### GCP IAM Permissions
 
-For Google Cloud Storage, ensure your service account or user has the following roles:
+For Google Cloud Storage, ensure your service account or user has the
+following roles:
+
 - **Storage Object Admin**: For full read/write access to objects
 - **Storage Legacy Bucket Reader**: For listing bucket contents
 

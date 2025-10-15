@@ -20,6 +20,7 @@ pixi run kirin ui
 ```
 
 **Benefits:**
+
 - Full development environment with all dependencies
 - Easy to contribute to the project
 - Includes testing and development tools
@@ -40,6 +41,7 @@ uv run kirin ui
 ```
 
 **Benefits:**
+
 - Clean, isolated installation
 - Easy to update and manage
 - No system Python conflicts
@@ -57,14 +59,16 @@ uvx python -m kirin.setup_ssl
 ```
 
 **Benefits:**
+
 - No permanent installation
 - Always uses latest version
 - Good for experimentation
 
-
 ## SSL Certificate Setup
 
-When using isolated Python environments (pixi, uv, conda), SSL certificates are not automatically available. This affects HTTPS connections to cloud storage providers.
+When using isolated Python environments (pixi, uv, conda), SSL certificates
+are not automatically available. This affects HTTPS connections to cloud
+storage providers.
 
 ### Automatic Setup (Recommended)
 
@@ -91,7 +95,8 @@ Test your installation:
 python -c "import kirin; print('Kirin version:', kirin.__version__)"
 
 # Test HTTPS connection
-python -c "import requests; r = requests.get('https://storage.googleapis.com'); print('HTTPS works:', r.status_code)"
+python -c "import requests; r = requests.get('https://storage.googleapis.com'); \
+print('HTTPS works:', r.status_code)"
 
 # Or use the automatic setup
 python -m kirin.setup_ssl
