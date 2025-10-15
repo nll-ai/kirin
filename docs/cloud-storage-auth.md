@@ -6,7 +6,8 @@ with different cloud providers using the new cloud-agnostic authentication param
 
 ## New Cloud-Agnostic Authentication (Recommended)
 
-Kirin now supports cloud-agnostic authentication parameters that work across all cloud providers:
+Kirin now supports cloud-agnostic authentication parameters that work across
+all cloud providers:
 
 ### AWS/S3 Authentication
 
@@ -70,7 +71,8 @@ dataset = Dataset(
 
 ### Web UI Integration
 
-The web UI also supports cloud authentication through the `CatalogConfig.to_catalog()` method:
+The web UI also supports cloud authentication through the
+`CatalogConfig.to_catalog()` method:
 
 ```python
 from kirin.web.config import CatalogConfig
@@ -89,7 +91,8 @@ catalog = config.to_catalog()
 
 ## Legacy Authentication Methods
 
-The following sections show the legacy authentication methods that still work but are less convenient than the new cloud-agnostic approach.
+The following sections show the legacy authentication methods that still work
+but are less convenient than the new cloud-agnostic approach.
 
 ## Google Cloud Storage (GCS)
 
@@ -296,11 +299,14 @@ For any cloud provider, the recommended pattern is:
 
    # For AWS/S3
    catalog = Catalog(root_dir="s3://bucket/path", aws_profile="my-profile")
-   dataset = Dataset(root_dir="s3://bucket/path", name="my_data", aws_profile="my-profile")
+   dataset = Dataset(root_dir="s3://bucket/path", name="my_data",
+                    aws_profile="my-profile")
 
    # For GCS
-   catalog = Catalog(root_dir="gs://bucket/path", gcs_token="/path/to/key.json", gcs_project="my-project")
-   dataset = Dataset(root_dir="gs://bucket/path", name="my_data", gcs_token="/path/to/key.json", gcs_project="my-project")
+   catalog = Catalog(root_dir="gs://bucket/path", gcs_token="/path/to/key.json",
+                    gcs_project="my-project")
+   dataset = Dataset(root_dir="gs://bucket/path", name="my_data",
+                    gcs_token="/path/to/key.json", gcs_project="my-project")
 
    # For Azure
    catalog = Catalog(root_dir="az://container/path", azure_connection_string="...")
@@ -370,9 +376,12 @@ ds = Dataset(root_dir="memory://test-data", dataset_name="my_data")
 
 ### macOS Python 3.13 SSL Certificate Verification
 
-On macOS with Python 3.13, you may encounter SSL certificate verification errors when using cloud storage backends. This is a known Python/macOS issue.
+On macOS with Python 3.13, you may encounter SSL certificate verification
+errors when using cloud storage backends. This is a known Python/macOS issue.
 
-**Workaround**: The web UI skips connection testing during backend creation. Backends are validated when actually used. If you encounter SSL errors during actual usage, install certificates:
+**Workaround**: The web UI skips connection testing during backend creation.
+Backends are validated when actually used. If you encounter SSL errors during
+actual usage, install certificates:
 
 ```bash
 /Applications/Python\ 3.13/Install\ Certificates.command

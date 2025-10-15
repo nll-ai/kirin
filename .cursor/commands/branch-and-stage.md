@@ -1,1 +1,5 @@
-Given everything we just did, and given what you see when you run `git diff`, give me a new git branch and git add to stage all the changes. You do not need to give me a commit message, I have a git commit message writer.
+# Branch and Stage Command
+
+Run git diff, then give me a new branch (with name based on the git diff) and
+git add to stage all the changes. You do not need to give me a commit message,
+I have a git commit message writer.

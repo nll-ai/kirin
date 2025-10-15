@@ -4,11 +4,16 @@ Welcome to Kirin - simplified "git" for data versioning!
 
 ## What is Kirin?
 
-Kirin is a simplified tool for version-controlling data using content-addressed storage. It provides linear commit history for datasets without the complexity of branching and merging.
+Kirin is a simplified tool for version-controlling data using
+content-addressed storage. It provides linear commit history for datasets
+without the complexity of branching and merging.
 
 **Key Benefits:**
-- **Linear versioning**: Simple, Git-like commits without branching complexity
-- **Content-addressed storage**: Files stored by content hash for integrity and deduplication
+
+- **Linear versioning**: Simple, Git-like commits without branching
+  complexity
+- **Content-addressed storage**: Files stored by content hash for
+  integrity and deduplication
 - **Cloud support**: Works with S3, GCS, Azure, and more
 - **Ergonomic API**: Designed for data science workflows
 - **Zero-copy operations**: Efficient handling of large files
@@ -38,21 +43,30 @@ with ds.local_files() as local_files:
 
 ### Getting Started
 
-- **[Quickstart](getting-started/quickstart.md)** - Get up and running in 5 minutes
-- **[Installation](getting-started/installation.md)** - Installation options and setup
-- **[Core Concepts](getting-started/core-concepts.md)** - Understanding datasets, commits, and content-addressing
+- **[Quickstart](getting-started/quickstart.md)** - Get up and running in 5
+  minutes
+- **[Installation](getting-started/installation.md)** - Installation options
+  and setup
+- **[Core Concepts](getting-started/core-concepts.md)** - Understanding
+  datasets, commits, and content-addressing
 
 ### User Guides
 
-- **[Basic Usage](guides/basic-usage.md)** - Essential workflows for working with datasets
-- **[Cloud Storage](guides/cloud-storage.md)** - Set up and use cloud storage backends
-- **[Working with Files](guides/working-with-files.md)** - File operations and data science integration
-- **[Commit Management](guides/commit-management.md)** - Understanding and working with commit history
+- **[Basic Usage](guides/basic-usage.md)** - Essential workflows for working
+  with datasets
+- **[Cloud Storage](guides/cloud-storage.md)** - Set up and use cloud storage
+  backends
+- **[Working with Files](guides/working-with-files.md)** - File operations and
+  data science integration
+- **[Commit Management](guides/commit-management.md)** - Understanding and
+  working with commit history
 
 ### Web UI
 
-- **[Web UI Overview](web-ui/overview.md)** - Getting started with the web interface
-- **[Catalog Management](web-ui/catalog-management.md)** - Advanced catalog configuration
+- **[Web UI Overview](web-ui/overview.md)** - Getting started with the web
+  interface
+- **[Catalog Management](web-ui/catalog-management.md)** - Advanced catalog
+  configuration
 
 ### Reference
 
@@ -61,7 +75,8 @@ with ds.local_files() as local_files:
 
 ### Architecture
 
-- **[Architecture Overview](architecture/overview.md)** - System architecture and design principles
+- **[Architecture Overview](architecture/overview.md)** - System architecture
+  and design principles
 
 ## Why Kirin Exists
 

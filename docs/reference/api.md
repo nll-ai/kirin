@@ -83,7 +83,7 @@ from kirin import Catalog
 catalog = Catalog(root_dir="/path/to/data")
 ```
 
-#### Constructor Parameters
+#### Catalog Constructor Parameters
 
 ```python
 Catalog(
@@ -99,14 +99,14 @@ Catalog(
 )
 ```
 
-#### Basic Operations
+#### Catalog Basic Operations
 
 - `datasets()` - List all datasets in the catalog
 - `get_dataset(name)` - Get a specific dataset
 - `create_dataset(name, description="")` - Create a new dataset
 - `__len__()` - Number of datasets in the catalog
 
-#### Examples
+#### Catalog Examples
 
 ```python
 # Basic usage
@@ -283,4 +283,5 @@ dataset = Dataset(
 )
 ```
 
-For detailed examples and cloud storage setup, see the [Cloud Storage Authentication Guide](../cloud-storage-auth.md).
+For detailed examples and cloud storage setup, see the
+[Cloud Storage Authentication Guide](../cloud-storage-auth.md).

@@ -34,9 +34,7 @@ else:
     print("Dataset not found")
 ```
 
-## Working with Files
-
-### Adding Files to a Dataset
+## Adding Files to a Dataset
 
 ```python
 # Add single file
@@ -178,6 +176,7 @@ with dataset.local_files() as local_files:
 ```
 
 **Benefits of local_files():**
+
 - **Library compatibility**: Works with pandas, polars, etc.
 - **Automatic cleanup**: Files cleaned up when done
 - **Standard paths**: Use normal Python file operations
@@ -310,7 +309,8 @@ dataset.commit("Add processed data", add_files=["processed/sales_clean.csv"])
 dataset.commit("Add analysis", add_files=["analysis/results.csv", "analysis/plots.png"])
 
 # Avoid flat structure
-dataset.commit("Add files", add_files=["sales.csv", "customers.csv", "results.csv", "plots.png"])
+dataset.commit("Add files", add_files=["sales.csv", "customers.csv",
+                                        "results.csv", "plots.png"])
 ```
 
 ### Regular Commits

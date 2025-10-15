@@ -1,6 +1,7 @@
 # Web UI Overview
 
-Kirin includes a comprehensive web interface for managing datasets and catalogs through your browser.
+Kirin includes a comprehensive web interface for managing datasets and
+catalogs through your browser.
 
 ## Getting Started
 
@@ -17,7 +18,8 @@ uv run kirin ui
 uvx kirin ui
 ```
 
-The web UI will start on a random port (usually 8000+) and display the URL in your terminal.
+The web UI will start on a random port (usually 8000+) and display the URL
+in your terminal.
 
 ### First Time Setup
 
@@ -54,12 +56,14 @@ The web UI will start on a random port (usually 8000+) and display the URL in yo
 
 1. **Home** (`/`): Catalog management and overview
 2. **Catalog View** (`/{catalog_id}`): Dataset listing for a catalog
-3. **Dataset View** (`/{catalog_id}/{dataset}`): Individual dataset with files and history
-4. **File Preview** (`/{catalog_id}/{dataset}/files/{filename}`): File content viewer
+3. **Dataset View** (`/{catalog_id}/{dataset}`): Individual dataset with files
+   and history
+4. **File Preview** (`/{catalog_id}/{dataset}/files/{filename}`): File content
+   viewer
 
 ### Navigation Flow
 
-```
+```text
 Home → Catalog → Dataset → File Preview
   ↑       ↑        ↑         ↑
 Catalogs  Datasets  Files    Content
@@ -76,7 +80,6 @@ Catalogs  Datasets  Files    Content
    - **Root Directory**: Storage location
 3. **Configure authentication** (for cloud storage)
 4. **Save and test** the connection
-
 
 ## Working with Datasets
 
@@ -196,7 +199,6 @@ pixi run setup-ssl
 - **Use appropriate regions** for better performance
 - **Enable compression** for text files
 - **Batch operations** when possible
-
 
 ## Next Steps
 

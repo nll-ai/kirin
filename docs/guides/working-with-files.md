@@ -40,12 +40,11 @@ with dataset.local_files() as local_files:
 ```
 
 **Benefits:**
+
 - **Library compatibility**: Works with pandas, polars, numpy, etc.
 - **Automatic cleanup**: Files cleaned up when done
 - **Standard paths**: Use normal Python file operations
 - **Memory efficient**: No need to load entire files into memory
-
-
 
 ## Working with Data Science Libraries
 
@@ -157,10 +156,6 @@ with dataset.local_files() as local_files:
         )
 ```
 
-
-
-
-
 ## Best Practices
 
 ### File Naming
@@ -189,12 +184,13 @@ dataset.commit("Add processed data", add_files=["processed/sales_clean.csv"])
 dataset.commit("Add analysis", add_files=["analysis/results.csv", "analysis/plots.png"])
 
 # Avoid flat structure
-dataset.commit("Add files", add_files=["sales.csv", "customers.csv", "results.csv", "plots.png"])
+dataset.commit("Add files", add_files=["sales.csv", "customers.csv",
+                                        "results.csv", "plots.png"])
 ```
-
 
 ## Next Steps
 
-- **[Commit Management](commit-management.md)** - Understanding commit history
+- **[Commit Management](commit-management.md)** - Understanding commit
+  history
 - **[Cloud Storage](cloud-storage.md)** - Working with cloud backends
 - **[Basic Usage](basic-usage.md)** - Core dataset operations
