@@ -3,7 +3,9 @@
 
 ## Overview
 
-Create a terminal user interface using Rich library that mimics the web UI functionality, starting with the most critical feature: committing files to a dataset.
+Create a terminal user interface using Rich library that mimics the web UI
+functionality, starting with the most critical feature: committing files to a
+dataset.
 
 ## Architecture
 
@@ -137,6 +139,8 @@ Following TDD approach:
 
 - [ ] Add rich library to pyproject.toml dependencies
 - [ ] Write tests for TUI functionality (TDD approach) in tests/test_tui.py
-- [ ] Create kirin/tui.py with catalog selection, dataset selection, file handling, and commit functionality
+- [ ] Create kirin/tui.py with catalog selection, dataset selection, file
+  handling, and commit functionality
 - [ ] Update kirin/cli.py to add 'kirin tui' command
-- [ ] Manually test the TUI with different scenarios (existing catalog, multiple datasets, file commits)
+- [ ] Manually test the TUI with different scenarios (existing catalog,
+  multiple datasets, file commits)
