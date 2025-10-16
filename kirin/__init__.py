@@ -14,15 +14,17 @@ from kirin.cloud_auth import (
     get_s3_compatible_filesystem,
     get_s3_filesystem,
 )
-from kirin.commit import Commit
-from kirin.dataset import Dataset
 from kirin.file import File
+
+# Main implementations
+from kirin.dataset import Dataset, Commit
 
 __all__ = [
     "Catalog",
     "Dataset",
     "File",
     "Commit",
+    # Cloud authentication helpers
     "get_s3_filesystem",
     "get_gcs_filesystem",
     "get_azure_filesystem",

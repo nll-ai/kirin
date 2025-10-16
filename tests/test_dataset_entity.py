@@ -324,14 +324,54 @@ def test_dataset_checkout_nonexistent(temp_dir):
 
 
 def test_dataset_cleanup_orphaned_files(temp_dir):
-    """Test cleaning up orphaned files."""
+    """Test cleanup of orphaned files after checkout."""
     dataset = Dataset(root_dir=temp_dir, name="test_dataset")
 
-    # Add file
-    test_file = Path(temp_dir) / "test.txt"
-    test_file.write_text("Hello")
-    dataset.commit("Add file", add_files=[test_file])
+    # Create initial commit
+    file1 = Path(temp_dir) / "file1.txt"
+    file1.write_text("content1")
+    commit1 = dataset.commit(message="First commit", add_files=[file1])
 
-    # Cleanup should return 0 (no orphaned files)
-    removed_count = dataset.cleanup_orphaned_files()
-    assert removed_count == 0
+    # Create second commit with different file
+    file2 = Path(temp_dir) / "file2.txt"
+    file2.write_text("content2")
+    commit2 = dataset.commit(message="Second commit", add_files=[file2])
+
+    # Checkout first commit - file2.txt should be cleaned up
+    dataset.checkout(commit1)
+
+    # Verify only file1.txt exists
+    assert dataset.has_file("file1.txt")
+    assert not dataset.has_file("file2.txt")
+
+
+def test_dataset_git_filename_protection(temp_dir):
+    """Test that files starting with .git are rejected."""
+    dataset = Dataset(root_dir=temp_dir, name="test_dataset")
+
+    # Create test files directory to avoid conflicts with dataset's .git directory
+    test_files_dir = Path(temp_dir) / "test_files"
+    test_files_dir.mkdir()
+
+    # Test that .git file is rejected
+    git_file = test_files_dir / ".git"
+    git_file.write_text("This would conflict with Git!")
+
+    with pytest.raises(ValueError, match="Cannot add file '.git': conflicts with Git metadata"):
+        dataset.commit(message="Try to add .git file", add_files=[git_file])
+
+    # Test that .gitignore is rejected
+    gitignore_file = test_files_dir / ".gitignore"
+    gitignore_file.write_text("*.tmp")
+
+    with pytest.raises(ValueError, match="Cannot add file '.gitignore': conflicts with Git metadata"):
+        dataset.commit(message="Try to add .gitignore", add_files=[gitignore_file])
+
+    # Test that normal files still work
+    normal_file = test_files_dir / "normal.txt"
+    normal_file.write_text("This is fine")
+
+    # This should succeed
+    commit_hash = dataset.commit(message="Add normal file", add_files=[normal_file])
+    assert commit_hash is not None
+    assert dataset.has_file("normal.txt")

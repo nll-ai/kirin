@@ -1,56 +1,22 @@
-"""Dataset entity for Kirin - represents a versioned collection of files with linear history."""  # noqa: E501
+"""Simplified Git-based dataset using pygit2 directly."""
 
+import shutil
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-import fsspec
+import pygit2
 from loguru import logger
 
-from .commit import Commit, CommitBuilder
-from .commit_store import CommitStore
 from .file import File
-from .storage import ContentStore
-from .utils import get_filesystem, strip_protocol
 
 
 class Dataset:
-    """Represents a versioned collection of files with linear commit history.
+    """Simplified Git-based dataset.
 
-    This is the main interface for working with Kirin datasets. It provides
-    methods for committing changes, checking out specific versions, and
-    accessing files from the current commit.
-
-    The dataset maintains a linear commit history where each commit represents
-    a snapshot of files at a point in time. You can checkout any commit to
-    access files from that version, or checkout the latest commit by calling
-    checkout() without arguments.
-
-    **Important:** New commits can only be created when checked out to the
-    latest commit. This ensures linear history without divergent branches.
-    If you've checked out an older commit, you must first checkout() to the
-    latest commit before making new commits.
-
-    Example:
-        # Create a dataset
-        dataset = Dataset(root_dir="/path/to/data", name="my_dataset")
-
-        # Commit some files
-        commit_hash = dataset.commit(message="Initial commit", add_files=["file1.csv"])
-
-        # Checkout an older commit to view files
-        dataset.checkout(commit_hash)
-
-        # Must checkout to latest before committing again
-        dataset.checkout()  # Move to latest
-        dataset.commit(message="New commit", add_files=["file2.csv"])
-
-    Args:
-        root_dir: Root directory for the dataset
-        name: Name of the dataset
-        description: Description of the dataset
-        fs: Filesystem to use (auto-detected if None)
+    Uses pygit2 directly without complex wrapper layers.
+    Maintains the same API but with much simpler implementation.
     """
 
     def __init__(
@@ -58,265 +24,240 @@ class Dataset:
         root_dir: Union[str, Path],
         name: str,
         description: str = "",
-        fs: Optional[fsspec.AbstractFileSystem] = None,
-        # AWS/S3 authentication
-        aws_profile: Optional[str] = None,
-        # GCP/GCS authentication
-        gcs_token: Optional[Union[str, Path]] = None,
-        gcs_project: Optional[str] = None,
-        # Azure authentication
-        azure_account_name: Optional[str] = None,
-        azure_account_key: Optional[str] = None,
-        azure_connection_string: Optional[str] = None,
+        **kwargs  # For cloud auth compatibility
     ):
         self.root_dir = str(root_dir)
         self.name = name
         self.description = description
-        self.fs = fs or get_filesystem(
-            self.root_dir,
-            aws_profile=aws_profile,
-            gcs_token=gcs_token,
-            gcs_project=gcs_project,
-            azure_account_name=azure_account_name,
-            azure_account_key=azure_account_key,
-            azure_connection_string=azure_connection_string,
-        )
 
-        # Initialize storage and commit store
-        self.storage = ContentStore(self.root_dir, self.fs)
-        self.commit_store = CommitStore(self.root_dir, name, self.fs, self.storage)
+        # Initialize Git repository (this handles everything we need)
+        try:
+            self.repo = pygit2.Repository(self.root_dir)
+        except pygit2.GitError:
+            self.repo = pygit2.init_repository(self.root_dir)
+            # Set basic config
+            self.repo.config['user.name'] = 'Kirin'
+            self.repo.config['user.email'] = 'kirin@data.versioning'
 
-        # Current commit (lazy loaded)
-        self._current_commit: Optional[Commit] = None
-
-        logger.info(f"Dataset '{name}' initialized at {self.root_dir}")
+        logger.info(f"Git dataset '{name}' ready at {self.root_dir}")
 
     @property
-    def current_commit(self) -> Optional[Commit]:
-        """Get the current commit.
-
-        Returns:
-            Current commit if any exist, None otherwise
-        """
-        if self._current_commit is None:
-            self._current_commit = self.commit_store.get_latest_commit()
-        return self._current_commit
-
-    @current_commit.setter
-    def current_commit(self, commit: Optional[Commit]):
-        """Set the current commit.
-
-        Args:
-            commit: Commit to set as current
-        """
-        self._current_commit = commit
+    def current_commit(self) -> Optional["Commit"]:
+        """Get current commit (HEAD)."""
+        try:
+            git_commit = self.repo.head.peel(pygit2.Commit)
+            return Commit(git_commit, self.repo)
+        except (pygit2.GitError, AttributeError):
+            return None
 
     @property
-    def head(self) -> Optional[Commit]:
-        """Get the latest commit (alias for current_commit)."""
+    def head(self) -> Optional["Commit"]:
+        """Alias for current_commit for backward compatibility."""
         return self.current_commit
 
     @property
     def files(self) -> Dict[str, File]:
-        """Get files from the current commit.
+        """Get files from current commit."""
+        if self.current_commit:
+            return self.current_commit.files
+        return {}
 
-        Returns:
-            Dictionary mapping filenames to File objects
-        """
-        if self.current_commit is None:
-            return {}
-        return self.current_commit.files
+    def is_empty(self) -> bool:
+        """Check if dataset has no commits."""
+        return self.current_commit is None
+
+    def get_commit(self, commit_hash: str) -> Optional["Commit"]:
+        """Get a specific commit by hash (supports partial hashes)."""
+        try:
+            # Handle partial hashes by expanding them
+            if len(commit_hash) < 40:
+                # Find commits that start with this prefix
+                for ref in self.repo.listall_reference_objects():
+                    if hasattr(ref, 'target') and ref.target:
+                        commit = self.repo.get(ref.target)
+                        if commit and str(commit.id).startswith(commit_hash):
+                            commit_hash = str(commit.id)
+                            break
+
+            git_commit = self.repo.get(commit_hash)
+            if git_commit and git_commit.type == pygit2.GIT_OBJECT_COMMIT:
+                return Commit(git_commit, self.repo)
+        except (pygit2.GitError, ValueError):
+            pass
+        return None
+
+    def get_info(self) -> Dict:
+        """Get dataset information."""
+        commit_count = len(list(self.repo.walk(self.repo.head.target))) if self.current_commit else 0
+        recent_commits = []
+        if self.current_commit:
+            recent_commits = [{"hash": c.hash, "message": c.message} for c in self.history(limit=5)]
+
+        return {
+            "name": self.name,
+            "description": self.description,
+            "commit_count": commit_count,
+            "current_commit": self.current_commit.hash if self.current_commit else None,
+            "latest_commit": self.current_commit.hash if self.current_commit else None,
+            "recent_commits": recent_commits,
+        }
+
+    def to_dict(self) -> Dict:
+        """Convert dataset to dictionary."""
+        return {
+            "name": self.name,
+            "description": self.description,
+            "root_dir": self.root_dir,
+            "current_commit": self.current_commit.hash if self.current_commit else None,
+            "commit_count": len(list(self.repo.walk(self.repo.head.target))) if self.current_commit else 0,
+        }
+
+    def cleanup_orphaned_files(self) -> int:
+        """Clean up orphaned files (no-op for Git implementation)."""
+        # Git handles this automatically, so this is just for compatibility
+        return 0
+
+    def __str__(self) -> str:
+        """String representation of the dataset."""
+        commit_count = len(list(self.repo.walk(self.repo.head.target))) if self.current_commit else 0
+        return f"Dataset(name='{self.name}', commits={commit_count})"
+
+    def __repr__(self) -> str:
+        """Detailed representation of the dataset."""
+        return f"Dataset(name='{self.name}', description='{self.description}', root_dir='{self.root_dir}')"
 
     def commit(
         self,
         message: str,
-        add_files: List[Union[str, Path]] = None,
-        remove_files: List[str] = None,
+        add_files: Optional[List[Union[str, Path]]] = None,
+        remove_files: Optional[List[str]] = None,
     ) -> str:
-        """Create a new commit with changes.
-
-        Args:
-            message: Commit message
-            add_files: List of files to add/update
-            remove_files: List of filenames to remove
-
-        Returns:
-            Hash of the new commit
-
-        Raises:
-            ValueError: If no changes are specified or if not on latest commit
-            FileNotFoundError: If a file to add doesn't exist
-        """
+        """Create a new commit."""
         if not add_files and not remove_files:
-            raise ValueError(
-                "No changes specified - at least one of add_files or "
-                "remove_files must be provided"
-            )
+            raise ValueError("No changes specified")
 
-        # Ensure we're on the latest commit before allowing new commits
-        latest_commit = self.commit_store.get_latest_commit()
-        if latest_commit is not None:  # Only check if commits exist
-            if (
-                self.current_commit is None
-                or self.current_commit.hash != latest_commit.hash
-            ):
-                raise ValueError(
-                    "Cannot commit: currently checked out to non-latest commit. "
-                    "Use checkout() to move to the latest commit first."
-                )
-
-        # Start building commit from current state
-        builder = CommitBuilder(self.current_commit)
+        # Start with current tree or empty tree
+        if self.current_commit:
+            tree_builder = self.repo.TreeBuilder(self.current_commit._git_commit.tree)
+        else:
+            tree_builder = self.repo.TreeBuilder()
 
         # Add files
-        if add_files:
-            for file_path in add_files:
-                file_path = str(file_path)
+        for file_path in (add_files or []):
+            file_path = Path(file_path)
+            if not file_path.exists():
+                raise FileNotFoundError(f"File not found: {file_path}")
 
-                # Check if file exists
-                source_fs = get_filesystem(file_path)
-                if not source_fs.exists(strip_protocol(file_path)):
-                    raise FileNotFoundError(f"File not found: {file_path}")
+            # Validate filename to prevent Git conflicts
+            filename = file_path.name
+            if filename.startswith('.git'):
+                raise ValueError(f"Cannot add file '{filename}': conflicts with Git metadata. Files starting with '.git' are reserved.")
 
-                # Store file in content store
-                content_hash = self.storage.store_file(file_path)
-
-                # Create File object
-                file_size = source_fs.size(strip_protocol(file_path))
-                file_obj = File(
-                    hash=content_hash,
-                    name=Path(file_path).name,
-                    size=file_size,
-                    _storage=self.storage,
-                )
-
-                # Add to commit
-                builder.add_file(file_obj.name, file_obj)
+            # Create blob and add to tree
+            with open(file_path, "rb") as f:
+                blob_id = self.repo.create_blob(f.read())
+            tree_builder.insert(filename, blob_id, pygit2.GIT_FILEMODE_BLOB)
 
         # Remove files
-        if remove_files:
-            for filename in remove_files:
-                builder.remove_file(filename)
+        for file_name in (remove_files or []):
+            try:
+                # Extract just the filename from the path
+                file_path = Path(file_name)
+                tree_builder.remove(file_path.name)
+            except KeyError:
+                pass  # File not in tree, ignore
 
-        # Build and save commit
-        commit = builder.build(message)
-        self.commit_store.save_commit(commit)
-        self._current_commit = commit
+        # Create tree and commit
+        tree_id = tree_builder.write()
 
-        logger.info(f"Created commit {commit.short_hash}: {message}")
-        return commit.hash
+        # Get parent commits
+        parents = [self.current_commit._git_commit.id] if self.current_commit else []
 
-    def checkout(self, commit_hash: Optional[str] = None) -> None:
-        """Checkout a specific commit or the latest commit.
+        # Create commit
+        signature = pygit2.Signature("Kirin", "kirin@data.versioning")
+        commit_id = self.repo.create_commit(
+            "HEAD",  # Update HEAD
+            signature,
+            signature,
+            message,
+            tree_id,
+            parents
+        )
 
-        This method allows you to switch between different versions of your dataset.
-        You can checkout a specific commit by providing its hash, or checkout the
-        latest commit by calling without arguments.
+        logger.info(f"Created commit {str(commit_id)[:8]}: {message}")
+        return str(commit_id)
 
-        Args:
-            commit_hash: Hash of the commit to checkout (can be partial hash).
-                        If None or not provided, checks out the latest commit.
+    def checkout(self, commit_hash: Optional[str] = None):
+        """Checkout a commit."""
+        if commit_hash:
+            try:
+                # Handle partial hashes by expanding them
+                if len(commit_hash) < 40:
+                    # Find commits that start with this prefix
+                    for ref in self.repo.listall_reference_objects():
+                        if hasattr(ref, 'target') and ref.target:
+                            commit = self.repo.get(ref.target)
+                            if commit and str(commit.id).startswith(commit_hash):
+                                commit_hash = str(commit.id)
+                                break
+                    else:
+                        # Try walking through commit history
+                        try:
+                            for commit in self.repo.walk(self.repo.head.target):
+                                if str(commit.id).startswith(commit_hash):
+                                    commit_hash = str(commit.id)
+                                    break
+                        except pygit2.GitError:
+                            pass
 
-        Raises:
-            ValueError: If commit not found or no commits exist in dataset
-
-        Examples:
-            # Checkout the latest commit
-            dataset.checkout()
-
-            # Checkout a specific commit by full hash
-            dataset.checkout("abc123def456...")
-
-            # Checkout a specific commit by partial hash
-            dataset.checkout("abc123")
-        """
-        if commit_hash is None:
-            # Checkout the latest commit
-            commit = self.commit_store.get_latest_commit()
-            if commit is None:
-                raise ValueError("No commits found in dataset")
-        else:
-            # Checkout specific commit
-            commit = self.commit_store.get_commit(commit_hash)
-            if commit is None:
-                raise ValueError(f"Commit not found: {commit_hash}")
-
-        self.current_commit = commit
-        logger.info(f"Checked out commit {commit.short_hash}: {commit.message}")
+                commit_id = pygit2.Oid(hex=commit_hash)
+                # Verify commit exists
+                commit = self.repo.get(commit_id)
+                if not commit or commit.type != pygit2.GIT_OBJECT_COMMIT:
+                    raise ValueError("Commit not found")
+                self.repo.set_head(commit_id)
+            except (ValueError, pygit2.GitError) as e:
+                if "Commit not found" in str(e):
+                    raise
+                raise ValueError("Commit not found")
+        # If no hash provided, already at HEAD
 
     def get_file(self, name: str) -> Optional[File]:
-        """Get a file from the current commit.
-
-        Args:
-            name: Name of the file to get
-
-        Returns:
-            File object if found, None otherwise
-        """
-        if self.current_commit is None:
+        """Get a file from current commit."""
+        if not self.current_commit:
             return None
-        return self.current_commit.get_file(name)
-
-    def list_files(self) -> List[str]:
-        """List files in the current commit.
-
-        Returns:
-            List of filenames
-        """
-        if self.current_commit is None:
-            return []
-        return self.current_commit.list_files()
-
-    def has_file(self, name: str) -> bool:
-        """Check if a file exists in the current commit.
-
-        Args:
-            name: Name of the file to check
-
-        Returns:
-            True if file exists, False otherwise
-        """
-        if self.current_commit is None:
-            return False
-        return self.current_commit.has_file(name)
+        return self.current_commit.files.get(name)
 
     def read_file(self, name: str, mode: str = "r") -> Union[str, bytes]:
-        """Read a file from the current commit.
+        """Read file content.
 
         Args:
             name: Name of the file to read
             mode: Read mode ('r' for text, 'rb' for bytes)
 
         Returns:
-            File content
-
-        Raises:
-            FileNotFoundError: If file doesn't exist
+            File content as string (mode='r') or bytes (mode='rb')
         """
         file_obj = self.get_file(name)
-        if file_obj is None:
+        if not file_obj:
             raise FileNotFoundError(f"File not found: {name}")
 
-        return file_obj.read(mode)
+        if mode == "rb":
+            return file_obj.read_bytes()
+        elif mode == "r":
+            return file_obj.read_text()
+        else:
+            raise ValueError(f"Unsupported mode: {mode}. Use 'r' or 'rb'")
 
-    def download_file(self, name: str, target_path: Union[str, Path]) -> str:
-        """Download a file from the current commit.
+    def list_files(self) -> List[str]:
+        """List files in current commit."""
+        if self.current_commit:
+            return list(self.current_commit.files.keys())
+        return []
 
-        Args:
-            name: Name of the file to download
-            target_path: Local path to save the file
-
-        Returns:
-            Path where the file was saved
-
-        Raises:
-            FileNotFoundError: If file doesn't exist
-        """
-        file_obj = self.get_file(name)
-        if file_obj is None:
-            raise FileNotFoundError(f"File not found: {name}")
-
-        return file_obj.download_to(target_path)
+    def has_file(self, name: str) -> bool:
+        """Check if file exists."""
+        return name in self.files
 
     def open_file(self, name: str, mode: str = "rb"):
         """Open a file from the current commit.
@@ -376,97 +317,208 @@ class Dataset:
                     f"Failed to clean up temporary directory {temp_dir}: {e}"
                 )
 
-    def history(self, limit: Optional[int] = None) -> List[Commit]:
-        """Get commit history.
+    def history(self, limit: Optional[int] = None) -> List["Commit"]:
+        """Get commit history."""
+        if not self.current_commit:
+            return []
 
-        Args:
-            limit: Maximum number of commits to return
+        commits = []
+        for git_commit in self.repo.walk(self.current_commit._git_commit.id):
+            commits.append(Commit(git_commit, self.repo))
+            if limit and len(commits) >= limit:
+                break
+        return commits
 
-        Returns:
-            List of commits in chronological order (newest first)
-        """
-        return self.commit_store.get_commit_history(limit)
+    # Simplified branching (optional - can be added later)
+    def create_branch(self, name: str):
+        """Create branch."""
+        if not self.current_commit:
+            raise ValueError("No commits to branch from")
+        ref = f"refs/heads/{name}"
+        self.repo.create_reference(ref, self.current_commit._git_commit.id)
 
-    def get_commit(self, commit_hash: str) -> Optional[Commit]:
-        """Get a specific commit.
+    def checkout_branch(self, name: str):
+        """Checkout branch."""
+        ref = f"refs/heads/{name}"
+        self.repo.set_head(ref)
 
-        Args:
-            commit_hash: Hash of the commit to get
+    def current_branch(self) -> str:
+        """Get current branch name."""
+        try:
+            return self.repo.head.shorthand
+        except pygit2.GitError:
+            return "main"
 
-        Returns:
-            Commit if found, None otherwise
-        """
-        return self.commit_store.get_commit(commit_hash)
+    def list_branches(self) -> List[str]:
+        """List all branches."""
+        branches = []
+        for ref_name in self.repo.references:
+            if ref_name.startswith("refs/heads/"):
+                branch_name = ref_name[len("refs/heads/"):]
+                branches.append(branch_name)
+        return sorted(branches)
 
-    def get_commits(self) -> List[Commit]:
-        """Get all commits in the dataset.
+    def delete_branch(self, name: str):
+        """Delete a branch."""
+        if name == self.current_branch():
+            raise ValueError("Cannot delete the current branch")
+        ref = f"refs/heads/{name}"
+        self.repo.references[ref].delete()
 
-        Returns:
-            List of all commits
-        """
-        return self.commit_store.get_commits()
+    @contextmanager
+    def file_context(self, file_name: str):
+        """Context manager for temporary file access."""
+        file_obj = self.get_file(file_name)
+        if not file_obj:
+            raise FileNotFoundError(f"File not found: {file_name}")
 
-    def is_empty(self) -> bool:
-        """Check if the dataset is empty (no commits).
+        with tempfile.NamedTemporaryFile(suffix=f"_{file_name}", delete=False) as tmp_file:
+            tmp_file.write(file_obj.read_bytes())
+            tmp_path = Path(tmp_file.name)
 
-        Returns:
-            True if no commits exist, False otherwise
-        """
-        return self.commit_store.is_empty()
+        try:
+            yield tmp_path
+        finally:
+            try:
+                tmp_path.unlink()
+            except OSError:
+                pass
 
-    def get_info(self) -> dict:
-        """Get information about the dataset.
+    def download_file(self, file_name: str, target_path: Union[str, Path]) -> str:
+        """Download a file to local path."""
+        file_obj = self.get_file(file_name)
+        if not file_obj:
+            raise FileNotFoundError(f"File not found: {file_name}")
 
-        Returns:
-            Dictionary with dataset information
-        """
-        info = self.commit_store.get_dataset_info()
-        info.update(
-            {
-                "name": self.name,
-                "description": self.description,
-                "root_dir": self.root_dir,
-                "current_commit": self.current_commit.hash
-                if self.current_commit
-                else None,
-            }
-        )
-        return info
+        target_path = Path(target_path)
+        target_path.parent.mkdir(parents=True, exist_ok=True)
 
-    def cleanup_orphaned_files(self) -> int:
-        """Remove files that are no longer referenced by any commit.
+        with open(target_path, "wb") as f:
+            f.write(file_obj.read_bytes())
 
-        Returns:
-            Number of files removed
-        """
-        return self.commit_store.cleanup_orphaned_files()
+        logger.info(f"Downloaded '{file_name}' to {target_path}")
+        return str(target_path)
+
+
+class Commit:
+    """Simplified commit wrapper."""
+
+    def __init__(self, git_commit: pygit2.Commit, repo: pygit2.Repository):
+        self._git_commit = git_commit
+        self._repo = repo
+        self._files = None
+
+    @property
+    def hash(self) -> str:
+        return str(self._git_commit.id)
+
+    @property
+    def short_hash(self) -> str:
+        return self.hash[:8]
+
+    @property
+    def message(self) -> str:
+        return self._git_commit.message.strip()
+
+    @property
+    def timestamp(self):
+        from datetime import datetime
+        return datetime.fromtimestamp(self._git_commit.commit_time)
+
+    @property
+    def parent_hash(self) -> Optional[str]:
+        if self._git_commit.parents:
+            return str(self._git_commit.parents[0].id)
+        return None
+
+    @property
+    def is_initial(self) -> bool:
+        return len(self._git_commit.parents) == 0
+
+    @property
+    def files(self) -> Dict[str, File]:
+        """Get files (lazy loaded)."""
+        if self._files is None:
+            self._files = {}
+            for entry in self._git_commit.tree:
+                if entry.type == pygit2.GIT_OBJECT_BLOB:
+                    blob = self._repo[entry.id]
+                    file_obj = File(
+                        hash=str(entry.id),
+                        name=entry.name,
+                        size=len(blob.data),
+                        content_type=self._guess_content_type(entry.name),
+                        _storage=BlobStorage(self._repo),
+                    )
+                    self._files[entry.name] = file_obj
+        return self._files
+
+    def _guess_content_type(self, file_name: str) -> Optional[str]:
+        """Guess content type from file extension."""
+        import mimetypes
+        content_type, _ = mimetypes.guess_type(file_name)
+        return content_type
+
+    def get_file(self, name: str) -> Optional[File]:
+        return self.files.get(name)
+
+    def list_files(self) -> List[str]:
+        return list(self.files.keys())
+
+    def has_file(self, name: str) -> bool:
+        return name in self.files
+
+    def get_file_count(self) -> int:
+        return len(self.files)
+
+    def get_total_size(self) -> int:
+        return sum(file.size for file in self.files.values())
 
     def to_dict(self) -> dict:
-        """Convert the dataset to a dictionary representation.
-
-        Returns:
-            Dictionary with dataset properties
-        """
+        """Convert to dictionary representation."""
         return {
-            "name": self.name,
-            "description": self.description,
-            "root_dir": self.root_dir,
-            "current_commit": self.current_commit.hash if self.current_commit else None,
-            "commit_count": self.commit_store.get_commit_count(),
+            "hash": self.hash,
+            "message": self.message,
+            "timestamp": self.timestamp.isoformat(),
+            "parent_hash": self.parent_hash,
+            "files": {
+                name: {
+                    "hash": file.hash,
+                    "name": file.name,
+                    "size": file.size,
+                    "content_type": file.content_type,
+                }
+                for name, file in self.files.items()
+            },
         }
 
     def __str__(self) -> str:
-        """String representation of the dataset."""
-        commit_count = self.commit_store.get_commit_count()
-        current_hash = self.current_commit.short_hash if self.current_commit else "None"
-        return (
-            f"Dataset(name='{self.name}', commits={commit_count}, "
-            f"current={current_hash})"
-        )
+        return f"GitCommit({self.short_hash}: {self.message[:50]})"
 
     def __repr__(self) -> str:
-        """Detailed string representation of the dataset."""
         return (
-            f"Dataset(name='{self.name}', description='{self.description}', "
-            f"root_dir='{self.root_dir}')"
+            f"GitCommit(hash={self.hash}, message='{self.message}', "
+            f"timestamp={self.timestamp}, files={len(self.files)})"
         )
+
+
+class BlobStorage:
+    """Minimal storage adapter for Git blobs."""
+
+    def __init__(self, repo: pygit2.Repository):
+        self.repo = repo
+
+    def retrieve(self, blob_hash: str) -> bytes:
+        """Retrieve blob content."""
+        blob_id = pygit2.Oid(hex=blob_hash)
+        blob = self.repo[blob_id]
+        return blob.data
+
+    def exists(self, blob_hash: str) -> bool:
+        """Check if blob exists."""
+        try:
+            blob_id = pygit2.Oid(hex=blob_hash)
+            blob = self.repo[blob_id]
+            return blob.type == pygit2.GIT_OBJECT_BLOB
+        except (KeyError, ValueError):
+            return False

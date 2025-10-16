@@ -59,32 +59,36 @@ class Catalog:
 
         :return: The number of datasets in the catalog.
         """
-        try:
-            return len([d for d in self.fs.ls(self.datasets_dir) if self.fs.isdir(d)])
-        except FileNotFoundError:
-            return 0
+        return len(self.datasets())
 
     def datasets(self) -> List[str]:
         """Return a list of the names of the datasets in the catalog.
 
+        For Git-based implementation, look for .git directories in the root.
+
         :return: A list of the names of the datasets in the catalog.
         """
         try:
-            # List contents of datasets directory
-            dataset_paths = [
-                d for d in self.fs.ls(self.datasets_dir) if self.fs.isdir(d)
-            ]
-            # Extract dataset names from paths
-            return [d.split("/")[-1] for d in dataset_paths]
-        except FileNotFoundError:
-            # This is normal - empty catalogs don't have a datasets directory yet
-            # Works consistently across all filesystems (local, S3, GCS, Azure, etc.)
-            logger.debug(
-                f"Datasets directory is empty or doesn't exist yet: {self.datasets_dir}"
-            )
-            return []
+            # For Git implementation, look for .git directories
+            import os
+            from pathlib import Path
+
+            # Convert to local path for checking
+            root_path = Path(strip_protocol(self.root_dir))
+
+            if not root_path.exists():
+                return []
+
+            dataset_names = []
+            for item in root_path.iterdir():
+                # Check if this is a Git repository (has .git directory)
+                if item.is_dir() and (item / ".git").exists():
+                    dataset_names.append(item.name)
+
+            return sorted(dataset_names)
+
         except Exception as e:
-            logger.error(f"Error listing datasets from {self.datasets_dir}: {e}")
+            logger.error(f"Error listing datasets from {self.root_dir}: {e}")
             logger.exception("Full traceback:")
             return []  # Return empty list instead of crashing
 
@@ -94,7 +98,9 @@ class Catalog:
         :param dataset_name: The name of the dataset to get.
         :return: The Dataset object with the given name.
         """
-        return Dataset(root_dir=self.root_dir, name=dataset_name, fs=self.fs)
+        # Each dataset has its own directory for Git repository
+        dataset_dir = str(Path(self.root_dir) / dataset_name)
+        return Dataset(root_dir=dataset_dir, name=dataset_name, fs=self.fs)
 
     def create_dataset(self, dataset_name: str, description: str = "") -> Dataset:
         """Create a dataset in the catalog.
@@ -103,10 +109,10 @@ class Catalog:
         :param description: The description of the dataset.
         :return: The Dataset object with the given name.
         """
-        # Note: We don't create directories here for S3 compatibility
-        # Directories will be created when the first commit happens
+        # Each dataset gets its own directory for Git repository
+        dataset_dir = str(Path(self.root_dir) / dataset_name)
         return Dataset(
-            root_dir=self.root_dir,
+            root_dir=dataset_dir,
             name=dataset_name,
             description=description,
             fs=self.fs,

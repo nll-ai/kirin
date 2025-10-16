@@ -9,6 +9,13 @@ from typing import TYPE_CHECKING, BinaryIO, Optional, TextIO, Union
 import fsspec
 from loguru import logger
 
+if TYPE_CHECKING:
+    from typing import Protocol
+
+    class StorageProtocol(Protocol):
+        def retrieve(self, hash: str) -> bytes: ...
+        def exists(self, hash: str) -> bool: ...
+
 
 @dataclass(frozen=True)
 class File:
@@ -22,7 +29,7 @@ class File:
     name: str
     size: int
     content_type: Optional[str] = None
-    _storage: Optional["ContentStore"] = None
+    _storage: Optional["StorageProtocol"] = None
     _fs: Optional[fsspec.AbstractFileSystem] = None
 
     def __post_init__(self):
@@ -188,7 +195,7 @@ class File:
         }
 
     @classmethod
-    def from_dict(cls, data: dict, storage: Optional["ContentStore"] = None) -> "File":
+    def from_dict(cls, data: dict, storage: Optional["StorageProtocol"] = None) -> "File":
         """Create a File from a dictionary representation.
 
         Args:
@@ -255,6 +262,5 @@ class _TempFileHandle:
         return getattr(self._file, name)
 
 
-# Import ContentStore here to avoid circular imports
-if TYPE_CHECKING:
-    from .storage import ContentStore
+# Import storage types here to avoid circular imports
+# No additional imports needed - StorageProtocol is defined above
