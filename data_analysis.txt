@@ -1,0 +1,6 @@
+This file contains data analysis results.
+
+Key findings:
+- Revenue increased by 15%
+- Customer satisfaction improved
+- Market share expanded
