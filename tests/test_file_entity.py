@@ -49,7 +49,7 @@ def test_file_with_storage(temp_dir):
 
     # Create test content
     test_content = b"Hello, World!"
-    content_hash = storage.store_content(test_content)
+    content_hash = storage.store_content(test_content, "test.txt")
 
     # Create file with storage
     file = File(
@@ -68,7 +68,7 @@ def test_file_download(temp_dir):
 
     # Create test content
     test_content = b"Hello, World!"
-    content_hash = storage.store_content(test_content)
+    content_hash = storage.store_content(test_content, "test.txt")
 
     file = File(
         hash=content_hash, name="test.txt", size=len(test_content), _storage=storage
@@ -89,7 +89,7 @@ def test_file_open(temp_dir):
 
     # Create test content
     test_content = b"Hello, World!"
-    content_hash = storage.store_content(test_content)
+    content_hash = storage.store_content(test_content, "test.txt")
 
     file = File(
         hash=content_hash, name="test.txt", size=len(test_content), _storage=storage

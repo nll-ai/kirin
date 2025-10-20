@@ -58,7 +58,7 @@ class File:
             raise RuntimeError("File not associated with storage system")
 
         try:
-            return self._storage.retrieve(self.hash)
+            return self._storage.retrieve(self.hash, self.name)
         except Exception as e:
             logger.error(
                 f"Failed to read file {self.name} (hash: {self.hash[:8]}): {e}"
@@ -170,7 +170,7 @@ class File:
             return False
 
         try:
-            return self._storage.exists(self.hash)
+            return self._storage.exists(self.hash, self.name)
         except Exception:
             return False
 
