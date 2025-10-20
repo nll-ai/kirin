@@ -335,3 +335,167 @@ def test_dataset_cleanup_orphaned_files(temp_dir):
     # Cleanup should return 0 (no orphaned files)
     removed_count = dataset.cleanup_orphaned_files()
     assert removed_count == 0
+
+
+def test_local_files_lazy_loading(temp_dir):
+    """Test that local_files() uses lazy loading - files not downloaded on entry."""
+    from unittest.mock import patch
+
+    dataset = Dataset(root_dir=temp_dir, name="test_dataset")
+
+    # Add files
+    file1 = Path(temp_dir) / "file1.txt"
+    file1.write_text("Content 1")
+    file2 = Path(temp_dir) / "file2.txt"
+    file2.write_text("Content 2")
+
+    dataset.commit("Add files", add_files=[file1, file2])
+
+    # Mock the download_to method at the class level to track downloads
+    with patch("kirin.file.File.download_to") as mock_download:
+        with dataset.local_files() as local_files:
+            # Files should NOT be downloaded when entering context
+            mock_download.assert_not_called()
+
+            # Files should be downloaded only when accessed
+            local_files["file1.txt"]
+            assert mock_download.call_count == 1
+
+            # Second access should use cache (no additional download)
+            local_files["file1.txt"]
+            assert mock_download.call_count == 1  # Still only called once
+
+            # Access second file
+            local_files["file2.txt"]
+            assert mock_download.call_count == 2
+
+
+def test_local_files_iteration_no_download(temp_dir):
+    """Test that iterating over local_files does not trigger downloads."""
+    from unittest.mock import patch
+
+    dataset = Dataset(root_dir=temp_dir, name="test_dataset")
+
+    # Add files
+    file1 = Path(temp_dir) / "file1.txt"
+    file1.write_text("Content 1")
+    file2 = Path(temp_dir) / "file2.txt"
+    file2.write_text("Content 2")
+
+    dataset.commit("Add files", add_files=[file1, file2])
+
+    # Mock download_to to track downloads
+    with patch("kirin.file.File.download_to") as mock_download:
+        with dataset.local_files() as local_files:
+            # Iterating should not trigger downloads
+            filenames = list(local_files)
+            assert set(filenames) == {"file1.txt", "file2.txt"}
+            mock_download.assert_not_called()
+
+            # keys() should also not trigger downloads
+            keys = list(local_files.keys())
+            assert set(keys) == {"file1.txt", "file2.txt"}
+            mock_download.assert_not_called()
+
+
+def test_local_files_caching(temp_dir):
+    """Test that downloaded files are cached for fast repeated access."""
+    from unittest.mock import patch
+
+    dataset = Dataset(root_dir=temp_dir, name="test_dataset")
+
+    # Add file
+    file1 = Path(temp_dir) / "file1.txt"
+    file1.write_text("Content 1")
+
+    dataset.commit("Add file", add_files=[file1])
+
+    with patch("kirin.file.File.download_to") as mock_download:
+        with dataset.local_files() as local_files:
+            # First access should download
+            path1 = local_files["file1.txt"]
+            mock_download.assert_called_once()
+
+            # Second access should use cache (no additional download)
+            path2 = local_files["file1.txt"]
+            assert mock_download.call_count == 1  # Still only called once
+            assert path1 == path2  # Same path returned
+
+
+def test_local_files_key_error(temp_dir):
+    """Test that accessing non-existent file raises KeyError."""
+    dataset = Dataset(root_dir=temp_dir, name="test_dataset")
+
+    # Add one file
+    file1 = Path(temp_dir) / "file1.txt"
+    file1.write_text("Content 1")
+    dataset.commit("Add file", add_files=[file1])
+
+    with dataset.local_files() as local_files:
+        # Accessing existing file should work
+        assert "file1.txt" in local_files
+        path = local_files["file1.txt"]
+        assert Path(path).read_text() == "Content 1"
+
+        # Accessing non-existent file should raise KeyError
+        with pytest.raises(KeyError, match="File not found: nonexistent.txt"):
+            local_files["nonexistent.txt"]
+
+
+def test_local_files_get_method(temp_dir):
+    """Test the get() method with default values."""
+    dataset = Dataset(root_dir=temp_dir, name="test_dataset")
+
+    # Add file
+    file1 = Path(temp_dir) / "file1.txt"
+    file1.write_text("Content 1")
+    dataset.commit("Add file", add_files=[file1])
+
+    with dataset.local_files() as local_files:
+        # get() with existing file should return path
+        path = local_files.get("file1.txt")
+        assert path is not None
+        assert Path(path).read_text() == "Content 1"
+
+        # get() with non-existent file should return default
+        default_path = local_files.get("nonexistent.txt", "default")
+        assert default_path == "default"
+
+        # get() with no default should return None
+        none_path = local_files.get("nonexistent.txt")
+        assert none_path is None
+
+
+def test_local_files_dict_behavior(temp_dir):
+    """Test that LazyLocalFiles behaves like a dictionary."""
+    dataset = Dataset(root_dir=temp_dir, name="test_dataset")
+
+    # Add files
+    file1 = Path(temp_dir) / "file1.txt"
+    file1.write_text("Content 1")
+    file2 = Path(temp_dir) / "file2.txt"
+    file2.write_text("Content 2")
+
+    dataset.commit("Add files", add_files=[file1, file2])
+
+    with dataset.local_files() as local_files:
+        # Test len()
+        assert len(local_files) == 2
+
+        # Test 'in' operator
+        assert "file1.txt" in local_files
+        assert "file2.txt" in local_files
+        assert "nonexistent.txt" not in local_files
+
+        # Test values() and items() for downloaded files only
+        path1 = local_files["file1.txt"]  # Download first file
+
+        # values() should only return downloaded files
+        values = list(local_files.values())
+        assert len(values) == 1
+        assert path1 in values
+
+        # items() should only return downloaded files
+        items = list(local_files.items())
+        assert len(items) == 1
+        assert ("file1.txt", path1) in items

@@ -1,6 +1,7 @@
 """Dataset entity for Kirin - represents a versioned collection of files with linear history."""  # noqa: E501
 
 import tempfile
+from collections.abc import MutableMapping
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Dict, List, Optional, Union
@@ -13,6 +14,89 @@ from .commit_store import CommitStore
 from .file import File
 from .storage import ContentStore
 from .utils import get_filesystem, strip_protocol
+
+
+class LazyLocalFiles(MutableMapping):
+    """Dictionary-like object that lazily downloads files on access.
+
+    Files are only downloaded when accessed via key lookup. Downloaded files
+    are cached for fast repeated access. Iterating over keys does not trigger
+    downloads.
+
+    Args:
+        files: Dictionary mapping filenames to File objects
+        temp_dir: Temporary directory for downloaded files
+    """
+
+    def __init__(self, files: Dict[str, File], temp_dir: str):
+        self._files = files
+        self._temp_dir = temp_dir
+        self._cache = {}  # filename -> local path cache
+
+    def __getitem__(self, key: str) -> str:
+        """Get local path for a file, downloading if necessary.
+
+        Args:
+            key: Filename to access
+
+        Returns:
+            Local path to the downloaded file
+
+        Raises:
+            KeyError: If file doesn't exist
+        """
+        # If already downloaded, return cached path
+        if key in self._cache:
+            return self._cache[key]
+
+        # Download on first access
+        if key not in self._files:
+            raise KeyError(f"File not found: {key}")
+
+        local_path = Path(self._temp_dir) / key
+        self._files[key].download_to(local_path)
+        self._cache[key] = str(local_path)
+        return self._cache[key]
+
+    def __setitem__(self, key: str, value: str) -> None:
+        """Set a local path (for internal use)."""
+        self._cache[key] = value
+
+    def __delitem__(self, key: str) -> None:
+        """Delete a cached file path."""
+        if key in self._cache:
+            del self._cache[key]
+
+    def __iter__(self):
+        """Iterate over filenames without downloading."""
+        return iter(self._files)
+
+    def __len__(self) -> int:
+        """Return number of files."""
+        return len(self._files)
+
+    def __contains__(self, key: str) -> bool:
+        """Check if file exists without downloading."""
+        return key in self._files
+
+    def keys(self):
+        """Return filenames without downloading."""
+        return self._files.keys()
+
+    def values(self):
+        """Return local paths for downloaded files only."""
+        return self._cache.values()
+
+    def items(self):
+        """Return (filename, local_path) pairs for downloaded files only."""
+        return self._cache.items()
+
+    def get(self, key: str, default=None):
+        """Get local path with default if not found."""
+        try:
+            return self[key]
+        except KeyError:
+            return default
 
 
 class Dataset:
@@ -341,12 +425,13 @@ class Dataset:
     def local_files(self):
         """Context manager for accessing files as local paths.
 
-        Downloads all files to a temporary directory and provides a dictionary
-        mapping filenames to local paths. Files are automatically cleaned up
-        when exiting the context.
+        Files are downloaded lazily on first access and cached for fast repeated
+        access. Iterating over keys does not trigger downloads. Files are
+        automatically cleaned up when exiting the context.
 
         Yields:
-            Dictionary mapping filenames to local file paths
+            LazyLocalFiles object that behaves like a dictionary mapping
+            filenames to local file paths
         """
         if self.current_commit is None:
             yield {}
@@ -354,19 +439,13 @@ class Dataset:
 
         # Create temporary directory
         temp_dir = tempfile.mkdtemp(prefix=f"kirin_{self.name}_")
-        local_files = {}
 
         try:
-            # Download all files
-            for name, file_obj in self.current_commit.files.items():
-                local_path = Path(temp_dir) / name
-                file_obj.download_to(local_path)
-                local_files[name] = str(local_path)
-
-            yield local_files
+            # Return lazy-loading dict-like object
+            yield LazyLocalFiles(self.current_commit.files, temp_dir)
 
         finally:
-            # Clean up temporary directory
+            # Clean up all downloaded files
             import shutil
 
             try:
