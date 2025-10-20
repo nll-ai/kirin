@@ -29,21 +29,24 @@ linear-only history:
 
 ### Content-Addressed Storage Design
 
-**CRITICAL**: Files are stored **without file extensions** in the
+**CRITICAL**: Files are stored with **visible filenames** in the
 content-addressed storage system:
 
-- **Storage Path**: `root_dir/data/{hash[:2]}/{hash[2:]}` (e.g.,
-  `data/ab/cdef1234...`)
-- **No Extensions**: Original `.csv`, `.txt`, `.json` extensions are not
-  preserved in storage
-- **Metadata Storage**: File extensions are stored as metadata in the `File`
-  entity's `name` attribute
-- **Extension Restoration**: When files are downloaded or accessed, they get
-  their original names back
-- **Content Integrity**: Files are identified purely by content hash,
-  ensuring data integrity
+- **Storage Path**: `root_dir/data/{hash[:2]}/{hash[2:]}/{filename}` (e.g.,
+  `data/ab/cdef1234.../data.csv`)
+- **Visible Filenames**: Original filenames are preserved in storage for
+  transparency and debugging
+- **Deduplication with Multiple Filenames**: When identical content is uploaded
+  with different filenames, all filenames are stored as separate files in the
+  same hash directory (all are copies of the same content)
+- **File Retrieval**: Always uses the original filename from `File.name`
+  metadata (preserves current API behavior)
+- **Migration Strategy**: Automatically migrates old format files to new format
+  on first access, with cleanup of old files
+- **Content Integrity**: Files are identified by content hash, ensuring data
+  integrity
 - **Deduplication**: Identical content (regardless of original filename) is
-  stored only once
+  stored only once, but with multiple filename references
 
 ## Simplified Architecture (2024 Overhaul)
 
@@ -75,12 +78,11 @@ content-addressed storage system:
 **ContentStore** (`kirin/storage.py`):
 
 - Content-addressed storage using fsspec backends
-- Files stored at `root_dir/data/{hash[:2]}/{hash[2:]}` **without file
-  extensions**
-- File extensions are metadata stored in the `File` entity's `name`
-  attribute
-- Storage is extension-agnostic (content is stored as pure hash)
-- Extensions are restored when files are downloaded/accessed
+- Files stored at `root_dir/data/{hash[:2]}/{hash[2:]}/{filename}` **with
+  visible filenames**
+- Original filenames are preserved in storage for transparency
+- Supports deduplication with multiple filenames for same content
+- Automatic migration from old format to new format on first access
 - Methods: `store_file()`, `store_content()`, `retrieve()`, `exists()`
 - Supports local filesystem, S3, GCS, Azure, etc.
 

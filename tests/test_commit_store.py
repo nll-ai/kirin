@@ -254,8 +254,8 @@ def test_cleanup_orphaned_files(temp_dir):
     content1 = b"Hello"
     content2 = b"World"
 
-    hash1 = store.storage.store_content(content1)
-    hash2 = store.storage.store_content(content2)
+    hash1 = store.storage.store_content(content1, "file1.txt")
+    hash2 = store.storage.store_content(content2, "file2.txt")
 
     # Create commit with only hash1
     file1 = File(hash=hash1, name="file1.txt", size=len(content1))
@@ -273,8 +273,8 @@ def test_cleanup_orphaned_files(temp_dir):
 
     # Should remove hash2 (not referenced by any commit)
     assert removed_count == 1
-    assert store.storage.exists(hash1)
-    assert not store.storage.exists(hash2)
+    assert store.storage.exists(hash1, "file1.txt")
+    assert not store.storage.exists(hash2, "file2.txt")
 
 
 def test_get_dataset_info(temp_dir):
