@@ -94,7 +94,7 @@ docs = [
 ]
 
 [project.scripts]
-kirin = "kirin.cli:main"
+kirin = "kirin.cli:app"
 
 
 
