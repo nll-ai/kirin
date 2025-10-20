@@ -70,7 +70,7 @@ version = "0.0.2"
 dependencies = [
     "pyprojroot",
     "python-dotenv",
-    "typer",
+    "typer>=0.20.0",
     "json5",
     "fsspec>=2025.9.0,<2026",
     "s3fs",  # For S3 support
@@ -132,3 +132,4 @@ loguru = ">=0.7.3,<0.8"
 marimo = ">=0.16.5,<0.17"
 keyring = ">=25.6.0,<26"
 ipython = "*"
+typer = ">=0.20.0,<0.21"

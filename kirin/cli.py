@@ -1,11 +1,14 @@
 """CLI interface for Kirin."""
 
 import socket
-import sys
+from pathlib import Path
+from typing import List
 
 import typer
 import uvicorn
 from loguru import logger
+
+from .web.config import CatalogManager
 
 app = typer.Typer()
 
@@ -19,6 +22,7 @@ def find_free_port() -> int:
     return port
 
 
+@app.command()
 def ui() -> None:
     """Launch the Kirin web interface."""
     port = find_free_port()
@@ -36,15 +40,60 @@ def ui() -> None:
     )
 
 
-def main() -> None:
-    """Main entry point for the CLI."""
-    if len(sys.argv) > 1 and sys.argv[1] == "ui":
-        ui()
-    else:
-        print("Usage: kirin ui")
-        print("Launch the Kirin web interface.")
-        sys.exit(1)
+@app.command()
+def upload(
+    catalog: str = typer.Option(..., "--catalog", "-c", help="Catalog ID"),
+    dataset: str = typer.Option(..., "--dataset", "-d", help="Dataset name"),
+    commit_message: str = typer.Option(
+        ..., "--commit-message", "-m", help="Commit message"
+    ),
+    files: List[str] = typer.Argument(..., help="Files to upload"),
+) -> None:
+    """Upload files to a dataset in a catalog."""
+    if not files:
+        typer.echo("Error: No files provided", err=True)
+        raise typer.Exit(1)
+
+    # Load catalog configuration
+    catalog_manager = CatalogManager()
+    catalog_config = catalog_manager.get_catalog(catalog)
+
+    if catalog_config is None:
+        typer.echo(f"Error: Catalog not found: {catalog}", err=True)
+        raise typer.Exit(1)
+
+    # Convert strings to Path objects and validate files exist
+    file_paths = [Path(f) for f in files]
+    missing_files = []
+    for file_path in file_paths:
+        if not file_path.exists():
+            missing_files.append(str(file_path))
+
+    if missing_files:
+        for file_path in missing_files:
+            typer.echo(f"Error: File not found: {file_path}", err=True)
+        raise typer.Exit(1)
+
+    try:
+        # Convert config to Catalog instance with authentication
+        catalog_instance = catalog_config.to_catalog()
+
+        # Get or create dataset
+        dataset_instance = catalog_instance.get_dataset(dataset)
+
+        # Upload files in single commit
+        commit_hash = dataset_instance.commit(
+            message=commit_message, add_files=file_paths
+        )
+
+        # Report success
+        typer.echo(f"✓ Uploaded {len(files)} file(s) to {dataset}")
+        typer.echo(f"  Commit: {commit_hash[:8]}")
+
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":
-    main()
+    app()
