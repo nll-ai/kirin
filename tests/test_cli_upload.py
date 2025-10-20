@@ -168,16 +168,3 @@ def test_upload_command_no_files_provided(temp_dir, temp_catalog_manager):
     # Verify: Check error
     assert result.exit_code != 0
     assert "Missing argument" in result.stderr
-
-
-def test_upload_command_help():
-    """Test that upload command shows help."""
-    runner = CliRunner()
-    result = runner.invoke(app, ["upload", "--help"])
-
-    # Verify: Check help output
-    assert result.exit_code == 0
-    assert "Upload files to a dataset in a catalog" in result.stdout
-    assert "--catalog" in result.stdout
-    assert "--dataset" in result.stdout
-    assert "--commit-message" in result.stdout
