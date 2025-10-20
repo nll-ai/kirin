@@ -19,6 +19,7 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     """Setup Kirin and basic imports."""
+
     import sys
     from pathlib import Path
 
@@ -79,7 +80,9 @@ def _(Path, dataset):
     from kirin import Dataset
 
     # Checkout to latest commit (HEAD)
-    dataset.checkout("6e25abbe68066f92933f18eca9b99a9d21182986184da3fd2f3935bdcbe0b749")
+    dataset.checkout(
+        "6e25abbe68066f92933f18eca9b99a9d21182986184da3fd2f3935bdcbe0b749"
+    )
 
 
     # Access files as local paths
