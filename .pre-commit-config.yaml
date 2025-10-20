@@ -14,19 +14,21 @@ repos:
     hooks:
       - id: interrogate
         args: [-c, pyproject.toml]
-        exclude: '^notebooks/|^scripts/|test_dataset_creation\.py$|test_dataset_info\.py$|test_directory_creation\.py$|test_error_handling\.py$|test_lazy_creation\.py$|test_ui\.py$|test_web_ui\.py$|run_web_ui\.py$'
+        exclude: '^notebooks/|^scripts/|test_dataset_creation\.py$|test_dataset_info\.py$|test_directory_creation\.py$|test_error_handling\.py$|test_lazy_creation\.py$|test_ui\.py$|test_web_ui\.py$|run_web_ui\.py$|^docs/releases/.*\.md$'
   - repo: https://github.com/jsh9/pydoclint
     rev: 0.5.3
     hooks:
       - id: pydoclint
         args:
           - "--config=pyproject.toml"
+        exclude: '^docs/releases/.*\.md$'
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
     rev: v0.5.1
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
+        exclude: '^docs/releases/.*\.md$'
   - repo: https://github.com/igorshubovych/markdownlint-cli
     rev: v0.41.0
     hooks:
