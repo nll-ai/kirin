@@ -89,8 +89,8 @@ jobs:
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          llamabot configure default-model --model-name="${{ secrets.DEFAULT_LANGUAGE_MODEL }}"
-          llamabot git write-release-notes
+          uvx llamabot configure default-model --model-name="${{ secrets.DEFAULT_LANGUAGE_MODEL }}"
+          uvx llamabot git write-release-notes
 
       - name: Commit release notes
         if: github.event_name != 'pull_request'
