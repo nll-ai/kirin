@@ -31,6 +31,7 @@ For local filesystem storage:
 - **Catalog Name**: Friendly name for the catalog
 - **Root Directory**: S3 URL (e.g., `s3://my-bucket/data`)
 - **AWS Profile**: Optional AWS profile name (auto-detected from environment)
+- **Authentication Command**: Optional CLI command for automatic authentication
 
 #### Google Cloud Storage Configuration
 
@@ -45,6 +46,7 @@ For local filesystem storage:
 
 - **Catalog Name**: Friendly name for the catalog
 - **Root Directory**: GCS URL (e.g., `gs://my-bucket/data`)
+- **Authentication Command**: Optional CLI command for automatic authentication
 
 #### Azure Blob Storage Configuration
 
@@ -59,6 +61,48 @@ For local filesystem storage:
 
 - **Catalog Name**: Friendly name for the catalog
 - **Root Directory**: Azure URL (e.g., `az://my-container/data`)
+- **Authentication Command**: Optional CLI command for automatic authentication
+
+### Authentication Command Auto-Execution
+
+**NEW**: Kirin's web UI can automatically execute authentication commands
+when accessing catalogs, eliminating the need for manual CLI authentication.
+
+**How It Works:**
+
+1. Store your authentication command in the catalog configuration (e.g.,
+   `aws sso login --profile my-profile`)
+2. When authentication fails, Kirin automatically executes the command
+3. If successful, Kirin retries the operation and shows your datasets
+4. If it fails, you'll see clear error messages with manual instructions
+
+**Setup:**
+
+When adding or editing a catalog, fill in the "Authentication Command
+(Optional)" field:
+
+- **AWS S3**: `aws sso login --profile {{ aws_profile }}`
+- **GCP GCS**: `gcloud auth login`
+- **Azure**: `az login`
+
+**Benefits:**
+
+- **Automatic retry**: No manual intervention needed
+- **Seamless UX**: Authentication happens in the background
+- **Clear feedback**: Success/failure messages shown in UI
+- **Manual fallback**: You can still authenticate manually if auto-auth fails
+
+**Example:**
+
+```text
+Catalog: production-s3
+Root Directory: s3://my-production-bucket/data
+AWS Profile: production
+Auth Command: aws sso login --profile production
+
+Result: When you click on this catalog, Kirin will automatically
+run the auth command if authentication is needed.
+```
 
 ## Multi-Catalog Workflows
 

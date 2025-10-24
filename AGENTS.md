@@ -1009,6 +1009,10 @@ class TestLocalStateManager:
         # Test implementation...
 ```
 
+**CRITICAL**: All tests must be written in **pytest function style**, NOT
+unittest class style. Use `def test_function_name():` pattern, not
+`class TestSomething:` patterns.
+
 **Benefits of pytest-style functions**:
 
 - **Simpler structure** - No class overhead, just functions

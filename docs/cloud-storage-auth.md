@@ -392,3 +392,67 @@ Or use `certifi`:
 ```bash
 pip install --upgrade certifi
 ```
+
+## Web UI Auto-Authentication
+
+**NEW**: The Kirin web UI can automatically execute authentication
+commands when needed.
+
+### Configuring Auto-Authentication
+
+When creating or editing a catalog in the web UI, you can provide an
+optional authentication command:
+
+**AWS S3:**
+
+```text
+Auth Command: aws sso login --profile {{ aws_profile }}
+```
+
+**GCP GCS:**
+
+```text
+Auth Command: gcloud auth login
+```
+
+**Azure Blob Storage:**
+
+```text
+Auth Command: az login
+```
+
+### How Auto-Authentication Works
+
+1. **Catalog Access**: When you click on a catalog, Kirin attempts to
+   connect
+2. **Authentication Check**: If authentication fails or times out, Kirin
+   checks for stored auth command
+3. **Auto-Execution**: If found, Kirin executes the command automatically
+   (30-second timeout)
+4. **Retry**: If authentication succeeds, Kirin retries loading the
+   datasets
+5. **Feedback**: Success/failure messages are shown in the UI
+
+### Benefits
+
+- **No manual CLI**: Authentication happens automatically in the web UI
+- **Faster workflow**: No need to switch to terminal and run commands
+- **Clear feedback**: You see exactly what happened (success or failure)
+- **Manual fallback**: You can still authenticate manually if needed
+
+### Timeout Protection
+
+To prevent the UI from hanging on slow or failed connections:
+
+- **10-second timeout** for catalog operations (listing datasets)
+- **5-second timeout** for individual dataset loading
+- **30-second timeout** for authentication commands
+- **Clear error messages** when timeouts occur
+
+### Security Considerations
+
+- **Commands are stored locally** in your catalog configuration file
+- **No passwords stored**: Auth commands only contain profile names or
+  trigger browser-based OAuth
+- **Subprocess isolation**: Commands run in isolated subprocesses with
+  timeout protection
