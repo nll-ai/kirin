@@ -1,8 +1,11 @@
 """FastAPI application for Kirin Web UI."""
 
+import asyncio
 import os
 import shutil
+import subprocess
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import List
@@ -23,6 +26,101 @@ from .config import CatalogConfig, CatalogManager
 
 # Global catalog manager
 catalog_manager = CatalogManager()
+
+
+async def safe_catalog_operation(func, timeout_seconds=10, *args, **kwargs):
+    """Execute blocking catalog operation with timeout.
+
+    Args:
+        func: Blocking function to execute
+        timeout_seconds: Timeout in seconds (default 10)
+        *args, **kwargs: Arguments to pass to func
+
+    Returns:
+        Result from func or raises TimeoutError/Exception
+    """
+    loop = asyncio.get_event_loop()
+    executor = ThreadPoolExecutor(max_workers=1)
+
+    try:
+        async with asyncio.timeout(timeout_seconds):
+            result = await loop.run_in_executor(executor, lambda: func(*args, **kwargs))
+            return result
+    finally:
+        executor.shutdown(wait=False)
+
+
+async def execute_auth_command(
+    auth_command: str, timeout_seconds: int = 30
+) -> tuple[bool, str]:
+    """Execute authentication command safely with timeout.
+
+    Args:
+        auth_command: CLI command to execute (e.g.,
+            "aws sso login --profile my-profile")
+        timeout_seconds: Timeout in seconds (default 30)
+
+    Returns:
+        Tuple of (success: bool, message: str)
+    """
+    if not auth_command or not auth_command.strip():
+        return False, "No auth command provided"
+
+    try:
+        # Split command into parts for subprocess
+        cmd_parts = auth_command.strip().split()
+        if not cmd_parts:
+            return False, "Empty auth command"
+
+        logger.info(f"Executing auth command: {auth_command}")
+
+        # Execute command with timeout
+        loop = asyncio.get_event_loop()
+        executor = ThreadPoolExecutor(max_workers=1)
+
+        try:
+            async with asyncio.timeout(timeout_seconds):
+                result = await loop.run_in_executor(
+                    executor,
+                    lambda: subprocess.run(
+                        cmd_parts,
+                        capture_output=True,
+                        text=True,
+                        timeout=timeout_seconds,
+                        check=False,  # Don't raise exception on non-zero exit
+                    ),
+                )
+
+                if result.returncode == 0:
+                    logger.info(f"Auth command succeeded: {auth_command}")
+                    return True, f"Authentication successful: {auth_command}"
+                else:
+                    error_msg = (
+                        result.stderr.strip()
+                        or result.stdout.strip()
+                        or "Unknown error"
+                    )
+                    logger.warning(f"Auth command failed: {auth_command} - {error_msg}")
+                    return False, f"Authentication failed: {error_msg}"
+
+        finally:
+            executor.shutdown(wait=False)
+
+    except asyncio.TimeoutError:
+        logger.error(f"Auth command timeout: {auth_command}")
+        return (
+            False,
+            f"Authentication command timed out after {timeout_seconds} seconds",
+        )
+    except subprocess.TimeoutExpired:
+        logger.error(f"Auth command timeout: {auth_command}")
+        return (
+            False,
+            f"Authentication command timed out after {timeout_seconds} seconds",
+        )
+    except Exception as e:
+        logger.error(f"Auth command error: {auth_command} - {e}")
+        return False, f"Authentication command error: {str(e)}"
 
 
 def get_aws_profiles():
@@ -165,6 +263,7 @@ async def add_catalog(
     name: str = Form(..., min_length=1, max_length=100),
     root_dir: str = Form(..., min_length=1),
     aws_profile: str = Form(""),
+    auth_command: str = Form(""),
 ):
     """Add a new catalog."""
     try:
@@ -181,6 +280,7 @@ async def add_catalog(
             name=name,
             root_dir=root_dir,
             aws_profile=aws_profile if aws_profile else None,
+            auth_command=auth_command if auth_command else None,
         )
 
         # Add catalog
@@ -216,34 +316,50 @@ async def list_datasets(
     catalog_id: str,
     catalog_manager: CatalogManager = Depends(get_catalog_manager),
 ):
-    """List datasets in a catalog - automatically load datasets."""
+    """List datasets in a catalog with timeout protection."""
     catalog = catalog_manager.get_catalog(catalog_id)
     if not catalog:
         raise HTTPException(status_code=404, detail="Catalog not found")
 
     try:
-        # Create authenticated filesystem and load datasets automatically
-        kirin_catalog = catalog.to_catalog()
-        dataset_names = kirin_catalog.datasets()
+        # 10 second timeout for catalog connection and listing
+        dataset_names = await safe_catalog_operation(
+            lambda: catalog.to_catalog().datasets(), timeout_seconds=10
+        )
 
-        # Load actual dataset info for accurate commit counts
+        # Load dataset details with timeout
         datasets = []
         for dataset_name in dataset_names:
-            dataset = kirin_catalog.get_dataset(dataset_name)
-            datasets.append(
-                {
-                    "name": dataset_name,
-                    "description": dataset.description,
-                    "commit_count": len(dataset.history()),
-                    "current_commit": dataset.current_commit.hash
-                    if dataset.current_commit
-                    else None,
-                    "total_size": 0,  # Can calculate if needed
-                    "last_updated": dataset.current_commit.timestamp.isoformat()
-                    if dataset.current_commit
-                    else None,
-                }
-            )
+            try:
+
+                def get_dataset_info():
+                    """Get dataset information for display."""
+                    kirin_catalog = catalog.to_catalog()
+                    dataset = kirin_catalog.get_dataset(dataset_name)
+                    return {
+                        "name": dataset_name,
+                        "description": dataset.description,
+                        "commit_count": len(dataset.history()),
+                        "current_commit": dataset.current_commit.hash
+                        if dataset.current_commit
+                        else None,
+                        "total_size": 0,
+                        "last_updated": dataset.current_commit.timestamp.isoformat()
+                        if dataset.current_commit
+                        else None,
+                    }
+
+                dataset_info = await safe_catalog_operation(
+                    get_dataset_info, timeout_seconds=5
+                )
+                datasets.append(dataset_info)
+            except asyncio.TimeoutError:
+                logger.warning(f"Timeout loading dataset {dataset_name}")
+                # Skip this dataset, continue with others
+                continue
+            except Exception as e:
+                logger.warning(f"Error loading dataset {dataset_name}: {e}")
+                continue
 
         return templates.TemplateResponse(
             "datasets.html",
@@ -251,21 +367,188 @@ async def list_datasets(
                 "request": request,
                 "catalog": catalog,
                 "datasets": datasets,
-                "lazy_loading": False,  # We actually loaded the data
+                "lazy_loading": False,
             },
         )
 
-    except Exception as e:
-        logger.error(f"Failed to load datasets: {e}")
-        logger.exception("Full traceback:")
-        # Return error page instead of crashing
+    except asyncio.TimeoutError:
+        logger.error(f"Timeout connecting to catalog: {catalog.name}")
+
+        # Try auto-authentication if auth command is available
+        auto_auth_attempted = False
+        auto_auth_message = ""
+        if catalog.auth_command:
+            logger.info(f"Attempting auto-authentication for catalog: {catalog.name}")
+            auto_auth_success, auto_auth_message = await execute_auth_command(
+                catalog.auth_command, timeout_seconds=30
+            )
+            auto_auth_attempted = True
+
+            if auto_auth_success:
+                # Retry the operation after successful authentication
+                try:
+                    dataset_names = await safe_catalog_operation(
+                        lambda: catalog.to_catalog().datasets(), timeout_seconds=10
+                    )
+
+                    # Load dataset details with timeout
+                    datasets = []
+                    for dataset_name in dataset_names:
+                        try:
+
+                            def get_dataset_info():
+                                """Get dataset information for retry after auto-auth."""
+                                kirin_catalog = catalog.to_catalog()
+                                dataset = kirin_catalog.get_dataset(dataset_name)
+                                return {
+                                    "name": dataset_name,
+                                    "description": dataset.description,
+                                    "commit_count": len(dataset.history()),
+                                    "current_commit": dataset.current_commit.hash
+                                    if dataset.current_commit
+                                    else None,
+                                    "total_size": 0,
+                                    "last_updated": (
+                                        dataset.current_commit.timestamp.isoformat()
+                                        if dataset.current_commit
+                                        else None
+                                    ),
+                                }
+
+                            dataset_info = await safe_catalog_operation(
+                                get_dataset_info, timeout_seconds=5
+                            )
+                            datasets.append(dataset_info)
+                        except asyncio.TimeoutError:
+                            logger.warning(f"Timeout loading dataset {dataset_name}")
+                            continue
+                        except Exception as e:
+                            logger.warning(f"Error loading dataset {dataset_name}: {e}")
+                            continue
+
+                    return templates.TemplateResponse(
+                        "datasets.html",
+                        {
+                            "request": request,
+                            "catalog": catalog,
+                            "datasets": datasets,
+                            "lazy_loading": False,
+                            "auto_auth_success": True,
+                            "auto_auth_message": auto_auth_message,
+                        },
+                    )
+                except Exception as retry_error:
+                    logger.error(f"Retry after auto-auth failed: {retry_error}")
+                    auto_auth_message += f" (but retry failed: {str(retry_error)})"
+
         return templates.TemplateResponse(
             "datasets.html",
             {
                 "request": request,
                 "catalog": catalog,
                 "datasets": [],
-                "error": f"Failed to connect to catalog: {str(e)}",
+                "error": "Connection timeout - authentication may be required",
+                "auth_required": True,
+                "auto_auth_attempted": auto_auth_attempted,
+                "auto_auth_message": auto_auth_message,
+                "lazy_loading": False,
+            },
+        )
+    except Exception as e:
+        logger.error(f"Failed to load datasets: {e}")
+        logger.exception("Full traceback:")
+
+        # Check if it's an authentication error
+        error_str = str(e).lower()
+        auth_error = any(
+            keyword in error_str
+            for keyword in [
+                "credentials",
+                "authentication",
+                "unauthorized",
+                "permission denied",
+                "access denied",
+                "login",
+            ]
+        )
+
+        # Try auto-authentication if it's an auth error and auth command is available
+        auto_auth_attempted = False
+        auto_auth_message = ""
+        if auth_error and catalog.auth_command:
+            logger.info(f"Attempting auto-authentication for catalog: {catalog.name}")
+            auto_auth_success, auto_auth_message = await execute_auth_command(
+                catalog.auth_command, timeout_seconds=30
+            )
+            auto_auth_attempted = True
+
+            if auto_auth_success:
+                # Retry the operation after successful authentication
+                try:
+                    dataset_names = await safe_catalog_operation(
+                        lambda: catalog.to_catalog().datasets(), timeout_seconds=10
+                    )
+
+                    # Load dataset details with timeout
+                    datasets = []
+                    for dataset_name in dataset_names:
+                        try:
+
+                            def get_dataset_info():
+                                """Get dataset information for retry after auto-auth."""
+                                kirin_catalog = catalog.to_catalog()
+                                dataset = kirin_catalog.get_dataset(dataset_name)
+                                return {
+                                    "name": dataset_name,
+                                    "description": dataset.description,
+                                    "commit_count": len(dataset.history()),
+                                    "current_commit": dataset.current_commit.hash
+                                    if dataset.current_commit
+                                    else None,
+                                    "total_size": 0,
+                                    "last_updated": (
+                                        dataset.current_commit.timestamp.isoformat()
+                                        if dataset.current_commit
+                                        else None
+                                    ),
+                                }
+
+                            dataset_info = await safe_catalog_operation(
+                                get_dataset_info, timeout_seconds=5
+                            )
+                            datasets.append(dataset_info)
+                        except asyncio.TimeoutError:
+                            logger.warning(f"Timeout loading dataset {dataset_name}")
+                            continue
+                        except Exception as e:
+                            logger.warning(f"Error loading dataset {dataset_name}: {e}")
+                            continue
+
+                    return templates.TemplateResponse(
+                        "datasets.html",
+                        {
+                            "request": request,
+                            "catalog": catalog,
+                            "datasets": datasets,
+                            "lazy_loading": False,
+                            "auto_auth_success": True,
+                            "auto_auth_message": auto_auth_message,
+                        },
+                    )
+                except Exception as retry_error:
+                    logger.error(f"Retry after auto-auth failed: {retry_error}")
+                    auto_auth_message += f" (but retry failed: {str(retry_error)})"
+
+        return templates.TemplateResponse(
+            "datasets.html",
+            {
+                "request": request,
+                "catalog": catalog,
+                "datasets": [],
+                "error": f"Failed to connect: {str(e)}",
+                "auth_required": auth_error,
+                "auto_auth_attempted": auto_auth_attempted,
+                "auto_auth_message": auto_auth_message,
                 "lazy_loading": False,
             },
         )
@@ -279,18 +562,27 @@ async def create_dataset(
     description: str = Form(""),
     catalog_manager: CatalogManager = Depends(get_catalog_manager),
 ):
-    """Create a new dataset - fast like notebook."""
+    """Create a new dataset with timeout protection."""
     catalog = catalog_manager.get_catalog(catalog_id)
     if not catalog:
         raise HTTPException(status_code=404, detail="Catalog not found")
 
     try:
-        # Create authenticated filesystem before creating Catalog
-        kirin_catalog = catalog.to_catalog()
+        # Create dataset with timeout
+        def create_dataset_operation():
+            """Create a new dataset with conflict checking."""
+            kirin_catalog = catalog.to_catalog()
+            existing_datasets = kirin_catalog.datasets()
+            if name in existing_datasets:
+                return None  # Signal that dataset exists
+            kirin_catalog.create_dataset(name, description)
+            return True
 
-        # Check if dataset exists like notebook
-        existing_datasets = kirin_catalog.datasets()
-        if name in existing_datasets:
+        result = await safe_catalog_operation(
+            create_dataset_operation, timeout_seconds=10
+        )
+
+        if result is None:
             return templates.TemplateResponse(
                 "datasets.html",
                 {
@@ -304,13 +596,15 @@ async def create_dataset(
                 },
             )
 
-        # Create dataset like notebook
-        kirin_catalog.create_dataset(name, description)
-
-        # Redirect to the dataset page instead of showing empty catalog list
-        # This works better with S3 lazy directory creation
+        # Redirect to the dataset page
         return RedirectResponse(url=f"/catalog/{catalog_id}/{name}", status_code=302)
 
+    except asyncio.TimeoutError:
+        logger.error(f"Timeout creating dataset: {name}")
+        raise HTTPException(
+            status_code=504,
+            detail="Connection timeout - authentication may be required",
+        )
     except Exception as e:
         logger.error(f"Failed to create dataset {name}: {e}")
         raise HTTPException(
@@ -350,6 +644,7 @@ async def update_catalog(
     name: str = Form(...),
     root_dir: str = Form(...),
     aws_profile: str = Form(""),
+    auth_command: str = Form(""),
 ):
     """Update an existing catalog."""
     try:
@@ -367,6 +662,7 @@ async def update_catalog(
             name=name,
             root_dir=root_dir,
             aws_profile=aws_profile if aws_profile else None,
+            auth_command=auth_command if auth_command else None,
         )
 
         # Update catalog - handle ID changes
@@ -483,43 +779,55 @@ async def delete_catalog(
 async def view_dataset(
     request: Request, catalog_id: str, dataset_name: str, tab: str = "files"
 ):
-    """View a dataset - fast like notebook."""
+    """View a dataset with timeout protection."""
     try:
         # Get catalog config
         catalog = catalog_manager.get_catalog(catalog_id)
         if not catalog:
             raise HTTPException(status_code=404, detail="Catalog not found")
 
-        # Create authenticated filesystem before creating Catalog
-        kirin_catalog = catalog.to_catalog()
-        dataset = kirin_catalog.get_dataset(dataset_name)
+        # Load dataset with timeout
+        def load_dataset():
+            """Load dataset with files and metadata."""
+            kirin_catalog = catalog.to_catalog()
+            dataset = kirin_catalog.get_dataset(dataset_name)
 
-        # Get files like notebook: dataset.list_files()
-        files = []
-        if dataset.current_commit:
-            for name, file_obj in dataset.files.items():
-                files.append(
-                    {
-                        "name": name,
-                        "size": file_obj.size,
-                        "content_type": file_obj.content_type,
-                        "hash": file_obj.hash,
-                        "short_hash": file_obj.short_hash,
-                    }
-                )
+            files = []
+            if dataset.current_commit:
+                for name, file_obj in dataset.files.items():
+                    files.append(
+                        {
+                            "name": name,
+                            "size": file_obj.size,
+                            "content_type": file_obj.content_type,
+                            "hash": file_obj.hash,
+                            "short_hash": file_obj.short_hash,
+                        }
+                    )
 
-        # Simple info
-        info = {
-            "description": dataset.description or "",
-            "commit_count": len(dataset.history()),
-            "current_commit": dataset.current_commit.hash
-            if dataset.current_commit
-            else None,
-            "total_size": sum(f["size"] for f in files),
-            "last_updated": dataset.current_commit.timestamp.isoformat()
-            if dataset.current_commit
-            else None,
-        }
+            info = {
+                "description": dataset.description or "",
+                "commit_count": len(dataset.history()),
+                "current_commit": dataset.current_commit.hash
+                if dataset.current_commit
+                else None,
+                "total_size": sum(f["size"] for f in files),
+                "last_updated": dataset.current_commit.timestamp.isoformat()
+                if dataset.current_commit
+                else None,
+            }
+
+            return (
+                files,
+                info,
+                dataset.current_commit.hash
+                if dataset.current_commit and dataset.current_commit.hash
+                else None,
+            )
+
+        files, info, current_commit = await safe_catalog_operation(
+            load_dataset, timeout_seconds=10
+        )
 
         return templates.TemplateResponse(
             "dataset_view.html",
@@ -531,12 +839,16 @@ async def view_dataset(
                 "files": files,
                 "active_tab": tab,
                 "catalog": catalog,
-                "current_commit": dataset.current_commit.hash
-                if dataset.current_commit and dataset.current_commit.hash
-                else None,
+                "current_commit": current_commit,
             },
         )
 
+    except asyncio.TimeoutError:
+        logger.error(f"Timeout loading dataset: {dataset_name}")
+        raise HTTPException(
+            status_code=504,
+            detail="Connection timeout - authentication may be required",
+        )
     except Exception as e:
         logger.error(f"Failed to view dataset {dataset_name}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to view dataset: {str(e)}")

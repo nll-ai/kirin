@@ -26,6 +26,8 @@ class CatalogConfig:
     azure_account_name: Optional[str] = None
     azure_account_key: Optional[str] = None
     azure_connection_string: Optional[str] = None
+    # Optional CLI authentication command
+    auth_command: Optional[str] = None
 
     def to_catalog(self) -> Catalog:
         """Convert this configuration to a runtime Catalog instance.

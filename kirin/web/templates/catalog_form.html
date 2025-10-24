@@ -69,6 +69,19 @@
                     </p>
                 </div>
 
+                <!-- Authentication Command -->
+                <div class="form-group">
+                    <label for="auth_command" class="form-label">Authentication Command (Optional)</label>
+                    <input type="text" id="auth_command" name="auth_command" class="input"
+                           placeholder="aws sso login --profile my-profile or gcloud auth login"
+                           value="{{ catalog.auth_command if catalog else (form_data.auth_command if form_data else '') }}">
+                    <p class="text-sm text-muted-foreground mt-1">
+                        CLI command to authenticate with this catalog's cloud provider (e.g.,
+                        <code>aws sso login --profile my-profile</code> or
+                        <code>gcloud auth login</code>)
+                    </p>
+                </div>
+
                 <!-- Help Section -->
                 <div id="help-section" class="hidden">
                     <div class="bg-muted p-4 rounded-lg">
