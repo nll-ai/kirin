@@ -182,9 +182,28 @@ pixi run setup-ssl
 
 #### Cloud Authentication Failures
 
+**Automatic Authentication (NEW):**
+
+Kirin now automatically handles authentication for catalogs with stored auth commands:
+
+1. **Auto-retry**: When authentication fails, Kirin executes the stored auth command
+2. **Success feedback**: Green banner shows successful authentication
+3. **Failure guidance**: Error message with manual instructions if auto-auth fails
+
+**Manual Authentication:**
+
+If auto-authentication isn't configured or fails:
+
 1. **Check credentials**: Verify AWS profiles, GCS tokens, etc.
-2. **Test connectivity**: Try a simple cloud operation
-3. **Review logs**: Check terminal output for error messages
+2. **Run auth command**: Execute the CLI command manually (shown in error message)
+3. **Refresh page**: Try accessing the catalog again
+4. **Review logs**: Check terminal output for error messages
+
+**Timeout Protection:**
+
+- **10-second timeout** for catalog operations prevents UI from hanging
+- **Clear error messages** indicate when timeouts occur
+- **Retry button** allows you to try again after authentication
 
 ### Performance Tips
 
