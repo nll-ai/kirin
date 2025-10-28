@@ -109,7 +109,7 @@ def _clear_file_index(file_index: FileIndex) -> None:
         # Delete each index file
         for file_hash in file_hashes:
             try:
-                file_index._delete_index(file_hash)
+                file_index.delete_index(file_hash)
             except Exception as e:
                 logger.warning(f"Failed to delete index for {file_hash[:8]}: {e}")
         

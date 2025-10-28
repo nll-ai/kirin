@@ -104,7 +104,8 @@ Catalog(
 - `datasets()` - List all datasets in the catalog
 - `get_dataset(name)` - Get a specific dataset
 - `create_dataset(name, description="")` - Create a new dataset
-- `find_datasets_with_file(file_hash)` - Find datasets containing a specific file
+- `find_datasets_with_file(file_hash)` - Find datasets containing a specific file (by hash)
+- `find_datasets_with_filename(filename)` - Find datasets containing a specific file (by name)
 - `__len__()` - Number of datasets in the catalog
 
 #### Catalog Examples
@@ -179,6 +180,54 @@ for dataset_name, commits in results.items():
     for commit_info in commits:
         print(f"  Commit: {commit_info['commit_hash'][:8]}")
         print(f"  Files: {commit_info['filenames']}")
+```
+
+#### Filename Search Operations
+
+The catalog also provides filename-based search for user convenience:
+
+```python
+# Find datasets containing a file with a specific name
+filename = "data.csv"
+results = catalog.find_datasets_with_filename(filename)
+
+# Results structure includes additional metadata:
+# {
+#     "dataset1": [
+#         {
+#             "commit_hash": "commit123...",
+#             "timestamp": "2024-01-01T12:00:00",
+#             "filenames": ["data.csv"],
+#             "file_hash": "abc123...",  # Content hash for reference
+#             "file_size": 1024          # File size in bytes
+#         }
+#     ]
+# }
+```
+
+**Parameters:**
+- `filename` (str): Name of the file to search for
+
+**Returns:**
+- `Dict[str, List[Dict[str, Any]]]`: Dictionary mapping dataset names to list of commits containing the file
+
+**Performance Note:**
+- Filename search is less efficient than hash-based search
+- Searches through all datasets and commits
+- Use `find_datasets_with_file()` for better performance when you have the content hash
+
+**Example:**
+```python
+# Find all datasets containing a file named "data.csv"
+results = catalog.find_datasets_with_filename("data.csv")
+
+for dataset_name, commits in results.items():
+    print(f"Dataset: {dataset_name}")
+    for commit_info in commits:
+        print(f"  Commit: {commit_info['commit_hash'][:8]}")
+        print(f"  File: {commit_info['filenames'][0]}")
+        print(f"  Hash: {commit_info['file_hash'][:8]}")
+        print(f"  Size: {commit_info['file_size']} bytes")
 ```
 
 ### FileIndex

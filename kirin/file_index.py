@@ -71,7 +71,7 @@ class FileIndex:
         """
         try:
             # Load existing index data
-            index_data = self._load_index(file_hash)
+            index_data = self.load_index(file_hash)
             
             # Initialize structure if needed
             if "file_hash" not in index_data:
@@ -104,7 +104,7 @@ class FileIndex:
                 })
             
             # Save updated index
-            self._save_index(file_hash, index_data)
+            self.save_index(file_hash, index_data)
             
             logger.debug(
                 f"Added file reference: {file_hash[:8]} -> "
@@ -130,7 +130,7 @@ class FileIndex:
         """
         try:
             # Load existing index data
-            index_data = self._load_index(file_hash)
+            index_data = self.load_index(file_hash)
             
             if "datasets" not in index_data:
                 return
@@ -150,11 +150,11 @@ class FileIndex:
             
             # Remove entire index file if no datasets remain
             if not index_data["datasets"]:
-                self._delete_index(file_hash)
+                self.delete_index(file_hash)
                 logger.debug(f"Deleted empty index file for {file_hash[:8]}")
             else:
                 # Save updated index
-                self._save_index(file_hash, index_data)
+                self.save_index(file_hash, index_data)
             
             logger.debug(
                 f"Removed file reference: {file_hash[:8]} -> "
@@ -175,7 +175,7 @@ class FileIndex:
             Dictionary mapping dataset names to list of commits containing the file
         """
         try:
-            index_data = self._load_index(file_hash)
+            index_data = self.load_index(file_hash)
             
             if "datasets" not in index_data:
                 return {}
@@ -186,7 +186,7 @@ class FileIndex:
             logger.warning(f"Failed to get datasets for file {file_hash[:8]}: {e}")
             return {}
 
-    def _get_index_path(self, file_hash: str) -> str:
+    def get_index_path(self, file_hash: str) -> str:
         """Get the storage path for an index file.
 
         Args:
@@ -200,7 +200,7 @@ class FileIndex:
         index_file = f"{hash_dir}/{file_hash[2:]}.json"
         return index_file
 
-    def _load_index(self, file_hash: str) -> Dict[str, Any]:
+    def load_index(self, file_hash: str) -> Dict[str, Any]:
         """Load index data for a file hash.
 
         Args:
@@ -209,7 +209,7 @@ class FileIndex:
         Returns:
             Index data dictionary
         """
-        index_path = self._get_index_path(file_hash)
+        index_path = self.get_index_path(file_hash)
         
         try:
             if not self.fs.exists(strip_protocol(index_path)):
@@ -222,14 +222,14 @@ class FileIndex:
             logger.warning(f"Failed to load index for {file_hash[:8]}: {e}")
             return {}
 
-    def _save_index(self, file_hash: str, data: Dict[str, Any]) -> None:
+    def save_index(self, file_hash: str, data: Dict[str, Any]) -> None:
         """Save index data for a file hash.
 
         Args:
             file_hash: Content hash of the file
             data: Index data to save
         """
-        index_path = self._get_index_path(file_hash)
+        index_path = self.get_index_path(file_hash)
         
         try:
             # Ensure directory exists
@@ -244,13 +244,13 @@ class FileIndex:
             logger.error(f"Failed to save index for {file_hash[:8]}: {e}")
             raise IOError(f"Failed to save index: {e}") from e
 
-    def _delete_index(self, file_hash: str) -> None:
+    def delete_index(self, file_hash: str) -> None:
         """Delete index file for a file hash.
 
         Args:
             file_hash: Content hash of the file
         """
-        index_path = self._get_index_path(file_hash)
+        index_path = self.get_index_path(file_hash)
         
         try:
             if self.fs.exists(strip_protocol(index_path)):
@@ -303,7 +303,7 @@ class FileIndex:
             removed_count = 0
             for file_hash in orphaned_hashes:
                 try:
-                    self._delete_index(file_hash)
+                    self.delete_index(file_hash)
                     removed_count += 1
                     logger.debug(f"Removed orphaned index entry: {file_hash[:8]}")
                 except Exception as e:

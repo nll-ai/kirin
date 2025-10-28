@@ -34,7 +34,7 @@ def test_add_file_reference():
         )
         
         # Check that the index file was created
-        index_path = file_index._get_index_path("abc123def456")
+        index_path = file_index.get_index_path("abc123def456")
         assert Path(index_path).exists()
         
         # Check the content
@@ -162,7 +162,7 @@ def test_remove_file_reference_removes_empty_dataset():
         )
         
         # Check that the index file is deleted (no datasets remain)
-        index_path = file_index._get_index_path("abc123def456")
+        index_path = file_index.get_index_path("abc123def456")
         assert not Path(index_path).exists()
 
 
@@ -319,7 +319,7 @@ def test_load_index_handles_missing_file():
         file_index = FileIndex(temp_dir)
         
         # Try to load index for non-existent file
-        data = file_index._load_index("nonexistent")
+        data = file_index.load_index("nonexistent")
         assert data == {}
 
 
@@ -343,10 +343,10 @@ def test_save_and_load_index():
         }
         
         # Save the data
-        file_index._save_index("abc123def456", test_data)
+        file_index.save_index("abc123def456", test_data)
         
         # Load it back
-        loaded_data = file_index._load_index("abc123def456")
+        loaded_data = file_index.load_index("abc123def456")
         
         # Verify it matches
         assert loaded_data == test_data
@@ -367,11 +367,11 @@ def test_delete_index():
         )
         
         # Verify it exists
-        index_path = file_index._get_index_path("abc123def456")
+        index_path = file_index.get_index_path("abc123def456")
         assert Path(index_path).exists()
         
         # Delete it
-        file_index._delete_index("abc123def456")
+        file_index.delete_index("abc123def456")
         
         # Verify it's gone
         assert not Path(index_path).exists()
@@ -391,5 +391,5 @@ def test_index_path_calculation():
         ]
         
         for file_hash, expected_path in test_cases:
-            actual_path = file_index._get_index_path(file_hash)
+            actual_path = file_index.get_index_path(file_hash)
             assert actual_path == expected_path

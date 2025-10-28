@@ -156,3 +156,76 @@ class Catalog:
         except Exception as e:
             logger.error(f"Failed to find datasets with file {file_hash[:8]}: {e}")
             return {}
+
+    def find_datasets_with_filename(self, filename: str) -> Dict[str, List[Dict[str, Any]]]:
+        """Find all datasets containing a file with the given filename.
+
+        Searches through all datasets to find files with the specified name.
+        This is less efficient than hash-based search but more user-friendly.
+
+        Args:
+            filename: Name of the file to search for
+
+        Returns:
+            Dictionary mapping dataset names to list of commits containing the file.
+            Each commit entry contains:
+            - commit_hash: Hash of the commit
+            - timestamp: Timestamp of the commit
+            - filenames: List of filenames matching the search
+
+        Example:
+            # Find datasets containing a file named "data.csv"
+            results = catalog.find_datasets_with_filename("data.csv")
+            
+            # Results structure:
+            # {
+            #     "dataset1": [
+            #         {
+            #             "commit_hash": "commit123...",
+            #             "timestamp": "2024-01-01T12:00:00",
+            #             "filenames": ["data.csv"]
+            #         }
+            #     ],
+            #     "dataset2": [
+            #         {
+            #             "commit_hash": "commit456...",
+            #             "timestamp": "2024-01-02T10:00:00",
+            #             "filenames": ["data.csv"]
+            #         }
+            #     ]
+            # }
+        """
+        try:
+            results = {}
+            dataset_names = self.datasets()
+            
+            for dataset_name in dataset_names:
+                try:
+                    dataset = self.get_dataset(dataset_name)
+                    commits = dataset.get_commits()
+                    
+                    matching_commits = []
+                    for commit in commits:
+                        # Check if this commit contains a file with the target filename
+                        if filename in commit.files:
+                            file_obj = commit.files[filename]
+                            matching_commits.append({
+                                "commit_hash": commit.hash,
+                                "timestamp": commit.timestamp.isoformat(),
+                                "filenames": [filename],
+                                "file_hash": file_obj.hash,  # Include hash for reference
+                                "file_size": file_obj.size,
+                            })
+                    
+                    if matching_commits:
+                        results[dataset_name] = matching_commits
+                        
+                except Exception as e:
+                    logger.warning(f"Failed to search dataset {dataset_name}: {e}")
+                    continue
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"Failed to find datasets with filename {filename}: {e}")
+            return {}
