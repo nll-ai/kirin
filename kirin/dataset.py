@@ -12,6 +12,7 @@ from loguru import logger
 from .commit import Commit, CommitBuilder
 from .commit_store import CommitStore
 from .file import File
+from .file_index import FileIndex
 from .storage import ContentStore
 from .utils import get_filesystem, strip_protocol
 
@@ -286,6 +287,24 @@ class Dataset:
         commit = builder.build(message)
         self.commit_store.save_commit(commit)
         self._current_commit = commit
+
+        # Update file index for added files
+        if add_files:
+            try:
+                file_index = FileIndex(self.root_dir, self.fs)
+                for file_obj in commit.files.values():
+                    # Only index files that were added in this commit
+                    if file_obj.name in [Path(f).name for f in add_files]:
+                        file_index.add_file_reference(
+                            file_hash=file_obj.hash,
+                            dataset_name=self.name,
+                            commit_hash=commit.hash,
+                            timestamp=commit.timestamp.isoformat(),
+                            filename=file_obj.name,
+                        )
+                logger.debug(f"Updated file index for commit {commit.short_hash}")
+            except Exception as e:
+                logger.warning(f"Failed to update file index: {e}")
 
         logger.info(f"Created commit {commit.short_hash}: {message}")
         return commit.hash

@@ -104,6 +104,7 @@ Catalog(
 - `datasets()` - List all datasets in the catalog
 - `get_dataset(name)` - Get a specific dataset
 - `create_dataset(name, description="")` - Create a new dataset
+- `find_datasets_with_file(file_hash)` - Find datasets containing a specific file
 - `__len__()` - Number of datasets in the catalog
 
 #### Catalog Examples
@@ -126,6 +127,105 @@ catalog = Catalog(
     gcs_token="/path/to/service-account.json",
     gcs_project="my-project"
 )
+```
+
+#### File Search Operations
+
+The catalog provides powerful file search capabilities using a reverse index:
+
+```python
+# Find datasets containing a specific file
+file_hash = "abc123def456789..."
+results = catalog.find_datasets_with_file(file_hash)
+
+# Results structure:
+# {
+#     "dataset1": [
+#         {
+#             "commit_hash": "commit123...",
+#             "timestamp": "2024-01-01T12:00:00",
+#             "filenames": ["data.csv"]
+#         }
+#     ],
+#     "dataset2": [
+#         {
+#             "commit_hash": "commit456...",
+#             "timestamp": "2024-01-02T10:00:00",
+#             "filenames": ["results.csv", "backup.csv"]
+#         }
+#     ]
+# }
+```
+
+**Parameters:**
+- `file_hash` (str): Content hash of the file to search for
+
+**Returns:**
+- `Dict[str, List[Dict[str, Any]]]`: Dictionary mapping dataset names to list of commits containing the file
+
+**Use Cases:**
+- **Deduplication**: Find datasets with identical files
+- **Data lineage**: Track file usage across datasets
+- **Content discovery**: Locate datasets containing specific content
+
+**Example:**
+```python
+# Find all datasets containing a specific file
+file_hash = "abc123def456789..."
+results = catalog.find_datasets_with_file(file_hash)
+
+for dataset_name, commits in results.items():
+    print(f"Dataset: {dataset_name}")
+    for commit_info in commits:
+        print(f"  Commit: {commit_info['commit_hash'][:8]}")
+        print(f"  Files: {commit_info['filenames']}")
+```
+
+### FileIndex
+
+The FileIndex class manages the reverse index for file search:
+
+```python
+from kirin.file_index import FileIndex
+
+# Create file index
+file_index = FileIndex(root_dir="/path/to/catalog")
+
+# Add file reference
+file_index.add_file_reference(
+    file_hash="abc123def456",
+    dataset_name="my_dataset",
+    commit_hash="commit123",
+    timestamp="2024-01-01T12:00:00",
+    filename="data.csv"
+)
+
+# Query datasets
+results = file_index.get_datasets_with_file("abc123def456")
+
+# Remove file reference
+file_index.remove_file_reference(
+    file_hash="abc123def456",
+    dataset_name="my_dataset",
+    commit_hash="commit123"
+)
+```
+
+### Index Utilities
+
+Utility functions for managing the file index:
+
+```python
+from kirin.index_utils import rebuild_file_index, verify_file_index
+
+# Rebuild entire index
+count = rebuild_file_index("/path/to/catalog")
+print(f"Indexed {count} file references")
+
+# Verify index integrity
+results = verify_file_index("/path/to/catalog")
+print(f"Missing entries: {results['missing_index_entries']}")
+print(f"Extra entries: {results['extra_index_entries']}")
 ```
 
 ## Web UI

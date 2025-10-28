@@ -18,10 +18,15 @@ versioning. The storage is organized into two main areas:
 │   ├── ab/                  # First two characters of hash
 │   │   └── cdef1234...      # Rest of hash (no file extensions)
 │   └── ...
-└── datasets/                 # Dataset storage
-    ├── dataset1/             # Dataset directory
-    │   └── commits.json       # Linear commit history
-    └── ...
+├── datasets/                 # Dataset storage
+│   ├── dataset1/             # Dataset directory
+│   │   └── commits.json       # Linear commit history
+│   └── ...
+└── index/                    # File hash reverse index
+    └── files/                # File hash to dataset mapping
+        ├── ab/               # First two characters of hash
+        │   └── cdef1234.json # Rest of hash
+        └── ...
 ```
 
 ## Content Store
@@ -122,6 +127,59 @@ Each file entry contains:
 - **name**: Original filename (including extension)
 - **size**: File size in bytes
 - **content_type**: MIME type of the file
+
+## File Index Store
+
+### Index Storage Format
+
+The file index provides reverse lookup from file hashes to datasets and commits:
+
+**Storage Path**: `index/files/{hash[:2]}/{hash[2:]}.json`
+
+**Example**:
+- File hash: `abc123def456...`
+- Index path: `index/files/ab/c123def456.json`
+
+### Index File Format
+
+Each index file contains:
+
+```json
+{
+  "file_hash": "abc123def456789...",
+  "datasets": {
+    "dataset1": [
+      {
+        "commit_hash": "commit123...",
+        "timestamp": "2024-01-01T12:00:00",
+        "filenames": ["data.csv"]
+      }
+    ],
+    "dataset2": [
+      {
+        "commit_hash": "commit456...",
+        "timestamp": "2024-01-02T10:00:00",
+        "filenames": ["results.csv", "backup.csv"]
+      }
+    ]
+  }
+}
+```
+
+### Index Structure
+
+- **file_hash**: The content hash this index file represents
+- **datasets**: Dictionary mapping dataset names to list of commits
+- **commit_hash**: Hash of the commit containing this file
+- **timestamp**: ISO 8601 timestamp of the commit
+- **filenames**: List of filenames for this file hash in the commit
+
+### Index Benefits
+
+1. **Fast Lookups**: O(1) hash-based lookups for file searches
+2. **Sharded Storage**: Avoids filesystem limitations with large numbers of files
+3. **Deduplication**: Identical content tracked across all datasets
+4. **Data Lineage**: Track file usage across datasets and commits
 
 ## Data Structures
 

@@ -8,6 +8,7 @@ import fsspec
 from loguru import logger
 
 from .commit import Commit
+from .file_index import FileIndex
 from .storage import ContentStore
 from .utils import get_filesystem, strip_protocol
 
@@ -277,7 +278,17 @@ class CommitStore:
                 used_hashes.add(file.hash)
 
         # Clean up orphaned files
-        return self.storage.cleanup_orphaned_files(used_hashes)
+        files_removed = self.storage.cleanup_orphaned_files(used_hashes)
+        
+        # Clean up orphaned index entries
+        try:
+            file_index = FileIndex(self.root_dir, self.fs)
+            index_entries_removed = file_index.cleanup_orphaned_entries(used_hashes)
+            logger.info(f"Cleaned up {index_entries_removed} orphaned index entries")
+        except Exception as e:
+            logger.warning(f"Failed to cleanup orphaned index entries: {e}")
+        
+        return files_removed
 
     def get_dataset_info(self) -> dict:
         """Get information about the dataset.

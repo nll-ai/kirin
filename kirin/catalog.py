@@ -2,12 +2,13 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import fsspec
 from loguru import logger
 
 from .dataset import Dataset
+from .file_index import FileIndex
 from .utils import get_filesystem, strip_protocol
 
 
@@ -111,3 +112,47 @@ class Catalog:
             description=description,
             fs=self.fs,
         )
+
+    def find_datasets_with_file(self, file_hash: str) -> Dict[str, List[Dict[str, Any]]]:
+        """Find all datasets containing a file with the given hash.
+
+        Uses the reverse index for efficient lookup.
+
+        Args:
+            file_hash: Content hash of the file to search for
+
+        Returns:
+            Dictionary mapping dataset names to list of commits containing the file.
+            Each commit entry contains:
+            - commit_hash: Hash of the commit
+            - timestamp: Timestamp of the commit
+            - filenames: List of filenames for this file hash in the commit
+
+        Example:
+            # Find datasets containing a specific file
+            results = catalog.find_datasets_with_file("abc123def456...")
+            
+            # Results structure:
+            # {
+            #     "dataset1": [
+            #         {
+            #             "commit_hash": "commit123...",
+            #             "timestamp": "2024-01-01T12:00:00",
+            #             "filenames": ["data.csv"]
+            #         }
+            #     ],
+            #     "dataset2": [
+            #         {
+            #             "commit_hash": "commit456...",
+            #             "timestamp": "2024-01-02T10:00:00",
+            #             "filenames": ["results.csv", "backup.csv"]
+            #         }
+            #     ]
+            # }
+        """
+        try:
+            file_index = FileIndex(self.root_dir, self.fs)
+            return file_index.get_datasets_with_file(file_hash)
+        except Exception as e:
+            logger.error(f"Failed to find datasets with file {file_hash[:8]}: {e}")
+            return {}
