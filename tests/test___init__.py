@@ -1,1 +1,1 @@
-"""Tests for gitdata."""
+"""Tests for kirin."""

@@ -172,20 +172,20 @@ pixi run python -m kirin.web.app
 
 ```bash
 # Install with uv
-uv tool install gitdata
+uv tool install kirin
 
 # Set up SSL certificates (one-time setup)
 uv run python -m kirin.setup_ssl
 
 # Start the web UI
-uv run gitdata ui
+uv run kirin ui
 ```
 
 ### Option 3: UVX (One-time Use)
 
 ```bash
 # Run directly with uvx
-uvx gitdata ui
+uvx kirin ui
 
 # If SSL issues occur, set up certificates
 uvx python -m kirin.setup_ssl
@@ -195,10 +195,10 @@ uvx python -m kirin.setup_ssl
 
 ```bash
 # Install with pip
-pip install gitdata
+pip install kirin
 
 # No SSL setup needed - uses system certificates
-gitdata ui
+kirin ui
 ```
 
 ## Get started for development

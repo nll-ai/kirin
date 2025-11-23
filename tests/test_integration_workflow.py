@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Integration test for complete GitData workflow:
+Integration test for complete Kirin workflow:
 1. Create a new dataset on local filesystem
 2. Commit 3 text files
 3. Create a new branch
@@ -27,7 +27,7 @@ def create_test_files(directory: Path, files: list) -> None:
 
 
 def test_complete_kirin_linear_workflow():
-    """Test the complete GitData workflow with proper assertions."""
+    """Test the complete Kirin workflow with proper assertions."""
 
     # Setup test environment
     test_dir = Path("test-integration-workflow")

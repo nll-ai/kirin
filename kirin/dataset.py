@@ -4,7 +4,7 @@ import tempfile
 from collections.abc import MutableMapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import fsspec
 from loguru import logger
@@ -216,6 +216,8 @@ class Dataset:
         message: str,
         add_files: List[Union[str, Path]] = None,
         remove_files: List[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        tags: Optional[List[str]] = None,
     ) -> str:
         """Create a new commit with changes.
 
@@ -223,6 +225,8 @@ class Dataset:
             message: Commit message
             add_files: List of files to add/update
             remove_files: List of filenames to remove
+            metadata: Optional metadata dictionary (hyperparameters, metrics, etc.)
+            tags: Optional list of tags for staging/versioning
 
         Returns:
             Hash of the new commit
@@ -282,8 +286,15 @@ class Dataset:
             for filename in remove_files:
                 builder.remove_file(filename)
 
+        # Set metadata and tags
+        if metadata:
+            builder.set_metadata(metadata)
+
+        if tags:
+            builder.add_tags(tags)
+
         # Build and save commit
-        commit = builder.build(message)
+        commit = builder(message)
         self.commit_store.save_commit(commit)
         self._current_commit = commit
 
@@ -542,6 +553,93 @@ class Dataset:
             f"Dataset(name='{self.name}', commits={commit_count}, "
             f"current={current_hash})"
         )
+
+    def find_commits(
+        self,
+        tags: Optional[List[str]] = None,
+        metadata_filter: Optional[Callable[[Dict[str, Any]], bool]] = None,
+        limit: Optional[int] = None,
+    ) -> List[Commit]:
+        """Find commits matching criteria.
+
+        Args:
+            tags: Filter by tags (commits must have ALL specified tags)
+            metadata_filter: Callable that takes metadata dict and returns bool
+            limit: Maximum number of commits to return
+
+        Returns:
+            List of matching commits (newest first)
+
+        Examples:
+            # Find production models
+            ds.find_commits(tags=["production"])
+
+            # Find models with accuracy > 0.9
+            ds.find_commits(metadata_filter=lambda m: m.get("accuracy", 0) > 0.9)
+
+            # Combine criteria
+            ds.find_commits(
+                tags=["production"],
+                metadata_filter=lambda m: m.get("framework") == "pytorch"
+            )
+        """
+        commits = self.history()
+
+        # Filter by tags
+        if tags:
+            commits = [c for c in commits if all(tag in c.tags for tag in tags)]
+
+        # Filter by metadata
+        if metadata_filter:
+            commits = [c for c in commits if metadata_filter(c.metadata)]
+
+        # Apply limit
+        if limit:
+            commits = commits[:limit]
+
+        return commits
+
+    def compare_commits(self, hash1: str, hash2: str) -> dict:
+        """Compare metadata between two commits.
+
+        Args:
+            hash1: First commit hash
+            hash2: Second commit hash
+
+        Returns:
+            Dictionary with comparison results
+        """
+        commit1 = self.get_commit(hash1)
+        commit2 = self.get_commit(hash2)
+
+        if not commit1 or not commit2:
+            raise ValueError("One or both commits not found")
+
+        return {
+            "commit1": {"hash": commit1.short_hash, "message": commit1.message},
+            "commit2": {"hash": commit2.short_hash, "message": commit2.message},
+            "metadata_diff": {
+                "added": {
+                    k: v
+                    for k, v in commit2.metadata.items()
+                    if k not in commit1.metadata
+                },
+                "removed": {
+                    k: v
+                    for k, v in commit1.metadata.items()
+                    if k not in commit2.metadata
+                },
+                "changed": {
+                    k: {"old": commit1.metadata[k], "new": commit2.metadata[k]}
+                    for k in set(commit1.metadata) & set(commit2.metadata)
+                    if commit1.metadata[k] != commit2.metadata[k]
+                },
+            },
+            "tags_diff": {
+                "added": [t for t in commit2.tags if t not in commit1.tags],
+                "removed": [t for t in commit1.tags if t not in commit2.tags],
+            },
+        }
 
     def __repr__(self) -> str:
         """Detailed string representation of the dataset."""

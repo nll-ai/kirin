@@ -1,4 +1,4 @@
-"""Tests for file access methods in GitData."""
+"""Tests for file access methods in Kirin."""
 
 import os
 from pathlib import Path

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from loguru import logger
 
@@ -26,6 +26,8 @@ class Commit:
     timestamp: datetime
     parent_hash: Optional[str]
     files: Dict[str, File] = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    tags: List[str] = field(default_factory=list)
 
     def __post_init__(self):
         """Validate commit properties after initialization."""
@@ -104,6 +106,8 @@ class Commit:
             "timestamp": self.timestamp.isoformat(),
             "parent_hash": self.parent_hash,
             "files": {name: file.to_dict() for name, file in self.files.items()},
+            "metadata": self.metadata,
+            "tags": self.tags,
         }
 
     @classmethod
@@ -137,6 +141,8 @@ class Commit:
             timestamp=timestamp,
             parent_hash=data.get("parent_hash"),
             files=files,
+            metadata=data.get("metadata", {}),
+            tags=data.get("tags", []),
         )
 
     def __str__(self) -> str:
@@ -161,6 +167,18 @@ class CommitBuilder:
 
     This class helps construct commits by tracking changes from a parent commit.
 
+    **Rationale for Builder Pattern:**
+
+    We use a builder pattern primarily for **encapsulation**. Commit construction
+    involves non-trivial logic:
+    - Generating commit hashes from content
+    - Managing parent hash relationships
+    - Copying and merging state (files, metadata, tags) from parent commits
+    - Tracking changes for logging
+
+    The builder encapsulates this complexity, keeping the Dataset.commit() method
+    focused on file operations rather than commit construction details.
+
     Args:
         parent_commit: Parent commit to base changes on (None for initial commit)
     """
@@ -168,6 +186,8 @@ class CommitBuilder:
     def __init__(self, parent_commit: Optional[Commit] = None):
         self.parent_commit = parent_commit
         self.files = dict(parent_commit.files) if parent_commit else {}
+        self.metadata = dict(parent_commit.metadata) if parent_commit else {}
+        self.tags = list(parent_commit.tags) if parent_commit else []
         self.added_files = set()
         self.removed_files = set()
 
@@ -199,8 +219,32 @@ class CommitBuilder:
             self.removed_files.add(name)
         return self
 
-    def build(self, message: str, commit_hash: Optional[str] = None) -> Commit:
-        """Build the commit.
+    def set_metadata(self, metadata: Dict[str, Any]) -> "CommitBuilder":
+        """Set metadata for the commit.
+
+        Args:
+            metadata: Dictionary of metadata to store
+
+        Returns:
+            Self for method chaining
+        """
+        self.metadata = metadata
+        return self
+
+    def add_tags(self, tags: List[str]) -> "CommitBuilder":
+        """Add tags to the commit.
+
+        Args:
+            tags: List of tags to add
+
+        Returns:
+            Self for method chaining
+        """
+        self.tags = tags
+        return self
+
+    def __call__(self, message: str, commit_hash: Optional[str] = None) -> Commit:
+        """Build the commit (callable interface).
 
         Args:
             message: Commit message
@@ -223,6 +267,8 @@ class CommitBuilder:
             timestamp=datetime.now(),
             parent_hash=parent_hash,
             files=self.files.copy(),
+            metadata=self.metadata.copy(),
+            tags=self.tags.copy(),
         )
 
         logger.info(f"Built commit {commit_hash[:8]}: {message}")

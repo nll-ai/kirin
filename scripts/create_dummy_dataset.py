@@ -12,7 +12,7 @@
 """
 Create a comprehensive dummy dataset demonstrating Kirin's full workflow.
 
-This script creates a dataset at /tmp/gitdata-test-dataset and demonstrates:
+This script creates a dataset at /tmp/kirin-test-dataset and demonstrates:
 1. Creating a dataset with main branch
 2. Writing two files over two commits
 3. Branching to 'add-third' from main and adding a third file
@@ -47,7 +47,7 @@ def main():
     """Create a comprehensive dummy dataset demonstrating Kirin's full workflow."""
 
     # Set up the dataset path
-    dataset_path = "/tmp/gitdata-test-dataset"
+    dataset_path = "/tmp/kirin-test-dataset"
 
     # Clean up any existing dataset
     if os.path.exists(dataset_path):
@@ -55,7 +55,7 @@ def main():
         shutil.rmtree(dataset_path)
 
     # Clean up any existing local state
-    local_state_dir = Path.home() / ".gitdata" / "test-dataset"
+    local_state_dir = Path.home() / ".kirin" / "test-dataset"
     if local_state_dir.exists():
         logger.info(f"Cleaning up existing local state at {local_state_dir}")
         shutil.rmtree(local_state_dir)

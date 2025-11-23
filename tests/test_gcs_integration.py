@@ -17,7 +17,7 @@ try:
     fs = gcsfs.GCSFileSystem()
     # Try to access the test bucket
     try:
-        fs.ls("gitdata-test-bucket")
+        fs.ls("kirin-test-bucket")
         GCS_AVAILABLE = True
     except Exception:
         pass
@@ -33,9 +33,9 @@ pytestmark = pytest.mark.skipif(
 
 def test_gcs_dataset_creation():
     """Test creating a dataset on GCS."""
-    ds = Dataset(root_dir="gs://gitdata-test-bucket", name="test")
+    ds = Dataset(root_dir="gs://kirin-test-bucket", name="test")
     assert ds.name == "test"
-    assert "gs://gitdata-test-bucket" in ds.root_dir
+    assert "gs://kirin-test-bucket" in ds.root_dir
 
 
 def test_gcs_dataset_commit():
@@ -47,7 +47,7 @@ def test_gcs_dataset_commit():
 
     try:
         # Create dataset
-        ds = Dataset(root_dir="gs://gitdata-test-bucket", name="test-commit")
+        ds = Dataset(root_dir="gs://kirin-test-bucket", name="test-commit")
 
         # Commit the file
         ds.commit(commit_message="Test commit to GCS", add_files=[temp_file])
@@ -75,7 +75,7 @@ def test_gcs_dataset_checkout():
         temp_file2 = f.name
 
     try:
-        ds = Dataset(root_dir="gs://gitdata-test-bucket", name="test-checkout")
+        ds = Dataset(root_dir="gs://kirin-test-bucket", name="test-checkout")
 
         # First commit
         ds.commit(commit_message="First commit", add_files=[temp_file1])
@@ -106,7 +106,7 @@ def test_gcs_dataset_checkout():
 def test_gcs_dataset_metadata():
     """Test reading metadata from GCS dataset."""
     ds = Dataset(
-        root_dir="gs://gitdata-test-bucket",
+        root_dir="gs://kirin-test-bucket",
         name="test-metadata",
         description="Test dataset for metadata",
     )
@@ -122,7 +122,7 @@ def test_gcs_dataset_metadata():
 def test_gcs_dataset_reopen(name):
     """Test that we can reopen existing GCS datasets."""
     # This should not raise an error even if the dataset exists
-    ds = Dataset(root_dir="gs://gitdata-test-bucket", name=name)
+    ds = Dataset(root_dir="gs://kirin-test-bucket", name=name)
     assert ds.name == name
     # Should be able to get metadata
     metadata = ds.metadata()

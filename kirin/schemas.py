@@ -1,4 +1,4 @@
-"""DataFrame schemas for gitdata.
+"""DataFrame schemas for kirin.
 
 DataFrame schemas are written using `pandera`.
 Check out `pandera` docs for more information.

@@ -33,7 +33,8 @@ Dataset(
 
 #### Basic Operations
 
-- `commit(message, add_files=None, remove_files=None)` - Commit changes to the dataset
+- `commit(message, add_files=None, remove_files=None, metadata=None,
+  tags=None)` - Commit changes to the dataset
 - `checkout(commit_hash=None)` - Switch to a specific commit (latest if None)
 - `files` - Dictionary of files in the current commit
 - `local_files()` - Context manager for accessing files as local paths
@@ -41,6 +42,105 @@ Dataset(
 - `get_file(filename)` - Get a file from the current commit
 - `read_file(filename)` - Read file content as text
 - `download_file(filename, target_path)` - Download file to local path
+
+#### Model Versioning Operations
+
+- `find_commits(tags=None, metadata_filter=None, limit=None)` - Find commits
+  matching criteria
+- `compare_commits(hash1, hash2)` - Compare metadata between two commits
+
+#### Method Details
+
+##### `commit(message, add_files=None, remove_files=None, metadata=None, tags=None)`
+
+Create a new commit with changes to the dataset.
+
+**Parameters:**
+
+- `message` (str): Commit message describing the changes
+- `add_files` (List[Union[str, Path]], optional): List of files to add or update
+- `remove_files` (List[str], optional): List of filenames to remove
+- `metadata` (Dict[str, Any], optional): Metadata dictionary for model versioning
+- `tags` (List[str], optional): List of tags for staging/versioning
+
+**Returns:**
+
+- `str`: Hash of the new commit
+
+**Examples:**
+
+```python
+# Basic commit
+dataset.commit("Add new data", add_files=["data.csv"])
+
+# Model versioning commit
+dataset.commit(
+    message="Improved model v2.0",
+    add_files=["model.pt", "config.json"],
+    metadata={
+        "framework": "pytorch",
+        "accuracy": 0.92,
+        "hyperparameters": {"lr": 0.001, "epochs": 10}
+    },
+    tags=["production", "v2.0"]
+)
+```
+
+##### `find_commits(tags=None, metadata_filter=None, limit=None)`
+
+Find commits matching specified criteria.
+
+**Parameters:**
+
+- `tags` (List[str], optional): Filter by tags (commits must have ALL
+  specified tags)
+- `metadata_filter` (Callable[[Dict], bool], optional): Function that takes
+  metadata dict and returns bool
+- `limit` (int, optional): Maximum number of commits to return
+
+**Returns:**
+
+- `List[Commit]`: List of matching commits (newest first)
+
+**Examples:**
+
+```python
+# Find production models
+production_models = dataset.find_commits(tags=["production"])
+
+# Find high-accuracy models
+high_accuracy = dataset.find_commits(
+    metadata_filter=lambda m: m.get("accuracy", 0) > 0.9
+)
+
+# Find PyTorch production models
+pytorch_prod = dataset.find_commits(
+    tags=["production"],
+    metadata_filter=lambda m: m.get("framework") == "pytorch"
+)
+```
+
+##### `compare_commits(hash1, hash2)`
+
+Compare metadata between two commits.
+
+**Parameters:**
+
+- `hash1` (str): First commit hash
+- `hash2` (str): Second commit hash
+
+**Returns:**
+
+- `dict`: Dictionary with comparison results including metadata and tag
+  differences
+
+**Example:**
+
+```python
+comparison = dataset.compare_commits("abc123", "def456")
+print("Metadata changes:", comparison["metadata_diff"]["changed"])
+print("Tag changes:", comparison["tags_diff"])
+```
 
 #### Examples
 
@@ -231,6 +331,51 @@ except FileNotFoundError as e:
 with dataset.local_files() as local_files:
     df = pd.read_csv(local_files["data.csv"])
     # Files automatically cleaned up
+```
+
+### Commit
+
+Represents an immutable snapshot of files at a point in time with optional
+metadata and tags.
+
+#### Properties
+
+- `hash` (str): Unique commit identifier
+- `message` (str): Commit message
+- `timestamp` (datetime): When the commit was created
+- `parent_hash` (Optional[str]): Hash of the parent commit (None for initial commit)
+- `files` (Dict[str, File]): Dictionary of files in this commit
+- `metadata` (Dict[str, Any]): Metadata dictionary for model versioning
+- `tags` (List[str]): List of tags for staging/versioning
+
+#### Methods
+
+- `get_file(name)` - Get a file by name
+- `list_files()` - List all file names
+- `has_file(name)` - Check if file exists
+- `get_file_count()` - Get number of files
+- `get_total_size()` - Get total size of all files
+- `to_dict()` - Convert to dictionary representation
+- `from_dict(data, storage)` - Create from dictionary
+
+#### Commit Examples
+
+```python
+# Access commit properties
+commit = dataset.current_commit
+print(f"Commit: {commit.short_hash}")
+print(f"Message: {commit.message}")
+print(f"Files: {len(commit.files)}")
+print(f"Metadata: {commit.metadata}")
+print(f"Tags: {commit.tags}")
+
+# Check if commit has specific metadata
+if commit.metadata.get("accuracy", 0) > 0.9:
+    print("High accuracy model!")
+
+# Check if commit has specific tags
+if "production" in commit.tags:
+    print("Production model")
 ```
 
 ### Commit History
