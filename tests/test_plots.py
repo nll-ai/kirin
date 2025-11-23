@@ -1,6 +1,5 @@
 """Tests for the kirin.plots module."""
 
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest

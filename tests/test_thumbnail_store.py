@@ -132,9 +132,7 @@ def test_thumbnail_store_with_content_store(temp_dir):
     file_hash = content_store.store_content(file_content, filename)
 
     # Generate thumbnail for the image
-    thumbnail_bytes = thumbnail_store.get_or_generate_thumbnail(
-        file_hash, file_content
-    )
+    thumbnail_bytes = thumbnail_store.get_or_generate_thumbnail(file_hash, file_content)
 
     # Verify thumbnail was created
     assert thumbnail_bytes is not None
