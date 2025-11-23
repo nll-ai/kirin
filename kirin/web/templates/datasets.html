@@ -268,7 +268,7 @@ dataset = catalog.get_dataset("dataset_name")</code></pre>
                         </svg>
                         Edit Catalog Credentials
                     </a>
-                    <button onclick="location.reload()" class="btn btn-secondary">
+                    <button onclick="tryAuthenticate('{{ catalog.id }}')" class="btn btn-secondary" id="try-again-btn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6z"></path>
                             <circle cx="12" cy="12" r="3"></circle>
@@ -277,7 +277,7 @@ dataset = catalog.get_dataset("dataset_name")</code></pre>
                     </button>
                 </div>
                 {% else %}
-                <button onclick="location.reload()" class="btn btn-primary">
+                <button onclick="tryAuthenticate('{{ catalog.id }}')" class="btn btn-primary" id="try-again-btn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6z"></path>
                         <circle cx="12" cy="12" r="3"></circle>
@@ -456,6 +456,43 @@ async function copyCode(codeId) {
     }
 }
 
+
+// Try to authenticate and reload
+async function tryAuthenticate(catalogId) {
+    const btn = document.getElementById('try-again-btn');
+    if (!btn) return;
+
+    // Disable button and show loading state
+    btn.disabled = true;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg> Authenticating...';
+
+    try {
+        const response = await fetch(`/catalog/${catalogId}/authenticate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Authentication succeeded, reload the page
+            location.reload();
+        } else {
+            // Authentication failed, show error and re-enable button
+            alert(`Authentication failed: ${data.message}`);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    } catch (error) {
+        // Network or other error
+        alert(`Error: ${error.message}`);
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }
+}
 
 // Show create form if there's an error
 document.addEventListener('DOMContentLoaded', function() {

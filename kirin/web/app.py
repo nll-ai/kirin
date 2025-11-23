@@ -321,6 +321,17 @@ async def list_datasets(
     if not catalog:
         raise HTTPException(status_code=404, detail="Catalog not found")
 
+    # Proactive authentication: run auth command if available before attempting to list
+    if catalog.auth_command:
+        logger.info(f"Running proactive authentication for catalog: {catalog.name}")
+        auth_success, auth_message = await execute_auth_command(
+            catalog.auth_command, timeout_seconds=30
+        )
+        if auth_success:
+            logger.info(f"Proactive authentication successful: {auth_message}")
+        else:
+            logger.warning(f"Proactive authentication failed: {auth_message}")
+
     try:
         # 10 second timeout for catalog connection and listing
         dataset_names = await safe_catalog_operation(
@@ -469,6 +480,9 @@ async def list_datasets(
                 "permission denied",
                 "access denied",
                 "login",
+                "token",
+                "expired",
+                "refresh failed",
             ]
         )
 
@@ -552,6 +566,44 @@ async def list_datasets(
                 "lazy_loading": False,
             },
         )
+
+
+@app.post("/catalog/{catalog_id}/authenticate", response_class=JSONResponse)
+async def authenticate_catalog(
+    catalog_id: str,
+    catalog_manager: CatalogManager = Depends(get_catalog_manager),
+):
+    """Execute authentication command for a catalog.
+
+    Returns JSON response with success status and message.
+    """
+    catalog = catalog_manager.get_catalog(catalog_id)
+    if not catalog:
+        raise HTTPException(status_code=404, detail="Catalog not found")
+
+    if not catalog.auth_command:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "success": False,
+                "message": "No authentication command configured for this catalog",
+            },
+        )
+
+    logger.info(
+        f"Executing auth command for catalog {catalog.name}: {catalog.auth_command}"
+    )
+    success, message = await execute_auth_command(
+        catalog.auth_command, timeout_seconds=30
+    )
+
+    return JSONResponse(
+        status_code=200,
+        content={
+            "success": success,
+            "message": message,
+        },
+    )
 
 
 @app.post("/catalog/{catalog_id}/datasets/create", response_class=HTMLResponse)
