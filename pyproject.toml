@@ -96,6 +96,9 @@ docs = [
 [project.scripts]
 kirin = "kirin.cli:app"
 
+[dependency-groups]
+tests = ["kaleido>=1.2.0,<2"]
+
 
 
 [tool.coverage.run]
@@ -118,6 +121,12 @@ tests = { features = ["tests"], solve-group = "default" }
 
 [tool.pixi.feature.tests.tasks]
 test = "pytest --durations=10 --tb=short -v"
+
+[tool.pixi.feature.tests.dependencies]
+matplotlib = ">=3.10.8,<4"
+pillow = ">=12.0.0,<13"
+plotly = ">=6.5.0,<7"
+httpx = "*"
 
 [tool.pixi.feature.docs.tasks]
 build-docs = "mkdocs build --clean"

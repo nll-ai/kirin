@@ -42,6 +42,15 @@ Dataset(
 - `get_file(filename)` - Get a file from the current commit
 - `read_file(filename)` - Read file content as text
 - `download_file(filename, target_path)` - Download file to local path
+- `save_plot(plot_object, filename, auto_commit=False, message=None, ...)` -
+  Save plots with automatic format detection
+
+#### Plot Versioning Operations
+
+- `save_plot(plot_object, filename, auto_commit=False, message=None,
+  metadata=None, tags=None, format=None)` - Save plots from matplotlib,
+  plotly, etc. with automatic format detection (SVG for vectors, WebP for
+  bitmaps)
 
 #### Model Versioning Operations
 
@@ -142,6 +151,82 @@ print("Metadata changes:", comparison["metadata_diff"]["changed"])
 print("Tag changes:", comparison["tags_diff"])
 ```
 
+##### save_plot
+
+Save a plot to the dataset with automatic format detection.
+
+**Signature:**
+
+```python
+save_plot(
+    plot_object,
+    filename,
+    auto_commit=False,
+    message=None,
+    metadata=None,
+    tags=None,
+    format=None
+)
+```
+
+**Parameters:**
+
+- `plot_object`: The plot object to save (matplotlib Figure, plotly Figure,
+  etc.)
+- `filename` (str): Desired filename for the plot (extension may be adjusted)
+- `auto_commit` (bool): If True, automatically commits the plot. If False,
+  returns file path for explicit commit
+- `message` (str, optional): Commit message (required if auto_commit=True)
+- `metadata` (Dict[str, Any], optional): Metadata dictionary for the commit
+- `tags` (List[str], optional): List of tags for the commit
+- `format` (str, optional): Format override ('svg' or 'webp'). If None, auto-detects
+
+**Returns:**
+
+- If `auto_commit=False`: File path (str) that can be used in `commit()`
+- If `auto_commit=True`: Commit hash (str) of the created commit
+
+#### Strict Content Hashing for SVG Plots
+
+Kirin uses strict content-addressed hashing based on exact file content.
+This means:
+
+- SVG plots will produce different hashes even when the plot content is
+  identical, because matplotlib embeds creation timestamps in the SVG metadata
+  (`<dc:date>` elements). This is the strictest form of hashing and ensures
+  complete content integrity.
+
+- Identical plots = different commits: If you save the same plot twice (same
+  data, same code), you'll get different hashes and thus different commits,
+  because the SVG files differ by their timestamps.
+
+- This is by design: Content-addressed storage requires exact byte matching.
+  The timestamp metadata is part of the file content, so it affects the hash.
+
+- For deterministic hashing: If you need identical plots to produce identical
+  hashes, consider using WebP format (raster) instead of SVG, or strip metadata
+  before saving (not currently implemented).
+
+**Examples:**
+
+```python
+import matplotlib.pyplot as plt
+
+# Create a plot
+fig, ax = plt.subplots()
+ax.plot([1, 2, 3], [1, 4, 9])
+
+# Auto-commit mode (convenient for single plots)
+commit_hash = dataset.save_plot(
+    fig, "plot.png", auto_commit=True, message="Add visualization"
+)
+
+# Default mode (allows batching multiple plots)
+plot_path = dataset.save_plot(fig, "plot1.png")
+plot_path2 = dataset.save_plot(fig2, "plot2.png")
+dataset.commit(message="Add multiple plots", add_files=[plot_path, plot_path2])
+```
+
 #### Examples
 
 ```python
@@ -170,6 +255,58 @@ dataset = Dataset(
     name="project",
     azure_connection_string=os.getenv("AZURE_CONNECTION_STRING")
 )
+```
+
+### save_plot (standalone function)
+
+Standalone function for saving plots to content-addressed storage.
+
+```python
+from kirin import save_plot
+from kirin.storage import ContentStore
+
+storage = ContentStore("/path/to/data")
+hash, filename = save_plot(fig, "plot.png", storage)
+```
+
+#### Strict Content Hashing for SVG Plots (save_plot function)
+
+Kirin uses strict content-addressed hashing - files are identified by their
+exact byte content. SVG plots from matplotlib will produce different hashes
+even when the plot content is identical, because matplotlib embeds creation
+timestamps in the SVG metadata. This is the strictest form of hashing and
+ensures complete content integrity. See `Dataset.save_plot()` documentation
+for more details.
+
+**Parameters:**
+
+- `plot_object`: The plot object to save (matplotlib Figure, plotly Figure, etc.)
+- `filename` (str): Desired filename for the plot (extension may be adjusted)
+- `storage` (ContentStore): ContentStore instance to use for storage
+- `format` (str, optional): Format override ('svg' or 'webp'). If None, auto-detects
+
+**Returns:**
+
+- `tuple[str, str]`: Tuple of (content_hash, actual_filename) where
+  actual_filename is the filename used (may have extension adjusted based on
+  format)
+
+**Example:**
+
+```python
+import matplotlib.pyplot as plt
+from kirin import save_plot
+from kirin.storage import ContentStore
+
+storage = ContentStore("/path/to/data")
+
+fig, ax = plt.subplots()
+ax.plot([1, 2, 3], [1, 4, 9])
+
+# Save plot (returns hash and actual filename)
+content_hash, actual_filename = save_plot(fig, "plot.png", storage)
+print(f"Saved plot with hash: {content_hash[:8]}")
+print(f"Actual filename: {actual_filename}")  # May be "plot.svg"
 ```
 
 ### Catalog

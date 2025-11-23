@@ -22,6 +22,8 @@ from fastapi.templating import Jinja2Templates
 from loguru import logger
 from slugify import slugify
 
+from kirin.thumbnail_store import ThumbnailStore
+
 from .config import CatalogConfig, CatalogManager
 
 # Global catalog manager
@@ -1165,8 +1167,16 @@ async def preview_file(
         if not file_obj:
             raise HTTPException(status_code=404, detail="File not found")
 
-        # Check if file is text-based by content type
+        # Check if file is an image by content type or extension
         content_type = file_obj.content_type or ""
+        is_image_file = (
+            content_type.startswith("image/")
+            or file_name.lower().endswith(
+                (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico")
+            )
+        )
+
+        # Check if file is text-based by content type
         is_text_file = (
             content_type.startswith("text/")
             or content_type
@@ -1190,6 +1200,26 @@ async def preview_file(
             )
         )
 
+        # Handle image files
+        if is_image_file:
+            return templates.TemplateResponse(
+                "file_preview.html",
+                {
+                    "request": request,
+                    "catalog_id": catalog_id,
+                    "dataset_name": dataset_name,
+                    "file_name": file_name,
+                    "file_size": file_obj.size,
+                    "content": None,
+                    "is_binary": False,
+                    "is_image": True,
+                    "content_type": content_type,
+                    "truncated": False,
+                    "catalog": catalog,
+                    "checkout_commit": checkout,
+                },
+            )
+
         if not is_text_file:
             # For binary files, show a message instead of content
             return templates.TemplateResponse(
@@ -1202,6 +1232,7 @@ async def preview_file(
                     "file_size": file_obj.size,
                     "content": None,
                     "is_binary": True,
+                    "is_image": False,
                     "content_type": content_type,
                     "truncated": False,
                     "catalog": catalog,
@@ -1233,6 +1264,7 @@ async def preview_file(
                     "file_size": file_obj.size,
                     "content": None,
                     "is_binary": True,
+                    "is_image": False,
                     "content_type": content_type,
                     "truncated": False,
                     "catalog": catalog,
@@ -1250,6 +1282,7 @@ async def preview_file(
                 "file_size": file_obj.size,
                 "content": preview_content,
                 "is_binary": False,
+                "is_image": False,
                 "truncated": len(lines) > 1000,
                 "catalog": catalog,
                 "checkout_commit": checkout,
@@ -1262,6 +1295,86 @@ async def preview_file(
     except Exception as e:
         logger.error(f"Failed to preview file {file_name}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to preview file: {str(e)}")
+
+
+@app.get("/catalog/{catalog_id}/{dataset_name}/file/{file_name}/image")
+async def serve_image(catalog_id: str, dataset_name: str, file_name: str):
+    """Serve an image file directly."""
+    try:
+        catalog = catalog_manager.get_catalog(catalog_id)
+        if not catalog:
+            raise HTTPException(status_code=404, detail="Catalog not found")
+
+        kirin_catalog = catalog.to_catalog()
+        dataset = kirin_catalog.get_dataset(dataset_name)
+        file_obj = dataset.get_file(file_name)
+
+        if not file_obj:
+            raise HTTPException(status_code=404, detail="File not found")
+
+        # Read image content
+        image_bytes = file_obj.read_bytes()
+        content_type = file_obj.content_type or "image/png"
+
+        return StreamingResponse(
+            iter([image_bytes]),
+            media_type=content_type,
+            headers={"Content-Disposition": f'inline; filename="{file_name}"'},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to serve image {file_name}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to serve image: {str(e)}")
+
+
+@app.get("/catalog/{catalog_id}/{dataset_name}/file/{file_name}/thumbnail")
+async def serve_thumbnail(catalog_id: str, dataset_name: str, file_name: str):
+    """Serve a thumbnail for an image file."""
+    try:
+        catalog = catalog_manager.get_catalog(catalog_id)
+        if not catalog:
+            raise HTTPException(status_code=404, detail="Catalog not found")
+
+        kirin_catalog = catalog.to_catalog()
+        dataset = kirin_catalog.get_dataset(dataset_name)
+        file_obj = dataset.get_file(file_name)
+
+        if not file_obj:
+            raise HTTPException(status_code=404, detail="File not found")
+
+        # Check if file is an image
+        content_type = file_obj.content_type or ""
+        is_image = (
+            content_type.startswith("image/")
+            or file_name.lower().endswith(
+                (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico")
+            )
+        )
+
+        if not is_image:
+            raise HTTPException(status_code=400, detail="File is not an image")
+
+        # Get thumbnail using ThumbnailStore
+        # Use the same filesystem as the dataset (stored in dataset.fs)
+        thumbnail_store = ThumbnailStore(dataset.root_dir, fs=dataset.fs)
+        file_content = file_obj.read_bytes()
+        thumbnail_bytes = thumbnail_store.get_or_generate_thumbnail(
+            file_obj.hash, file_content
+        )
+
+        return StreamingResponse(
+            iter([thumbnail_bytes]),
+            media_type="image/webp",
+            headers={"Content-Disposition": 'inline; filename="thumbnail.webp"'},
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to serve thumbnail for {file_name}: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to serve thumbnail: {str(e)}"
+        )
 
 
 @app.get("/catalog/{catalog_id}/{dataset_name}/file/{file_name}/download")
