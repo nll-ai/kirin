@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 try:
     import matplotlib.pyplot as plt
+
     HAS_MATPLOTLIB = True
 except ImportError:
     plt = None
@@ -22,6 +23,7 @@ except ImportError:
 
 try:
     import plotly.graph_objects as go
+
     HAS_PLOTLY = True
 except ImportError:
     go = None
@@ -29,6 +31,7 @@ except ImportError:
 
 try:
     from PIL import Image
+
     HAS_PILLOW = True
 except ImportError:
     Image = None
@@ -242,8 +245,6 @@ def _save_plotly_plot(
     # Store in content-addressed storage
     content_hash = storage.store_content(content_bytes, filename)
 
-    logger.info(
-        f"Saved plotly plot as {format.upper()} with hash {content_hash[:8]}"
-    )
+    logger.info(f"Saved plotly plot as {format.upper()} with hash {content_hash[:8]}")
 
     return (content_hash, filename)
