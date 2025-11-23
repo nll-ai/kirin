@@ -54,7 +54,19 @@ dataset.checkout()
         {% for file in files %}
         <div class="file-item">
             <div class="file-icon">
-                {% if file.name.endswith('.csv') or file.name.endswith('.tsv') %}
+                {% if file.name.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp', '.ico')) or (file.content_type and file.content_type.startswith('image/')) %}
+                <!-- Image thumbnail -->
+                <img src="/catalog/{{ catalog_id }}/{{ dataset_name }}/file/{{ file.name }}/thumbnail"
+                     alt="{{ file.name }}"
+                     class="file-icon"
+                     style="width: 16px; height: 16px; object-fit: cover; border-radius: 2px;"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21,15 16,10 5,21"></polyline>
+                </svg>
+                {% elif file.name.endswith('.csv') or file.name.endswith('.tsv') %}
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14,2 14,8 20,8"></polyline>
