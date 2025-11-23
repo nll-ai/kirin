@@ -252,7 +252,7 @@ components. When working on the web UI:
 ### CSS Architecture & Best Practices
 
 **External Stylesheet System** - The project uses a centralized CSS
-architecture with all common styles in `/gitdata/static/styles.css`:
+architecture with all common styles in `/kirin/static/styles.css`:
 
 - **Base Template** - `base.html` includes the external stylesheet via
   `<link rel="stylesheet" href="/static/styles.css">`
@@ -351,23 +351,44 @@ architecture with all common styles in `/gitdata/static/styles.css`:
 
 ### Linting Guidelines
 
-**IMPORTANT**: Only fix linting errors that cannot be automatically fixed by
-linters like ruff. The project has pre-commit hooks that handle automatic
-linting fixes (formatting, import sorting, etc.). Focus on:
+**CRITICAL**: Always run pre-commit on all files and fix all issues. This
+ensures code quality and consistency across the entire codebase.
 
-- Logic errors and bugs that require manual intervention
-- Issues that cannot be automatically resolved by linters
-- Code quality problems that need human judgment
+**Pre-commit Requirements**:
 
-**Do NOT fix**:
+- **Run pre-commit on all files**: Always run `pre-commit run --all-files`
+  before committing changes
+- **Fix all issues**: Every single issue that pre-commit reports must be fixed
+- **Zero tolerance**: No pre-commit errors are acceptable - all must be
+  resolved
+- **Re-run until clean**: Continue running pre-commit until all files pass with
+  zero errors
+- **Before committing**: Never commit files that have pre-commit errors
+
+**Pre-commit handles automatic fixes**:
 
 - Import sorting (handled by isort/ruff)
 - Code formatting (handled by black/ruff)
 - Line length issues (handled by formatters)
 - Whitespace and spacing (handled by formatters)
 
-The pre-commit hooks will automatically handle these formatting issues, so
-focus on substantive code improvements.
+**Manual fixes required**:
+
+- Logic errors and bugs that require manual intervention
+- Issues that cannot be automatically resolved by linters
+- Code quality problems that need human judgment
+
+**Workflow**:
+
+```bash
+# Run pre-commit on all files
+pre-commit run --all-files
+
+# If issues are found, fix them and re-run
+pre-commit run --all-files
+
+# Continue until all files pass
+```
 
 ### Logging Standards
 
@@ -412,12 +433,12 @@ across the project.
 ### Static File Serving
 
 The application is configured to serve static files from the
-`/gitdata/static/` directory:
+`/kirin/static/` directory:
 
-- **CSS Files** - Place all stylesheets in `/gitdata/static/` directory
+- **CSS Files** - Place all stylesheets in `/kirin/static/` directory
 - **Static Mount** - FastAPI StaticFiles is mounted at `/static` route
 - **CSS Reference** - Templates reference CSS via `/static/styles.css`
-- **Development** - Use `pixi run python -m gitdata.web_ui` to start the
+- **Development** - Use `pixi run python -m kirin.web.app` to start the
   server with auto-reload
 
 ### Pixi Environment Management
@@ -428,10 +449,10 @@ must be executed within the pixi environment:
 
 - **Testing Commands**: Always use `pixi run python -m pytest` or
   `pixi run python script.py`
-- **Development Server**: Use `pixi run python -m gitdata.web_ui` to start
+- **Development Server**: Use `pixi run python -m kirin.web.app` to start
   the server
-- **Kirin UI**: Use `pixi run gitdata ui` to run the Kirin web interface
-- **CLI Commands**: Use `pixi run python -m gitdata.cli` for command-line
+- **Kirin UI**: Use `pixi run kirin ui` to run the Kirin web interface
+- **CLI Commands**: Use `pixi run python -m kirin.cli` for command-line
   operations
 
 **Dependency Management**: For core runtime dependencies, use
@@ -762,21 +783,21 @@ proper dependency resolution.
 # requires-python = ">=3.13"
 # dependencies = [
 #     "polars==1.34.0",
-#     "gitdata==0.0.1",
+#     "kirin==0.0.1",
 #     "anthropic==0.69.0",
 #     "loguru==0.7.3",
 # ]
 #
 # [tool.uv.sources]
-# gitdata = { path = "../", editable = true }
+# kirin = { path = "../", editable = true }
 # ///
 ```
 
 **Key Requirements**:
 
 - **Python Version**: Always specify `requires-python = ">=3.13"`
-- **Kirin Dependency**: Include `gitdata==0.0.1` in dependencies
-- **Editable Source**: Use `[tool.uv.sources]` with `gitdata = { path =
+- **Kirin Dependency**: Include `kirin==0.0.1` in dependencies
+- **Editable Source**: Use `[tool.uv.sources]` with `kirin = { path =
   "../", editable = true }`
 - **Additional Dependencies**: Include any other libraries the script needs
 - **Metadata Block**: Must be at the very top of the file, before any
@@ -1386,8 +1407,10 @@ consistency and quality. This is mandatory for all markdown file changes.
    resolved
 4. **Re-run until clean**: Continue running markdownlint until the file
    passes with zero errors
-5. **Before committing**: Never commit a Markdown file that has markdownlint
-   errors
+5. **Run pre-commit**: Always run `pre-commit run --all-files` to ensure all
+   files (including markdown) pass validation
+6. **Before committing**: Never commit a Markdown file that has markdownlint
+   errors or pre-commit failures
 
 **BULK LINTING**: When working on multiple Markdown files, run markdownlint
 on all files at once to identify issues across the entire documentation

@@ -94,6 +94,8 @@ def test_commit_to_dict():
         "timestamp": timestamp.isoformat(),
         "parent_hash": "def456",
         "files": {},
+        "metadata": {},
+        "tags": [],
     }
 
     assert data == expected
@@ -144,7 +146,7 @@ def test_commit_builder_initial():
     file = File(hash="hash1", name="file1.txt", size=100)
     builder.add_file("file1.txt", file)
 
-    commit = builder.build("Initial commit")
+    commit = builder("Initial commit")
 
     assert commit.is_initial
     assert commit.message == "Initial commit"
@@ -173,7 +175,7 @@ def test_commit_builder_with_parent():
     # Remove parent file
     builder.remove_file("parent.txt")
 
-    commit = builder.build("Child commit")
+    commit = builder("Child commit")
 
     assert not commit.is_initial
     assert commit.parent_hash == "parent123"
@@ -211,7 +213,7 @@ def test_commit_builder_custom_hash():
     builder.add_file("file1.txt", file)
 
     custom_hash = "custom123"
-    commit = builder.build("Test commit", custom_hash)
+    commit = builder("Test commit", custom_hash)
 
     assert commit.hash == custom_hash
 
@@ -228,7 +230,7 @@ def test_commit_builder_method_chaining():
         "file1.txt"
     )
 
-    commit = builder.build("Chained commit")
+    commit = builder("Chained commit")
 
     assert commit.get_file_count() == 1
     assert commit.has_file("file2.txt")

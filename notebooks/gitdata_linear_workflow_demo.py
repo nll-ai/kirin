@@ -1,12 +1,12 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "gitdata==0.0.1",
+#     "kirin==0.0.1",
 #     "loguru==0.7.3",
 # ]
 #
 # [tool.uv.sources]
-# gitdata = { path = "../", editable = true }
+# kirin = { path = "../", editable = true }
 # ///
 
 import marimo
@@ -24,9 +24,9 @@ def _():
 
 @app.cell
 def _(mo):
-    """# GitData: Linear Workflow Demonstration
+    """# Kirin: Linear Workflow Demonstration
 
-    This notebook demonstrates how to use **GitData** for version-controlled data management with a clean, linear commit history. GitData brings Git-like workflows to your data, enabling you to:
+    This notebook demonstrates how to use **Kirin** for version-controlled data management with a clean, linear commit history. Kirin brings Git-like workflows to your data, enabling you to:
 
     - 📁 **Track data changes** with commits and branches
     - 🔄 **Merge branches** using rebase strategy for linear history
@@ -39,9 +39,9 @@ def _(mo):
     In this demo, we'll create a dataset, make changes on feature branches, and merge them back to main using **rebase strategy** to maintain a clean, linear history without merge commits.
     """
     mo.md(
-        """# GitData: Linear Workflow Demonstration
+        """# Kirin: Linear Workflow Demonstration
 
-This notebook demonstrates how to use **GitData** for version-controlled data management with a clean, linear commit history. GitData brings Git-like workflows to your data, enabling you to:
+This notebook demonstrates how to use **Kirin** for version-controlled data management with a clean, linear commit history. Kirin brings Git-like workflows to your data, enabling you to:
 
 - 📁 **Track data changes** with commits and branches
 - 🔄 **Merge branches** using rebase strategy for linear history
@@ -60,12 +60,12 @@ In this demo, we'll create a dataset, make changes on feature branches, and merg
 def _(mo):
     """## Step 1: Dataset Setup
 
-    Let's start by creating a new GitData dataset with some initial files. This simulates the beginning of a data project where you have your base dataset ready for version control.
+    Let's start by creating a new Kirin dataset with some initial files. This simulates the beginning of a data project where you have your base dataset ready for version control.
     """
     mo.md(
         """## Step 1: Dataset Setup
 
-Let's start by creating a new GitData dataset with some initial files. This simulates the beginning of a data project where you have your base dataset ready for version control."""
+Let's start by creating a new Kirin dataset with some initial files. This simulates the beginning of a data project where you have your base dataset ready for version control."""
     )
     return
 
@@ -158,12 +158,12 @@ def _(dataset, temp_dir):
 def _(mo):
     """## Step 3: Rebase Merge Strategy
 
-    Here's where GitData shines! Instead of creating a merge commit (which would create a "branchy" history), we use the **rebase strategy** to replay our feature branch commits on top of main, creating a clean linear history.
+    Here's where Kirin shines! Instead of creating a merge commit (which would create a "branchy" history), we use the **rebase strategy** to replay our feature branch commits on top of main, creating a clean linear history.
     """
     mo.md(
         """## Step 3: Rebase Merge Strategy
 
-Here's where GitData shines! Instead of creating a merge commit (which would create a "branchy" history), we use the **rebase strategy** to replay our feature branch commits on top of main, creating a clean linear history."""
+Here's where Kirin shines! Instead of creating a merge commit (which would create a "branchy" history), we use the **rebase strategy** to replay our feature branch commits on top of main, creating a clean linear history."""
     )
     return
 
@@ -346,7 +346,7 @@ def _(dataset, mo):
 def _(mo):
     """## Key Takeaways
 
-    🎉 **Congratulations!** You've successfully demonstrated GitData's linear workflow capabilities:
+    🎉 **Congratulations!** You've successfully demonstrated Kirin's linear workflow capabilities:
 
     ### What We Accomplished:
     - ✅ Created a version-controlled dataset
@@ -364,12 +364,12 @@ def _(mo):
     ### Next Steps:
     - Try this workflow with your own datasets
     - Experiment with different merge strategies
-    - Explore GitData's other features
+    - Explore Kirin's other features
     """
     mo.md(
         """## Key Takeaways
 
-🎉 **Congratulations!** You've successfully demonstrated GitData's linear workflow capabilities:
+🎉 **Congratulations!** You've successfully demonstrated Kirin's linear workflow capabilities:
 
 ### What We Accomplished:
 - ✅ Created a version-controlled dataset
@@ -387,7 +387,7 @@ def _(mo):
 ### Next Steps:
 - Try this workflow with your own datasets
 - Experiment with different merge strategies
-- Explore GitData's other features"""
+- Explore Kirin's other features"""
     )
     return
 
