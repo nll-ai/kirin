@@ -169,7 +169,7 @@ def main():
     if len(sys.argv) != 3:
         print("Usage: python diagnose_commit_history.py <dataset_path> <dataset_name>")
         print(
-            "Example: python diagnose_commit_history.py /tmp/gitdata-test-dataset test-dataset"
+            "Example: python diagnose_commit_history.py /tmp/kirin-test-dataset test-dataset"
         )
         sys.exit(1)
 

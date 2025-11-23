@@ -1,4 +1,4 @@
-"""Utilities for gitdata."""
+"""Utilities for kirin."""
 
 import os
 from pathlib import Path

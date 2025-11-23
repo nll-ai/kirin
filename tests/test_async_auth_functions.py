@@ -2,12 +2,12 @@
 # requires-python = ">=3.13"
 # dependencies = [
 #     "pytest==8.3.4",
-#     "gitdata==0.0.1",
+#     "kirin==0.0.1",
 #     "loguru==0.7.3",
 # ]
 #
 # [tool.uv.sources]
-# gitdata = { path = "../", editable = true }
+# kirin = { path = "../", editable = true }
 # ///
 
 """Fast unit tests for async authentication timeout and auto-execution features."""
