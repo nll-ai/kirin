@@ -70,36 +70,24 @@ version = "0.0.5"
 dependencies = [
     "pyprojroot",
     "python-dotenv",
-    "typer>=0.20.0",
+    "typer",
     "json5",
-    "fsspec>=2025.9.0,<2026",
+    "fsspec",
     "s3fs",  # For S3 support
     "gcsfs",  # For Google Cloud Storage support
     "fastapi",
     "jinja2",
-    "python-multipart", "python-slugify>=8.0.4,<9", "keyring", "boto3>=1.40.18,<2",
+    "python-multipart",
+    "python-slugify",
+    "keyring",
+    "boto3",
+    "loguru",  # Runtime logging
+    "uvicorn",  # Web server for CLI
 ]
 readme = "README.md"
 
-[project.optional-dependencies]
-tests = [
-    "pytest",
-    "pytest-cov",
-    "httpx",
-]
-docs = [
-    "mkdocs-material",
-    "mkdocs",
-    "mkdocstrings[python]"
-]
-
 [project.scripts]
 kirin = "kirin.cli:app"
-
-[dependency-groups]
-tests = ["kaleido>=1.2.0,<2"]
-
-
 
 [tool.coverage.run]
 omit = [
@@ -123,12 +111,24 @@ tests = { features = ["tests"], solve-group = "default" }
 test = "pytest --durations=10 --tb=short -v"
 
 [tool.pixi.feature.tests.dependencies]
+# Conda packages for testing
 pytest = "*"
 pytest-cov = "*"
-matplotlib = ">=3.10.8,<4"
-pillow = ">=12.0.0,<13"
-plotly = ">=6.5.0,<7"
+matplotlib = "*"
+pillow = "*"
+plotly = "*"
 httpx = "*"
+
+[tool.pixi.feature.tests.pypi-dependencies]
+# PyPI-only packages for testing
+kaleido = "*"
+
+[tool.pixi.feature.docs.dependencies]
+mkdocs-material = "*"
+mkdocs = "*"
+
+[tool.pixi.feature.docs.pypi-dependencies]
+mkdocstrings = { extras = ["python"] }
 
 [tool.pixi.feature.docs.tasks]
 build-docs = "mkdocs build --clean"
@@ -139,8 +139,14 @@ serve-docs = "mkdocs serve"
 setup-ssl = "python -m kirin.setup_ssl"
 
 [tool.pixi.dependencies]
-loguru = ">=0.7.3,<0.8"
-marimo = ">=0.16.5,<0.17"
-keyring = ">=25.6.0,<26"
-ipython = "*"
-typer = ">=0.20.0,<0.21"
+# NOTE: Only add dependencies here if absolutely necessary.
+# This section is for conda packages that cannot be installed via PyPI.
+#
+# - Runtime dependencies are automatically installed via editable kirin package
+#   (from [project.dependencies] in pyproject.toml)
+# - Notebooks manage their own dependencies via PEP 723 inline script metadata
+# - Test dependencies go in [tool.pixi.feature.tests.dependencies]
+# - Docs dependencies go in [tool.pixi.feature.docs.dependencies]
+#
+# Prefer adding dependencies to [project.dependencies] or feature-specific sections
+# rather than here, unless you specifically need a conda-only package.
