@@ -1166,7 +1166,15 @@ async def preview_file(
         # Checkout to specific commit if provided
         # Note: If checkout is None, dataset is already on latest commit by default
         if checkout:
-            dataset.checkout(checkout)
+            try:
+                dataset.checkout(checkout)
+            except ValueError as e:
+                # Invalid checkout hash
+                if "not found" in str(e).lower():
+                    raise HTTPException(
+                        status_code=400, detail=f"Invalid checkout hash: {checkout}"
+                    )
+                raise
 
         file_obj = dataset.get_file(file_name)
 
@@ -1175,7 +1183,7 @@ async def preview_file(
 
         # Check if file is an image by content type or extension
         content_type = file_obj.content_type or ""
-        _is_image = is_image_file(file_name, content_type)
+        is_image = is_image_file(file_name, content_type)
 
         # Check if file is text-based by content type
         is_text_file = (
@@ -1202,7 +1210,7 @@ async def preview_file(
         )
 
         # Handle image files
-        if is_image_file:
+        if is_image:
             template_context = {
                 "request": request,
                 "catalog_id": catalog_id,
@@ -1302,6 +1310,114 @@ async def preview_file(
         raise HTTPException(status_code=500, detail=f"Failed to preview file: {str(e)}")
 
 
+@app.get(
+    "/catalog/{catalog_id}/{dataset_name}/file/{file_name}/commits",
+    response_class=JSONResponse,
+)
+async def get_file_commits(
+    catalog_id: str,
+    dataset_name: str,
+    file_name: str,
+):
+    """Get all commits that contain a specific file.
+
+    This endpoint returns a JSON array of all commits in the dataset that contain
+    the specified file. Commits are ordered chronologically with the newest commit
+    first. The endpoint filters the full commit history to only include commits
+    where the file exists.
+
+    Args:
+        catalog_id: The catalog identifier where the dataset is located.
+        dataset_name: The name of the dataset to search for commits.
+        file_name: The name of the file to find commits for.
+
+    Returns:
+        JSONResponse: A JSON array of commit objects, each containing:
+            - hash: Full commit hash (string)
+            - short_hash: Shortened commit hash for display (string)
+            - message: Commit message (string)
+            - timestamp: ISO format timestamp of the commit (string)
+
+        Returns an empty array [] if:
+            - The file doesn't exist in any commits
+            - The file was never committed to the dataset
+            - The dataset has no commits
+
+    Raises:
+        HTTPException:
+            - 404: If the catalog is not found
+            - 500: If there's a server error loading the dataset or commits
+            - 500: If the operation times out (after 10 seconds)
+
+    Performance:
+        - Uses a timeout of 10 seconds for dataset operations
+        - Filters commits by checking each commit for file existence
+        - For large commit histories, this may take time proportional to
+          the number of commits
+
+    Examples:
+        Response for a file with 3 commits:
+        [
+            {
+                "hash": "abc123...",
+                "short_hash": "abc123",
+                "message": "Latest change",
+                "timestamp": "2024-01-15T10:30:00"
+            },
+            {
+                "hash": "def456...",
+                "short_hash": "def456",
+                "message": "Initial commit",
+                "timestamp": "2024-01-10T09:00:00"
+            }
+        ]
+
+        Response for a file that doesn't exist:
+        []
+    """
+    try:
+        # Get catalog config
+        catalog = catalog_manager.get_catalog(catalog_id)
+        if not catalog:
+            raise HTTPException(status_code=404, detail="Catalog not found")
+
+        # Load dataset with timeout
+        def load_file_commits():
+            """Load commits containing the file."""
+            kirin_catalog = catalog.to_catalog()
+            dataset = kirin_catalog.get_dataset(dataset_name)
+
+            # Get full commit history
+            all_commits = dataset.history()
+
+            # Filter commits that contain the file
+            file_commits = []
+            for commit in all_commits:
+                if commit.has_file(file_name):
+                    file_commits.append(
+                        {
+                            "hash": commit.hash,
+                            "short_hash": commit.short_hash,
+                            "message": commit.message,
+                            "timestamp": commit.timestamp.isoformat(),
+                        }
+                    )
+
+            return file_commits
+
+        commits = await safe_catalog_operation(load_file_commits, timeout_seconds=10)
+
+        return JSONResponse(content=commits)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get file commits for {file_name}: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get file commits: {str(e)}"
+        )
+
+
 def is_image_file(file_name: str, content_type: str) -> bool:
     """Check if a file is an image based on name and content type.
 
@@ -1370,7 +1486,23 @@ async def serve_image(
 
         # Read image content
         image_bytes = file_obj.read_bytes()
-        content_type = file_obj.content_type or "image/png"
+        # Infer content type from filename if not set
+        if file_obj.content_type:
+            content_type = file_obj.content_type
+        else:
+            # Infer from file extension
+            ext = file_name.lower().split(".")[-1] if "." in file_name else ""
+            content_type_map = {
+                "webp": "image/webp",
+                "svg": "image/svg+xml",
+                "png": "image/png",
+                "jpg": "image/jpeg",
+                "jpeg": "image/jpeg",
+                "gif": "image/gif",
+                "bmp": "image/bmp",
+                "ico": "image/x-icon",
+            }
+            content_type = content_type_map.get(ext, "image/png")
 
         return StreamingResponse(
             iter([image_bytes]),
@@ -1413,8 +1545,13 @@ async def serve_thumbnail(
 
 
 @app.get("/catalog/{catalog_id}/{dataset_name}/file/{file_name}/download")
-async def download_file(catalog_id: str, dataset_name: str, file_name: str):
-    """Download a file."""
+async def download_file(
+    catalog_id: str,
+    dataset_name: str,
+    file_name: str,
+    checkout: Optional[str] = None,
+):
+    """Download a file, optionally from a specific commit."""
     try:
         # Create authenticated filesystem before creating Catalog
         catalog = catalog_manager.get_catalog(catalog_id)
@@ -1423,6 +1560,11 @@ async def download_file(catalog_id: str, dataset_name: str, file_name: str):
 
         kirin_catalog = catalog.to_catalog()
         dataset = kirin_catalog.get_dataset(dataset_name)
+
+        # Checkout to specific commit if provided
+        if checkout:
+            dataset.checkout(checkout)
+
         file_obj = dataset.get_file(file_name)
 
         if not file_obj:

@@ -1,12 +1,12 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "polars==1.34.0",
-#     "kirin==0.0.1",
-#     "anthropic==0.69.0",
-#     "loguru==0.7.3",
-#     "matplotlib==3.10.7",
-#     "numpy==2.3.5",
+#     "polars",
+#     "kirin",
+#     "anthropic",
+#     "loguru",
+#     "matplotlib",
+#     "numpy",
 # ]
 #
 # [tool.uv.sources]
@@ -41,7 +41,6 @@ def _():
 @app.cell(hide_code=True)
 def _(np, plt):
     # Generate correlated data with correlation ~0.75
-    np.random.seed(42)
     n_points = 100
 
     # Generate x values

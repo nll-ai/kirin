@@ -903,3 +903,138 @@ body {
 .code-snippet.collapsed .code-snippet-toggle svg {
   transform: rotate(-90deg);
 }
+
+/* Modal styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  position: relative;
+  background-color: hsl(var(--card));
+  border-radius: var(--radius);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  max-width: min(90vw, 1200px);
+  max-height: 90vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  z-index: 1001;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid hsl(var(--border));
+  gap: 1rem;
+}
+
+.modal-header .flex-1 {
+  flex: 1;
+  min-width: 0;
+}
+
+.modal-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: hsl(var(--foreground));
+}
+
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid hsl(var(--border));
+}
+
+/* Commit navigation styles */
+.commit-nav-info {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.commit-nav-position {
+  color: hsl(var(--muted-foreground));
+  margin-bottom: 0.25rem;
+  font-weight: 500;
+}
+
+.commit-nav-position.commit-latest {
+  color: hsl(var(--primary));
+  font-weight: 600;
+}
+
+.commit-nav-position.commit-oldest {
+  color: hsl(var(--muted-foreground));
+}
+
+.commit-nav-position.commit-middle {
+  color: hsl(var(--muted-foreground));
+}
+
+.commit-nav-details {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.commit-hash {
+  font-family: monospace;
+  font-size: 0.8125rem;
+  color: hsl(var(--primary));
+  background-color: hsl(var(--muted));
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+}
+
+.commit-message {
+  color: hsl(var(--foreground));
+  font-weight: 500;
+}
+
+.commit-nav-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.commit-nav-buttons .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.commit-nav-buttons .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
