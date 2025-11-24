@@ -127,7 +127,36 @@ document.addEventListener('htmx:afterRequest', function(event) {
     <div class="modal-overlay" onclick="closePreview()"></div>
     <div class="modal-content">
         <div class="modal-header">
+            <div class="flex-1">
             <h3 id="preview-title" class="modal-title">File Preview</h3>
+                <!-- Commit Navigation Info (hidden by default, shown for images) -->
+                <div id="commit-nav-info" class="commit-nav-info" style="display: none;">
+                    <div class="commit-nav-position">
+                        <span id="commit-position">Commit 1 of 1</span>
+                    </div>
+                    <div class="commit-nav-details">
+                        <span id="commit-hash" class="commit-hash"></span>
+                        <span id="commit-message" class="commit-message"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <!-- Commit Navigation Buttons (hidden by default, shown for images) -->
+                <div id="commit-nav-buttons" class="commit-nav-buttons" style="display: none;">
+                    <button id="commit-nav-prev" onclick="navigateCommit(-1)" class="btn btn-ghost btn-sm" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15,18 9,12 15,6"></polyline>
+                        </svg>
+                        Previous
+                    </button>
+                    <button id="commit-nav-next" onclick="navigateCommit(1)" class="btn btn-ghost btn-sm" disabled>
+                        Next
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9,18 15,12 9,6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+            </div>
             <button onclick="closePreview()" class="btn btn-ghost btn-sm">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -198,15 +227,461 @@ with dataset.local_files() as local_files:
 </div>
 
 <script>
-function openPreview(fileName) {
+// Global state for commit navigation
+let fileCommits = [];
+let currentCommitIndex = -1;
+let currentFileName = '';
+let previewAbortController = null; // For canceling in-flight preview requests
+let previewRequestId = 0; // Request counter to ignore stale responses
+
+// Cache for file commit history (key: fileName, value: commit array)
+let commitCache = new Map();
+
+/**
+ * Load all commits that contain a specific file from the backend API.
+ * Uses in-memory cache to avoid redundant API calls for the same file.
+ * Shows user-visible error message if loading fails.
+ *
+ * @param {string} fileName - The name of the file to load commits for
+ * @returns {Promise<Array>} Promise that resolves to an array of commit objects with:
+ *   - hash: Full commit hash (string)
+ *   - short_hash: Shortened commit hash (string)
+ *   - message: Commit message (string)
+ *   - timestamp: ISO format timestamp (string)
+ *   Returns empty array [] on error or if file has no commits
+ *
+ * Caching:
+ * - Results are cached by fileName to avoid redundant API calls
+ * - Cache is invalidated when commits are made (via HTMX events)
+ *
+ * Error handling:
+ * - Shows user-visible error message in commit navigation area on failure
+ * - Returns empty array to allow modal to function without commit navigation
+ */
+async function loadFileCommits(fileName) {
+    // Check cache first
+    if (commitCache.has(fileName)) {
+        return commitCache.get(fileName);
+    }
+
+    try {
+        const response = await fetch(
+            `/catalog/{{ catalog_id }}/{{ dataset_name }}/file/${encodeURIComponent(fileName)}/commits`
+        );
+        if (!response.ok) {
+            // Show error message to user
+            showCommitLoadError('Failed to load commit history. Navigation may be limited.');
+            return [];
+        }
+        const commits = await response.json();
+
+        // Store in cache
+        commitCache.set(fileName, commits);
+
+        // Clear any previous error message
+        clearCommitLoadError();
+
+        return commits;
+    } catch (error) {
+        console.error('Error loading file commits:', error);
+        // Show error message to user
+        showCommitLoadError('Unable to load commit history. Please try again later.');
+        return [];
+    }
+}
+
+/**
+ * Show an error message in the commit navigation area.
+ * @param {string} message - Error message to display
+ */
+function showCommitLoadError(message) {
+    const commitNavInfo = document.getElementById('commit-nav-info');
+    if (commitNavInfo) {
+        commitNavInfo.style.display = 'block';
+        commitNavInfo.innerHTML = `
+            <div class="text-muted-foreground" style="font-size: 0.875rem; color: hsl(var(--destructive));">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-right: 0.25rem;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                ${message}
+            </div>
+        `;
+    }
+}
+
+/**
+ * Clear any error message from the commit navigation area.
+ */
+function clearCommitLoadError() {
+    const commitNavInfo = document.getElementById('commit-nav-info');
+    if (commitNavInfo && commitNavInfo.querySelector('.text-muted-foreground')) {
+        // Only clear if it's an error message, not normal commit info
+        const hasError = commitNavInfo.innerHTML.includes('Failed to load') ||
+                        commitNavInfo.innerHTML.includes('Unable to load');
+        if (hasError) {
+            commitNavInfo.style.display = 'none';
+        }
+    }
+}
+
+/**
+ * Update the commit navigation UI to reflect the current commit position.
+ * Shows/hides navigation controls based on number of commits and updates
+ * position labels with contextual information (Latest, Oldest, or position).
+ *
+ * Side effects:
+ * - Updates commit position display with contextual labels
+ * - Updates commit hash and message display
+ * - Enables/disables Previous/Next buttons based on position
+ * - Hides navigation if only one commit or no commits exist
+ *
+ * Uses global state: fileCommits, currentCommitIndex
+ */
+function updateCommitNavigation() {
+    const commitNavInfo = document.getElementById('commit-nav-info');
+    const commitNavButtons = document.getElementById('commit-nav-buttons');
+    const commitPosition = document.getElementById('commit-position');
+    const commitHash = document.getElementById('commit-hash');
+    const commitMessage = document.getElementById('commit-message');
+    const prevButton = document.getElementById('commit-nav-prev');
+    const nextButton = document.getElementById('commit-nav-next');
+
+    if (fileCommits.length <= 1) {
+        // Hide navigation if only one commit or no commits
+        commitNavInfo.style.display = 'none';
+        commitNavButtons.style.display = 'none';
+        return;
+    }
+
+    // Show navigation controls
+    commitNavInfo.style.display = 'block';
+    commitNavButtons.style.display = 'flex';
+
+    // Update commit info with contextual labels
+    const commit = fileCommits[currentCommitIndex];
+    const position = currentCommitIndex + 1;
+    const total = fileCommits.length;
+
+    // Remove previous position classes
+    commitPosition.classList.remove('commit-latest', 'commit-oldest', 'commit-middle');
+
+    // Contextual labels: Latest, Oldest, or just position
+    if (currentCommitIndex === 0) {
+        // At latest commit
+        commitPosition.textContent = `Latest (Commit ${position} of ${total})`;
+        commitPosition.classList.add('commit-latest');
+    } else if (currentCommitIndex === fileCommits.length - 1) {
+        // At oldest commit
+        commitPosition.textContent = `Oldest (Commit ${position} of ${total})`;
+        commitPosition.classList.add('commit-oldest');
+    } else {
+        // In middle
+        commitPosition.textContent = `Commit ${position} of ${total}`;
+        commitPosition.classList.add('commit-middle');
+    }
+
+    commitHash.textContent = commit.short_hash;
+    commitMessage.textContent = commit.message;
+
+    // Update button states
+    prevButton.disabled = currentCommitIndex === 0;
+    nextButton.disabled = currentCommitIndex === fileCommits.length - 1;
+}
+
+/**
+ * Navigate to the previous or next commit in the file's commit history.
+ * @param {number} direction - Direction to navigate: -1 for previous, 1 for next
+ *
+ * Side effects:
+ * - Updates currentCommitIndex global state
+ * - Reloads preview content for the new commit
+ * - Updates navigation UI state
+ * - Updates download link to match new commit
+ *
+ * Uses global state: fileCommits, currentCommitIndex, currentFileName
+ * No-op if navigation would go out of bounds
+ */
+function navigateCommit(direction) {
+    const newIndex = currentCommitIndex + direction;
+    if (newIndex < 0 || newIndex >= fileCommits.length) {
+        return;
+    }
+
+    currentCommitIndex = newIndex;
+    const commit = fileCommits[currentCommitIndex];
+    loadPreviewContent(currentFileName, commit.hash);
+    updateCommitNavigation();
+    updateDownloadLink(currentFileName, commit.hash);
+}
+
+/**
+ * Update the download link in the modal footer to match the current commit.
+ * @param {string} fileName - The name of the file to download
+ * @param {string|null} commitHash - Optional commit hash to checkout specific version.
+ *   If null, downloads from latest commit (HEAD)
+ *
+ * Side effects:
+ * - Updates the href attribute of the preview-download link element
+ */
+function updateDownloadLink(fileName, commitHash) {
+    const downloadLink = document.getElementById('preview-download');
+    if (commitHash) {
+        downloadLink.href = `/catalog/{{ catalog_id }}/{{ dataset_name }}/file/${encodeURIComponent(fileName)}/download?checkout=${commitHash}`;
+    } else {
+        downloadLink.href = `/catalog/{{ catalog_id }}/{{ dataset_name }}/file/${encodeURIComponent(fileName)}/download`;
+    }
+}
+
+/**
+ * Load and display preview content for a file at a specific commit.
+ * Fetches the preview HTML, extracts relevant content (panels), and updates
+ * the modal content area. Handles image files by updating image src URLs
+ * to include checkout parameters and cache-busting.
+ *
+ * Implements race condition protection:
+ * - Cancels any previous in-flight requests using AbortController
+ * - Uses request ID to ignore stale responses
+ * - Disables navigation buttons during loading
+ *
+ * @param {string} fileName - The name of the file to preview
+ * @param {string|null} checkoutHash - Optional commit hash to preview specific version.
+ *   If null, previews from latest commit (HEAD)
+ *
+ * Side effects:
+ * - Updates preview-content element innerHTML
+ * - Shows loading state during fetch
+ * - Updates image src attributes for image files
+ * - Shows error message on failure
+ * - Cancels previous fetch requests
+ * - Disables/enables navigation buttons
+ *
+ * Edge cases handled:
+ * - No panels found: Falls back to panel-content or main content area
+ * - Image files: Updates src URLs to include checkout parameter and cache-busting
+ * - Text files: Content is displayed as-is from extracted HTML
+ * - Network errors: Shows error message in preview area
+ * - Race conditions: Cancels old requests and ignores stale responses
+ */
+function loadPreviewContent(fileName, checkoutHash) {
+    const content = document.getElementById('preview-content');
+
+    // Cancel any previous in-flight request
+    if (previewAbortController) {
+        previewAbortController.abort();
+    }
+
+    // Create new AbortController for this request
+    previewAbortController = new AbortController();
+    const currentRequestId = ++previewRequestId;
+
+    // Disable navigation buttons during loading
+    const prevButton = document.getElementById('commit-nav-prev');
+    const nextButton = document.getElementById('commit-nav-next');
+    if (prevButton) prevButton.disabled = true;
+    if (nextButton) nextButton.disabled = true;
+
+    // Show loading state
+    content.innerHTML = `
+        <div class="text-center py-8">
+            <div class="spinner mx-auto"></div>
+            <p class="text-muted-foreground mt-2">Loading preview...</p>
+        </div>
+    `;
+
+    const previewUrl = checkoutHash
+        ? `/catalog/{{ catalog_id }}/{{ dataset_name }}/file/${encodeURIComponent(fileName)}/preview?checkout=${checkoutHash}`
+        : `/catalog/{{ catalog_id }}/{{ dataset_name }}/file/${encodeURIComponent(fileName)}/preview`;
+
+    fetch(previewUrl, { signal: previewAbortController.signal })
+        .then(response => {
+            // Check for HTTP errors
+            if (!response.ok) {
+                // Create error object with response for better error handling
+                const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+                error.response = response;
+                throw error;
+            }
+            return response.text();
+        })
+        .then(html => {
+            // Ignore stale responses (race condition protection)
+            if (currentRequestId !== previewRequestId) {
+                return;
+            }
+
+            // Extract content from the response
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            // Extract all panels (source file section and file content)
+            // Note: We don't extract code-snippet because the modal already has its own
+            const panels = doc.querySelectorAll('.panel');
+            let extractedHTML = '';
+
+            // Extract panels (source file links and file content)
+            if (panels.length > 0) {
+                // Extract entire panel structure to preserve styling
+                panels.forEach(panel => {
+                    extractedHTML += panel.outerHTML;
+                });
+            } else {
+                // Fallback: if no panels found, try just the main panel-content
+                const previewContent = doc.querySelector('.panel-content');
+                if (previewContent) {
+                    extractedHTML = '<div class="panel"><div class="panel-content">' + previewContent.innerHTML + '</div></div>';
+                }
+            }
+
+            // If still no content, try extracting from main content area
+            if (!extractedHTML) {
+                const mainContent = doc.querySelector('main') || doc.querySelector('.space-y-4');
+                if (mainContent) {
+                    extractedHTML = mainContent.innerHTML;
+                }
+            }
+
+            if (extractedHTML) {
+                content.innerHTML = extractedHTML;
+
+                // Ensure images load correctly - update image src to include checkout parameter
+                // Only process images if they exist (for image files)
+                const images = content.querySelectorAll('img');
+                if (images.length > 0) {
+                    images.forEach(img => {
+                        const currentSrc = img.getAttribute('src');
+                        if (currentSrc && currentSrc.includes('/image')) {
+                            // Update image src to include checkout parameter if needed
+                            let newSrc = currentSrc;
+                            if (checkoutHash && !currentSrc.includes('checkout=')) {
+                                const separator = currentSrc.includes('?') ? '&' : '?';
+                                newSrc = currentSrc + separator + 'checkout=' + checkoutHash;
+                            } else if (!checkoutHash && currentSrc.includes('checkout=')) {
+                                // Remove checkout parameter if not needed
+                                newSrc = currentSrc.split('?')[0];
+                            }
+
+                            // Update src - add cache-busting parameter to force reload
+                            const separator = newSrc.includes('?') ? '&' : '?';
+                            img.src = newSrc + separator + '_t=' + Date.now();
+
+                            // Ensure image is visible and loads eagerly
+                            img.style.display = '';
+                            img.loading = 'eager';
+                            img.decoding = 'async';
+                        }
+                    });
+                }
+                // For text files, the content is already in the extractedHTML and will display correctly
+            } else {
+                // Only update if this is still the current request
+                if (currentRequestId === previewRequestId) {
+                    content.innerHTML = `
+                        <div class="text-center py-8">
+                            <p class="text-muted-foreground">Preview not available</p>
+                        </div>
+                    `;
+                }
+            }
+
+            // Re-enable navigation buttons after successful load
+            if (currentRequestId === previewRequestId) {
+                updateCommitNavigation();
+            }
+        })
+        .catch(error => {
+            // Ignore abort errors (they're expected when canceling requests)
+            if (error.name === 'AbortError') {
+                return;
+            }
+
+            // Only show error if this is still the current request
+            if (currentRequestId !== previewRequestId) {
+                return;
+            }
+
+            console.error('Error loading preview:', error);
+
+            // Determine error type and provide actionable suggestions
+            let errorMessage = 'Error loading preview';
+            let suggestion = '';
+
+            if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                // Network error (connection failed, CORS, etc.)
+                errorMessage = 'Connection error';
+                suggestion = 'Please check your internet connection and try again.';
+            } else if (error.response) {
+                // HTTP error response
+                const status = error.response.status;
+                if (status === 404) {
+                    errorMessage = 'File not found';
+                    suggestion = 'This file may not exist in this commit. Try navigating to a different commit.';
+                } else if (status === 500) {
+                    errorMessage = 'Server error';
+                    suggestion = 'The server encountered an error. Please try again in a moment.';
+                } else if (status >= 400 && status < 500) {
+                    errorMessage = 'Request error';
+                    suggestion = 'There was a problem with your request. Please try refreshing the page.';
+                } else {
+                    errorMessage = 'Server error';
+                    suggestion = 'Please try again later.';
+                }
+            } else if (error.message && error.message.includes('timeout')) {
+                errorMessage = 'Request timeout';
+                suggestion = 'The request took too long. Please try again or check your connection.';
+            } else {
+                // Generic error - provide more detail if available
+                errorMessage = 'Error loading preview';
+                suggestion = 'Please try refreshing the page or navigating to a different commit.';
+            }
+
+            content.innerHTML = `
+                <div class="text-center py-8">
+                    <p class="text-destructive" style="font-weight: 600; margin-bottom: 0.5rem;">${errorMessage}</p>
+                    <p class="text-muted-foreground" style="font-size: 0.875rem;">${suggestion}</p>
+                </div>
+            `;
+            // Re-enable navigation buttons even on error
+            updateCommitNavigation();
+        });
+}
+
+/**
+ * Open the file preview modal and initialize commit navigation.
+ * Loads commit history for the file, determines current commit position,
+ * and displays the preview content.
+ *
+ * @param {string} fileName - The name of the file to preview
+ *
+ * Side effects:
+ * - Shows the preview modal
+ * - Sets modal title to file name
+ * - Updates filename in code snippet
+ * - Loads file commit history
+ * - Initializes commit navigation state
+ * - Loads preview content for current commit
+ * - Updates download link
+ * - Disables body scroll while modal is open
+ *
+ * Uses global state: fileCommits, currentCommitIndex, currentFileName
+ *
+ * Commit selection logic:
+ * - If checkout_commit template variable is set, finds matching commit
+ * - Otherwise defaults to latest commit (index 0)
+ * - Falls back to latest if checkout commit not found
+ */
+async function openPreview(fileName) {
     const modal = document.getElementById('preview-modal');
     const title = document.getElementById('preview-title');
     const content = document.getElementById('preview-content');
     const downloadLink = document.getElementById('preview-download');
 
-    // Set title and download link
+    // Store current file name
+    currentFileName = fileName;
+
+    // Set title
     title.textContent = fileName;
-    downloadLink.href = `/catalog/{{ catalog_id }}/{{ dataset_name }}/file/${fileName}/download`;
 
     // Update filename in code snippet
     const modalFilename = document.getElementById('modal-filename');
@@ -226,90 +701,69 @@ function openPreview(fileName) {
     modal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
 
-    // Load preview content
+    // Load file commits for all file types
+    fileCommits = await loadFileCommits(fileName);
+
+    // Find current commit index (latest commit or checkout commit)
     const checkoutParam = {% if checkout_commit %}'{{ checkout_commit }}'{% else %}null{% endif %};
-    const previewUrl = checkoutParam
-        ? `/catalog/{{ catalog_id }}/{{ dataset_name }}/file/${fileName}/preview?checkout=${checkoutParam}`
-        : `/catalog/{{ catalog_id }}/{{ dataset_name }}/file/${fileName}/preview`;
+    if (checkoutParam && fileCommits.length > 0) {
+        // Find commit index matching checkout hash
+        currentCommitIndex = fileCommits.findIndex(c => c.hash === checkoutParam || c.short_hash === checkoutParam);
+        if (currentCommitIndex === -1) {
+            // If checkout commit not found, default to latest
+            currentCommitIndex = 0;
+        }
+    } else {
+        // Default to latest commit (index 0)
+        currentCommitIndex = fileCommits.length > 0 ? 0 : -1;
+    }
 
-    fetch(previewUrl)
-        .then(response => response.text())
-        .then(html => {
-            // Extract content from the response
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
+    // Update navigation UI (will hide if only one commit or no commits)
+    updateCommitNavigation();
 
-            // Extract all panels (source file section and file content)
-            const panels = doc.querySelectorAll('.panel');
-            let extractedHTML = '';
-
-            panels.forEach(panel => {
-                const panelContent = panel.querySelector('.panel-content');
-                if (panelContent) {
-                    // Wrap in a div to maintain structure, or just add the content
-                    extractedHTML += '<div class="panel-content">' + panelContent.innerHTML + '</div>';
-                }
-            });
-
-            // Fallback: if no panels found, try just the main panel-content
-            if (!extractedHTML) {
-                const previewContent = doc.querySelector('.panel-content');
-                if (previewContent) {
-                    extractedHTML = previewContent.innerHTML;
-                }
-            }
-
-            if (extractedHTML) {
-                content.innerHTML = extractedHTML;
-
-                // Ensure images load correctly - update image src to include checkout parameter
-                const images = content.querySelectorAll('img');
-                images.forEach(img => {
-                    const currentSrc = img.getAttribute('src');
-                    if (currentSrc && currentSrc.includes('/image')) {
-                        // Update image src to include checkout parameter if needed
-                        let newSrc = currentSrc;
-                        if (checkoutParam && !currentSrc.includes('checkout=')) {
-                            const separator = currentSrc.includes('?') ? '&' : '?';
-                            newSrc = currentSrc + separator + 'checkout=' + checkoutParam;
-                        } else if (!checkoutParam && currentSrc.includes('checkout=')) {
-                            // Remove checkout parameter if not needed
-                            newSrc = currentSrc.split('?')[0];
-                        }
-
-                        // Update src - add cache-busting parameter to force reload
-                        const separator = newSrc.includes('?') ? '&' : '?';
-                        img.src = newSrc + separator + '_t=' + Date.now();
-
-                        // Ensure image is visible and loads eagerly
-                        img.style.display = '';
-                        img.loading = 'eager';
-                        img.decoding = 'async';
-                    }
-                });
-            } else {
-                content.innerHTML = `
-                    <div class="text-center py-8">
-                        <p class="text-muted-foreground">Preview not available</p>
-                    </div>
-                `;
-            }
-        })
-        .catch(error => {
-            console.error('Error loading preview:', error);
-            content.innerHTML = `
-                <div class="text-center py-8">
-                    <p class="text-destructive">Error loading preview</p>
-                </div>
-            `;
-        });
+    // Load preview with current commit
+    const currentCommit = currentCommitIndex >= 0 ? fileCommits[currentCommitIndex] : null;
+    const commitHash = currentCommit ? currentCommit.hash : null;
+    loadPreviewContent(fileName, commitHash);
+    updateDownloadLink(fileName, commitHash);
 }
 
+/**
+ * Close the file preview modal and restore page scroll.
+ *
+ * Side effects:
+ * - Hides the preview modal
+ * - Restores body scroll behavior
+ */
 function closePreview() {
     const modal = document.getElementById('preview-modal');
     modal.style.display = 'none';
     document.body.style.overflow = 'auto';
 }
+
+/**
+ * Clear the commit cache for a specific file or all files.
+ * Should be called when commits are made to ensure fresh data.
+ *
+ * @param {string|null} fileName - Optional file name to clear cache for specific file.
+ *   If null, clears entire cache.
+ */
+function clearCommitCache(fileName) {
+    if (fileName) {
+        commitCache.delete(fileName);
+    } else {
+        commitCache.clear();
+    }
+}
+
+// Clear commit cache when commits are made (via HTMX after request)
+document.addEventListener('htmx:afterRequest', function(event) {
+    // Check if this was a commit request
+    if (event.detail.pathInfo.requestPath && event.detail.pathInfo.requestPath.includes('/commit')) {
+        // Clear entire cache since any file might have been affected
+        clearCommitCache();
+    }
+});
 
 // Close modal on Escape key
 document.addEventListener('keydown', function(event) {
