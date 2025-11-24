@@ -2,9 +2,9 @@
 
 import os
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING, BinaryIO, Optional, TextIO, Union
+from typing import TYPE_CHECKING, Any, BinaryIO, Dict, Optional, TextIO, Union
 
 import fsspec
 from loguru import logger
@@ -22,6 +22,7 @@ class File:
     name: str
     size: int
     content_type: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
     _storage: Optional["ContentStore"] = None
     _fs: Optional[fsspec.AbstractFileSystem] = None
 
@@ -180,12 +181,15 @@ class File:
         Returns:
             Dictionary with file properties
         """
-        return {
+        result = {
             "hash": self.hash,
             "name": self.name,
             "size": self.size,
             "content_type": self.content_type,
         }
+        if self.metadata:
+            result["metadata"] = self.metadata
+        return result
 
     @classmethod
     def from_dict(cls, data: dict, storage: Optional["ContentStore"] = None) -> "File":
@@ -203,6 +207,7 @@ class File:
             name=data["name"],
             size=data["size"],
             content_type=data.get("content_type"),
+            metadata=data.get("metadata", {}),
         )
 
         # Associate with storage if provided

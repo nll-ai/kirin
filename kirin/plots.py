@@ -6,9 +6,12 @@ WebP for bitmaps) with automatic format detection.
 """
 
 import io
-from typing import TYPE_CHECKING, Optional, Union
+import os
+from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 from loguru import logger
+
+from .utils import detect_source_file
 
 if TYPE_CHECKING:
     from .storage import ContentStore
@@ -45,7 +48,7 @@ def save_plot(
     filename: str,
     storage: "ContentStore",
     format: Optional[str] = None,
-) -> tuple[str, str]:
+) -> Tuple[str, str, Optional[str], Optional[str]]:
     """Save a plot to content-addressed storage with automatic format detection.
 
     Automatically detects the plot type (matplotlib, plotly, etc.) and chooses
@@ -81,27 +84,64 @@ def save_plot(
         format: Optional format override ('svg' or 'webp'). If None, auto-detects.
 
     Returns:
-        Tuple of (content_hash, actual_filename) where actual_filename is the
-        filename used (may have extension adjusted based on format)
+        Tuple of (content_hash, actual_filename, source_file_path, source_file_hash)
+        where:
+        - content_hash: Hash of the stored plot file
+        - actual_filename: Filename used (may have extension adjusted based on format)
+        - source_file_path: Path to source notebook/script, or None if not detected
+        - source_file_hash: Hash of stored source file, or None if not detected
 
     Raises:
         ValueError: If plot type is not supported or format detection fails
         ImportError: If required libraries are not available
     """
+    # Detect source file
+    source_file_path = detect_source_file()
+    source_file_hash = None
+
+    # If source file detected, read and store it
+    if source_file_path and os.path.exists(source_file_path):
+        try:
+            with open(source_file_path, "rb") as f:
+                source_content = f.read()
+
+            # Get just the filename from the path for storage
+            source_filename = os.path.basename(source_file_path)
+
+            # Store source file in content-addressed storage
+            source_file_hash = storage.store_content(source_content, source_filename)
+            logger.info(
+                f"Detected and stored source file: {source_filename} "
+                f"(hash: {source_file_hash[:8]})"
+            )
+        except Exception as e:
+            logger.warning(
+                f"Failed to store source file {source_file_path}: {e}. "
+                "Plot will be saved without source linking."
+            )
+            source_file_path = None
+            source_file_hash = None
+
     # Detect plot type and determine format
     if format is None:
         format = _detect_plot_format(plot_object, filename)
 
     # Save based on plot type
     if HAS_MATPLOTLIB and plt is not None and isinstance(plot_object, plt.Figure):
-        return _save_matplotlib_plot(plot_object, filename, storage, format)
+        content_hash, actual_filename = _save_matplotlib_plot(
+            plot_object, filename, storage, format
+        )
     elif HAS_PLOTLY and go is not None and isinstance(plot_object, go.Figure):
-        return _save_plotly_plot(plot_object, filename, storage, format)
+        content_hash, actual_filename = _save_plotly_plot(
+            plot_object, filename, storage, format
+        )
     else:
         raise ValueError(
             f"Unsupported plot type: {type(plot_object)}. "
             "Supported types: matplotlib.Figure, plotly.graph_objects.Figure"
         )
+
+    return (content_hash, actual_filename, source_file_path, source_file_hash)
 
 
 def _detect_plot_format(plot_object: object, filename: str) -> str:

@@ -207,6 +207,51 @@ This means:
   hashes, consider using WebP format (raster) instead of SVG, or strip metadata
   before saving (not currently implemented).
 
+#### Automatic Source File Linking
+
+When saving a plot, Kirin automatically detects and stores the source notebook or
+script that generated the plot, linking them together via metadata:
+
+- **Automatic Detection**: Uses `inspect.stack()` to detect the calling script or
+  notebook. For Jupyter notebooks, uses the `ipynbname` package if available.
+
+- **Source File Storage**: The source file is automatically stored in the same
+  commit as the plot, using content-addressed storage (deduplication handled
+  automatically).
+
+- **Metadata Linking**: The plot file's metadata contains:
+  - `source_file`: Filename of the source notebook/script
+  - `source_hash`: Content hash of the source file
+
+- **Web UI Display**: The web UI displays source file links in both the file list
+  and file preview pages, making it easy to navigate from plots to their source
+  code.
+
+- **Edge Cases**: If source detection fails (e.g., running in interactive shell),
+  the plot is still saved successfully, but no source linking occurs.
+
+**Example:**
+
+```python
+# In a Jupyter notebook or Python script
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots()
+ax.plot([1, 2, 3], [1, 4, 9])
+
+# Save plot - source file is automatically detected and linked
+commit_hash = dataset.save_plot(
+    fig, "plot.png", auto_commit=True, message="Add visualization"
+)
+
+# Access source file metadata
+plot_file = dataset.get_file("plot.png")
+if plot_file.metadata.get("source_file"):
+    print(f"Plot generated from: {plot_file.metadata['source_file']}")
+    source_file = dataset.get_file(plot_file.metadata["source_file"])
+    print(f"Source file hash: {source_file.hash}")
+```
+
 **Examples:**
 
 ```python
@@ -287,9 +332,12 @@ for more details.
 
 **Returns:**
 
-- `tuple[str, str]`: Tuple of (content_hash, actual_filename) where
-  actual_filename is the filename used (may have extension adjusted based on
-  format)
+- `tuple[str, str, Optional[str], Optional[str]]`: Tuple of
+  (content_hash, actual_filename, source_file_path, source_file_hash) where:
+  - `content_hash`: Hash of the stored plot file
+  - `actual_filename`: Filename used (may have extension adjusted based on format)
+  - `source_file_path`: Path to source notebook/script, or None if not detected
+  - `source_file_hash`: Hash of stored source file, or None if not detected
 
 **Example:**
 
@@ -303,10 +351,14 @@ storage = ContentStore("/path/to/data")
 fig, ax = plt.subplots()
 ax.plot([1, 2, 3], [1, 4, 9])
 
-# Save plot (returns hash and actual filename)
-content_hash, actual_filename = save_plot(fig, "plot.png", storage)
+# Save plot (returns hash, filename, and source info)
+content_hash, actual_filename, source_path, source_hash = save_plot(
+    fig, "plot.png", storage
+)
 print(f"Saved plot with hash: {content_hash[:8]}")
 print(f"Actual filename: {actual_filename}")  # May be "plot.svg"
+if source_path:
+    print(f"Source file: {source_path} (hash: {source_hash[:8]})")
 ```
 
 ### Catalog

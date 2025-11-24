@@ -235,13 +235,58 @@ function openPreview(fileName) {
     fetch(previewUrl)
         .then(response => response.text())
         .then(html => {
-            // Extract just the content from the response
+            // Extract content from the response
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
-            const previewContent = doc.querySelector('.panel-content');
 
-            if (previewContent) {
-                content.innerHTML = previewContent.innerHTML;
+            // Extract all panels (source file section and file content)
+            const panels = doc.querySelectorAll('.panel');
+            let extractedHTML = '';
+
+            panels.forEach(panel => {
+                const panelContent = panel.querySelector('.panel-content');
+                if (panelContent) {
+                    // Wrap in a div to maintain structure, or just add the content
+                    extractedHTML += '<div class="panel-content">' + panelContent.innerHTML + '</div>';
+                }
+            });
+
+            // Fallback: if no panels found, try just the main panel-content
+            if (!extractedHTML) {
+                const previewContent = doc.querySelector('.panel-content');
+                if (previewContent) {
+                    extractedHTML = previewContent.innerHTML;
+                }
+            }
+
+            if (extractedHTML) {
+                content.innerHTML = extractedHTML;
+
+                // Ensure images load correctly - update image src to include checkout parameter
+                const images = content.querySelectorAll('img');
+                images.forEach(img => {
+                    const currentSrc = img.getAttribute('src');
+                    if (currentSrc && currentSrc.includes('/image')) {
+                        // Update image src to include checkout parameter if needed
+                        let newSrc = currentSrc;
+                        if (checkoutParam && !currentSrc.includes('checkout=')) {
+                            const separator = currentSrc.includes('?') ? '&' : '?';
+                            newSrc = currentSrc + separator + 'checkout=' + checkoutParam;
+                        } else if (!checkoutParam && currentSrc.includes('checkout=')) {
+                            // Remove checkout parameter if not needed
+                            newSrc = currentSrc.split('?')[0];
+                        }
+
+                        // Update src - add cache-busting parameter to force reload
+                        const separator = newSrc.includes('?') ? '&' : '?';
+                        img.src = newSrc + separator + '_t=' + Date.now();
+
+                        // Ensure image is visible and loads eagerly
+                        img.style.display = '';
+                        img.loading = 'eager';
+                        img.decoding = 'async';
+                    }
+                });
             } else {
                 content.innerHTML = `
                     <div class="text-center py-8">

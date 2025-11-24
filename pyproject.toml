@@ -83,6 +83,8 @@ dependencies = [
     "boto3",
     "loguru",  # Runtime logging
     "uvicorn",  # Web server for CLI
+    "ipynbname",  # Jupyter notebook filename detection
+    "pillow",  # For image thumbnails and WebP encoding in web UI
 ]
 readme = "README.md"
 

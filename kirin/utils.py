@@ -1,11 +1,17 @@
 """Utilities for kirin."""
 
+import inspect
 import os
 from pathlib import Path
 from typing import Optional, Union
 
 import fsspec
 from loguru import logger
+
+try:
+    import ipynbname
+except ImportError:
+    ipynbname = None
 
 
 def strip_protocol(path: str) -> str:
@@ -176,6 +182,7 @@ def _get_gcs_filesystem_with_credentials(
         Authenticated GCS filesystem
     """
     from .cloud_auth import get_gcs_filesystem
+
     return get_gcs_filesystem(token=token, project=project)
 
 
@@ -195,8 +202,169 @@ def _get_azure_filesystem_with_credentials(
         Authenticated Azure filesystem
     """
     from .cloud_auth import get_azure_filesystem
+
     return get_azure_filesystem(
         account_name=account_name,
         account_key=account_key,
         connection_string=connection_string,
     )
+
+
+def is_kirin_internal_file(path: str) -> bool:
+    """Check if a path is a Kirin internal file (not user scripts/notebooks).
+
+    Args:
+        path: File path to check
+
+    Returns:
+        True if path is a Kirin internal file, False otherwise
+    """
+    normalized = path.replace(os.sep, "/")
+    if "/kirin/" not in normalized:
+        return False
+
+    parts = normalized.split("/kirin/", 1)
+    if len(parts) <= 1:
+        return False
+
+    after_kirin = parts[1]
+    # Allow user directories even if they contain "kirin" in path
+    allowed_prefixes = ["scripts/", "notebooks/", "tests/", "docs/"]
+    return not any(after_kirin.startswith(prefix) for prefix in allowed_prefixes)
+
+
+def extract_marimo_path(temp_path: str) -> Optional[str]:
+    """Extract actual notebook path from Marimo temporary file path.
+
+    Marimo creates temp files like:
+    /tmp/marimo_xxx/__marimo__cell_...:actual/path/to/notebook.py
+
+    Args:
+        temp_path: Temporary file path from Marimo
+
+    Returns:
+        Actual notebook path if found, None otherwise
+    """
+    normalized = temp_path.replace(os.sep, "/")
+    if "__marimo__" not in normalized and "/marimo_" not in normalized:
+        return None
+
+    if ":" not in normalized:
+        return None
+
+    parts = normalized.split(":", 1)
+    if len(parts) <= 1:
+        return None
+
+    potential_path = parts[1].split("#")[0]  # Remove URL fragments
+    import urllib.parse
+
+    potential_path = urllib.parse.unquote(potential_path)
+    return potential_path if os.path.exists(potential_path) else None
+
+
+def detect_source_file() -> Optional[str]:
+    """Detect the source notebook or script file that called this function.
+
+    Uses inspect.stack() to walk up the call stack and detect:
+    - Regular Python scripts (including Marimo notebooks): Uses frame.filename
+    - Jupyter/IPython notebooks: Uses ipynbname.path() if available
+
+    Detection priority:
+    1. Jupyter notebooks (via ipynbname)
+    2. Scripts/Marimo notebooks (via __file__ in frame globals)
+    3. Regular scripts (via co_filename)
+
+    Returns:
+        Path to source file, or None if source cannot be determined
+
+    Examples:
+        >>> # In a script
+        >>> detect_source_file()
+        '/path/to/script.py'
+
+        >>> # In a Jupyter notebook
+        >>> detect_source_file()
+        '/path/to/notebook.ipynb'
+
+        >>> # In interactive shell
+        >>> detect_source_file()
+        None
+    """
+    try:
+        # Walk up the call stack to find the calling frame
+        stack = inspect.stack()
+
+        # Skip frames that are inside the kirin package itself
+        # Frame 0: detect_source_file() itself
+        # Frame 1+: Callers (may include kirin internal functions)
+        for frame_info in stack[1:]:
+            frame = frame_info.frame
+
+            # First check if we're in a Jupyter/IPython notebook environment
+            # This must come before __file__ check because __file__ in Jupyter
+            # points to temp files
+            if "get_ipython" in frame.f_globals:
+                # Try to get notebook path using ipynbname (most reliable method)
+                if ipynbname is not None:
+                    try:
+                        notebook_path = ipynbname.path()
+                        if notebook_path and os.path.exists(notebook_path):
+                            return str(notebook_path)
+                    except Exception:
+                        # ipynbname may fail in some environments
+                        pass
+
+            # Check for __file__ in frame globals (works correctly for Marimo notebooks)
+            if "__file__" in frame.f_globals:
+                filename = frame.f_globals["__file__"]
+                if filename and isinstance(filename, str) and os.path.exists(filename):
+                    # Handle Marimo temp files
+                    marimo_path = extract_marimo_path(filename)
+                    if marimo_path:
+                        return marimo_path
+
+                    # Skip IPython/Jupyter temporary files
+                    normalized = filename.replace(os.sep, "/")
+                    if "/ipykernel_" in normalized or "/tmp/" in normalized:
+                        continue
+
+                    # Skip Kirin internal files
+                    if is_kirin_internal_file(filename):
+                        continue
+
+                    # Found a valid user file
+                    return filename
+
+            # Fallback: Check if this frame has co_filename (regular script)
+            if hasattr(frame, "f_code") and hasattr(frame.f_code, "co_filename"):
+                filename = frame.f_code.co_filename
+
+                # Skip internal Python files and compiled modules
+                if (
+                    filename
+                    and not filename.startswith("<")
+                    and filename.endswith(".py")
+                ):
+                    # Handle Marimo notebook temporary files
+                    marimo_path = extract_marimo_path(filename)
+                    if marimo_path:
+                        filename = marimo_path
+                        normalized = filename.replace(os.sep, "/")
+                    else:
+                        normalized = filename.replace(os.sep, "/")
+
+                    # Skip Kirin internal files
+                    if is_kirin_internal_file(filename):
+                        continue
+
+                    # Check if it's a real file
+                    if os.path.exists(filename) or os.path.isabs(filename):
+                        return filename
+
+        # If we couldn't determine the source, return None
+        return None
+
+    except Exception as e:
+        logger.warning(f"Failed to detect source file: {e}")
+        return None

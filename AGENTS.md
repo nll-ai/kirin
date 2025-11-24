@@ -349,6 +349,32 @@ architecture with all common styles in `/kirin/static/styles.css`:
 
 ## Development Guidelines
 
+### Code Style: No Private Methods/Functions
+
+**CRITICAL**: Do not use private method/function naming conventions (leading
+underscores). Use regular module-level functions and methods instead.
+
+**Rationale**:
+
+- **Pythonic**: Python doesn't have true privacy - underscores are just
+  conventions
+- **Testability**: Public functions are easier to test independently
+- **Clarity**: Clear, descriptive names are better than hiding behind
+  underscores
+- **Consistency**: Keep the codebase consistent without mixing public/private
+  conventions
+
+**Pattern**:
+
+- ✅ **Use**: `is_kirin_internal_file()`, `extract_marimo_path()`,
+  `get_image_content_type()`
+- ❌ **Avoid**: `_is_kirin_internal_file()`, `_extract_marimo_path()`,
+  `_get_image_content_type()`
+
+**Exception**: Only use leading underscores for truly internal implementation
+details that should never be accessed externally (e.g., `__init__`, `__str__`,
+dunder methods).
+
 ### Linting Guidelines
 
 **CRITICAL**: Always run pre-commit on all files and fix all issues. This
