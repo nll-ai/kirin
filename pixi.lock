@@ -2725,8 +2725,8 @@ packages:
   timestamp: 1754905959823
 - pypi: ./
   name: kirin
-  version: 0.0.6
-  sha256: 87869d2909d087d8dc34873fa91f20a47210db2c10d4adf78a43a1af7e55a3ae
+  version: 0.0.7
+  sha256: 5edccd9ae7425da93564649e94ab7f5eb541a4843d430871b00308c4d68f412e
   requires_dist:
   - pyprojroot
   - python-dotenv
