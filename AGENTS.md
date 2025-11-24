@@ -808,10 +808,10 @@ proper dependency resolution.
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "polars==1.34.0",
-#     "kirin==0.0.1",
-#     "anthropic==0.69.0",
-#     "loguru==0.7.3",
+#     "polars",
+#     "kirin",
+#     "anthropic",
+#     "loguru",
 # ]
 #
 # [tool.uv.sources]
@@ -822,10 +822,13 @@ proper dependency resolution.
 **Key Requirements**:
 
 - **Python Version**: Always specify `requires-python = ">=3.13"`
-- **Kirin Dependency**: Include `kirin==0.0.1` in dependencies
+- **Kirin Dependency**: Include `kirin` in dependencies (no version pin)
 - **Editable Source**: Use `[tool.uv.sources]` with `kirin = { path =
   "../", editable = true }`
 - **Additional Dependencies**: Include any other libraries the script needs
+  (no version pins)
+- **No Version Pins**: Do not pin versions in dependencies (e.g., use
+  `polars` not `polars==1.34.0`)
 - **Metadata Block**: Must be at the very top of the file, before any
   imports
 

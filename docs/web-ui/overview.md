@@ -1,226 +1,326 @@
 # Web UI Overview
 
-Kirin includes a comprehensive web interface for managing datasets and
-catalogs through your browser.
+The Kirin web interface provides a visual, browser-based way to manage your
+data versioning workflows. It's designed for users who prefer graphical
+interfaces over command-line tools, and for teams who need shared visibility
+into datasets and their history.
 
-## Getting Started
+## What Is the Web UI?
 
-### Starting the Web UI
+The web UI is a full-featured interface to Kirin's data versioning system,
+running as a local web server that you access through your browser. It
+provides the same core functionality as the Kirin CLI, but through an
+interactive, visual interface.
 
-```bash
-# Development (with pixi)
-pixi run kirin ui
+**Key characteristics:**
 
-# Production (with uv)
-uv run kirin ui
+- **Self-hosted**: Runs locally on your machine—no external services or
+  accounts required
+- **Browser-based**: Works in any modern web browser
+- **HTMX-powered**: Fast, dynamic updates without full page reloads
+- **Cloud-integrated**: Works seamlessly with S3, GCS, Azure, and local
+  storage
 
-# One-time use (with uvx)
-uvx kirin ui
-```
+## Why Does It Exist?
 
-The web UI will start on a random port (usually 8000+) and display the URL
-in your terminal.
+The web UI addresses several needs that the CLI doesn't:
 
-### First Time Setup
+**Visual Exploration:**
 
-1. **Start the web UI**: Run `pixi run kirin ui`
-2. **Open your browser**: Navigate to the displayed URL
-3. **Create your first catalog**: Click "Add Catalog" to get started
+- Browse datasets and files without remembering commands
+- See commit history as a timeline, not just log output
+- Preview file contents directly in the browser
 
-## Key Features
+**Team Collaboration:**
 
-### Catalog Management
+- Shared understanding of dataset structure and history
+- Easier onboarding for team members unfamiliar with CLI tools
+- Visual representation of changes over time
 
-- **Multiple Catalogs**: Manage different data collections
-- **Cloud Integration**: Connect to S3, GCS, Azure, and more
-- **Authentication**: Secure credential management
-- **Catalog Overview**: See all datasets at a glance
+**Workflow Integration:**
 
-### Dataset Operations
+- Quick file uploads via drag-and-drop
+- Immediate visual feedback on operations
+- No need to switch between terminal and file browser
 
-- **Browse Datasets**: View all datasets in a catalog
-- **File Management**: Upload, remove, and organize files
-- **Commit History**: Visual commit timeline
-- **File Preview**: View file contents directly in browser
+## How It Fits into Kirin
 
-### User Interface
+The web UI is one of three ways to interact with Kirin:
 
-- **Modern Design**: Clean, responsive interface
-- **Fast Interactions**: HTMX-powered dynamic updates
-- **Mobile Friendly**: Works on all device sizes
-- **Accessible**: Keyboard navigation and screen reader support
+### 1. Web UI (this interface)
 
-## Navigation
+- Best for: Visual exploration, quick operations, team collaboration
+- Use when: You want to browse datasets, upload files interactively, or
+  share views with teammates
 
-### Main Pages
+### 2. Python API
 
-1. **Home** (`/`): Catalog management and overview
-2. **Catalog View** (`/{catalog_id}`): Dataset listing for a catalog
-3. **Dataset View** (`/{catalog_id}/{dataset}`): Individual dataset with files
-   and history
-4. **File Preview** (`/{catalog_id}/{dataset}/files/{filename}`): File content
-   viewer
+- Best for: Programmatic access, automation, integration with data science
+  workflows
+- Use when: You're writing scripts, notebooks, or applications that need to
+  interact with Kirin
 
-### Navigation Flow
+### 3. CLI
+
+- Best for: Command-line workflows, automation, CI/CD pipelines
+- Use when: You're comfortable with terminals and need scriptable operations
+
+**All three interfaces work with the same underlying data.** A dataset created
+via the web UI can be accessed via Python API or CLI, and vice versa. They're
+different views of the same system.
+
+## Core Concepts
+
+### Catalogs
+
+A catalog is a connection to a storage location. Think of it as a "data
+source" that Kirin can access.
+
+**Storage backends:**
+
+- **Local filesystem**: Direct access to directories on your machine
+- **AWS S3**: Cloud storage buckets
+- **Google Cloud Storage**: GCS buckets
+- **Azure Blob Storage**: Azure containers
+
+**Key properties:**
+
+- Catalogs are independent—each manages its own set of datasets
+- Multiple catalogs can point to different storage locations
+- Catalogs handle authentication and connection details
+
+**Mental model**: A catalog is like a "workspace" or "project folder" that
+contains multiple datasets.
+
+### Datasets
+
+A dataset is a versioned collection of files within a catalog. It's the
+primary unit of organization in Kirin.
+
+**Key properties:**
+
+- Each dataset has a name and optional description
+- Files are stored with content-addressed hashing (deduplication)
+- History is linear—each commit has one parent
+- Datasets are independent—changes to one don't affect others
+
+**Mental model**: A dataset is like a git repository, but for data files
+instead of source code.
+
+### Commits
+
+A commit is a snapshot of files at a point in time. It records what files
+existed, their content hashes, and a message describing the change.
+
+**Key properties:**
+
+- Each commit has a unique hash (content-addressed)
+- Commits form a linear history (no branching)
+- Commit messages describe what changed and why
+- You can browse files at any point in history
+
+**Mental model**: A commit is like a "save point" or "checkpoint" in your
+data versioning workflow.
+
+### Files
+
+Files in Kirin are stored by content hash, not by name. This enables:
+
+- **Deduplication**: Identical content stored once, even if filenames differ
+- **Integrity**: Content verified by hash, ensuring data hasn't changed
+- **Efficiency**: Same file content referenced multiple times without
+  duplication
+
+**Key properties:**
+
+- Files are immutable once committed
+- Multiple filenames can point to the same content
+- Files can have metadata (e.g., source file links for generated plots)
+- Original filenames are preserved for display and access
+
+**Mental model**: Files are like "blobs" in git—content-addressed and
+immutable.
+
+## Architecture
+
+### Client-Server Model
+
+The web UI runs as a local web server:
 
 ```text
-Home → Catalog → Dataset → File Preview
-  ↑       ↑        ↑         ↑
-Catalogs  Datasets  Files    Content
+Browser ←→ Web UI Server ←→ Storage Backend
+         (FastAPI)        (fsspec)
 ```
 
-## Working with Catalogs
+**Server components:**
 
-### Creating a Catalog
+- **FastAPI application**: Handles HTTP requests and routing
+- **Template engine**: Renders HTML pages (Jinja2)
+- **HTMX integration**: Enables dynamic updates without JavaScript
+- **fsspec integration**: Connects to various storage backends
 
-1. **Click "Add Catalog"** on the home page
-2. **Enter catalog details**:
-   - **ID**: Unique identifier (e.g., `my-data`)
-   - **Name**: Display name (e.g., `My Data Catalog`)
-   - **Root Directory**: Storage location
-3. **Configure authentication** (for cloud storage)
-4. **Save and test** the connection
+**Communication:**
 
-## Working with Datasets
+- Browser sends HTTP requests (GET for pages, POST for actions)
+- Server processes requests and interacts with storage
+- Responses are HTML (with HTMX for dynamic updates)
+- No API endpoints—everything is page-based
 
-### Dataset View
+### Storage Abstraction
 
-The dataset view shows:
+The web UI uses the same storage abstraction as the Python API and CLI:
 
-- **Files Tab**: Current files in the dataset
-- **History Tab**: Commit history timeline
-- **Actions**: Upload files, remove files, commit changes
-
-### File Operations
-
-#### Uploading Files
-
-1. **Click "Upload Files"** in the dataset view
-2. **Select files** from your computer
-3. **Add commit message** describing the changes
-4. **Click "Commit Changes"** to save
-
-#### Removing Files
-
-1. **Click "Remove Files"** in the dataset view
-2. **Select files** to remove (checkboxes)
-3. **Add commit message** explaining the removal
-4. **Click "Commit Changes"** to save
-
-#### Combined Operations
-
-You can upload and remove files in the same commit:
-
-1. **Upload new files** and **select files to remove**
-2. **Add commit message** describing all changes
-3. **Click "Commit Changes"** to save everything together
-
-### Commit History
-
-The History tab shows:
-
-- **Commit Timeline**: Chronological list of commits
-- **Commit Details**: Files added/removed in each commit
-- **File Information**: Size, hash, and metadata
-- **Navigation**: Click to view specific commits
-
-## File Preview
-
-### Supported File Types
-
-The web UI can preview:
-
-- **Text files**: `.txt`, `.csv`, `.json`, `.py`, `.md`
-- **Code files**: `.py`, `.js`, `.html`, `.css`
-- **Data files**: `.csv`, `.json`, `.yaml`
-- **Configuration**: `.ini`, `.toml`, `.yaml`
-
-### Preview Features
-
-- **Syntax highlighting** for code files
-- **Line numbers** for easy reference
-- **Download button** for saving files
-- **Responsive layout** for different screen sizes
-
-## Cloud Storage Integration
-
-### Setting Up Cloud Catalogs
-
-1. **Create catalog** with cloud URL (e.g., `s3://bucket/path`)
-2. **Configure authentication**:
-   - **AWS**: Profile name or access keys
-   - **GCS**: Service account key file
-   - **Azure**: Connection string or account details
-3. **Test connection** to verify setup
-
-### Cloud Authentication
-
-The web UI handles cloud authentication automatically:
-
-- **Credential Storage**: Secure storage in catalog configuration
-- **Profile Detection**: Automatic AWS profile detection
-- **Token Management**: GCS service account token handling
-- **Connection Testing**: Verify authentication before saving
-
-## Troubleshooting
-
-### Common Issues
-
-#### Port Already in Use
-
-```bash
-# If port is busy, Kirin will use a different port
-# Check the terminal output for the actual URL
+```text
+Web UI → Catalog → Dataset → Storage Backend
 ```
 
-#### SSL Certificate Issues
+**Layers:**
 
-```bash
-# Set up SSL certificates for cloud storage
-pixi run setup-ssl
-```
+1. **Web UI**: User interface layer
+2. **Catalog**: Connection and configuration management
+3. **Dataset**: Versioning and file management
+4. **Storage Backend**: Actual file storage (local, S3, GCS, Azure)
 
-#### Cloud Authentication Failures
+This abstraction means the web UI works identically with any storage backend,
+without special handling for different providers.
 
-**Automatic Authentication (NEW):**
+### Authentication Flow
 
-Kirin now automatically handles authentication for catalogs with stored auth commands:
+For cloud storage, authentication happens at the catalog level:
 
-1. **Auto-retry**: When authentication fails, Kirin executes the stored auth command
-2. **Success feedback**: Green banner shows successful authentication
-3. **Failure guidance**: Error message with manual instructions if auto-auth fails
+**Automatic authentication:**
 
-**Manual Authentication:**
+- Catalogs can store authentication commands (e.g., `aws sso login --profile
+  production`)
+- When operations fail due to authentication, the web UI automatically runs
+  the stored command
+- Success/failure is communicated to the user via UI messages
 
-If auto-authentication isn't configured or fails:
+**Manual authentication:**
 
-1. **Check credentials**: Verify AWS profiles, GCS tokens, etc.
-2. **Run auth command**: Execute the CLI command manually (shown in error message)
-3. **Refresh page**: Try accessing the catalog again
-4. **Review logs**: Check terminal output for error messages
+- Users can authenticate via CLI before accessing catalogs
+- Authentication state persists in the user's environment
+- The web UI uses existing authentication from the environment
 
-**Timeout Protection:**
+**Security model:**
 
-- **10-second timeout** for catalog operations prevents UI from hanging
-- **Clear error messages** indicate when timeouts occur
-- **Retry button** allows you to try again after authentication
+- Credentials are never stored in the web UI
+- Authentication commands are stored, but not credentials themselves
+- The web UI executes authentication commands in the user's environment
 
-### Performance Tips
+## When to Use the Web UI
 
-#### Large Datasets
+**Use the web UI when:**
 
-- **Use file filtering** to focus on specific files
-- **Limit commit history** display for better performance
-- **Consider chunking** very large files
+- You want to explore datasets visually
+- You need to quickly upload or preview files
+- You're onboarding new team members
+- You want to share dataset views with non-technical stakeholders
+- You prefer graphical interfaces over command-line tools
 
-#### Cloud Storage
+**Use the Python API when:**
 
-- **Use appropriate regions** for better performance
-- **Enable compression** for text files
-- **Batch operations** when possible
+- You're writing scripts or notebooks
+- You need programmatic access to datasets
+- You're integrating Kirin into data science workflows
+- You want to automate dataset operations
+
+**Use the CLI when:**
+
+- You're comfortable with command-line tools
+- You need to script operations in shell scripts
+- You're working in CI/CD pipelines
+- You want lightweight, fast operations
+
+**You can mix and match:** Use the web UI for exploration and the Python API
+for automation in the same workflow.
+
+## Design Principles
+
+The web UI follows several design principles:
+
+**Simplicity First:**
+
+- Linear commit history (no branching complexity)
+- Clear, focused interface without overwhelming options
+- Progressive disclosure—advanced features don't clutter the main interface
+
+**Fast and Responsive:**
+
+- HTMX enables dynamic updates without full page reloads
+- Operations are asynchronous where possible
+- Timeout protection prevents UI from hanging
+
+**Cloud-Agnostic:**
+
+- Same interface works with any storage backend
+- Storage details are abstracted away
+- Users don't need to think about storage provider differences
+
+**User-Friendly:**
+
+- Clear error messages with actionable guidance
+- Visual feedback for all operations
+- Helpful defaults and sensible constraints
+
+## Limitations and Considerations
+
+**Local server:**
+
+- The web UI runs on your machine—it's not a hosted service
+- You need to keep the server running while using it
+- Port conflicts may require using a different port
+
+**Browser-based:**
+
+- Requires a modern web browser
+- Some operations (like large file uploads) depend on browser capabilities
+- Offline use is limited—you need the server running
+
+**Not for everything:**
+
+- Very large datasets (>10GB) may be slow to browse
+- Bulk operations are often faster via CLI or Python API
+- Advanced operations may require CLI or Python API
+
+**Security:**
+
+- The web UI runs locally and doesn't expose data to the internet
+- Authentication is handled by your environment (AWS, GCS, Azure CLIs)
+- No credentials are stored in the web UI itself
+
+## Integration with Other Tools
+
+**Python API:**
+
+- The web UI shows Python code snippets for accessing datasets
+- You can copy-paste code from the UI into your scripts
+- Both use the same underlying Kirin library
+
+**CLI:**
+
+- CLI operations appear in the web UI's commit history
+- You can use CLI for bulk operations and web UI for exploration
+- Both work with the same datasets and catalogs
+
+**Data Science Tools:**
+
+- Datasets created in the web UI can be loaded into pandas, polars, etc.
+- File previews help you understand data before loading
+- Python code snippets integrate with your existing workflows
+
+**Version Control:**
+
+- Kirin's linear history complements git's branching model
+- Use git for code, Kirin for data
+- Commit messages in Kirin follow similar best practices to git
 
 ## Next Steps
 
-- **[Catalog Management](catalog-management.md)** - Advanced catalog configuration
-- **[Basic Usage Guide](../guides/basic-usage.md)** - Core dataset operations
-- **[Cloud Storage Guide](../guides/cloud-storage.md)** - Cloud backend setup
+- **[Getting Started Tutorial](getting-started.md)** - Step-by-step guide to
+  your first catalog and dataset
+- **[Web UI How-To Guide](how-to.md)** - Common workflows and tasks
+- **[Catalog Management](catalog-management.md)** - Advanced catalog
+  configuration
+- **[Basic Usage Guide](../guides/basic-usage.md)** - Core dataset
+  operations

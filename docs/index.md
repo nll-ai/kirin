@@ -100,17 +100,17 @@ Kirin addresses critical needs in machine learning and data science workflows:
 ## Installation
 
 ```bash
-# Option 1: Using pixi (recommended for development)
+# Development (with pixi)
 git clone git@github.com:nll-ai/kirin
 cd kirin
 pixi install
 pixi run kirin ui
 
-# Option 2: Using uv tool (recommended for production)
+# Production (with uv)
 uv tool install kirin
 uv run kirin ui
 
-# Option 3: Using uvx (one-time use)
+# One-time use (with uvx)
 uvx kirin ui
 ```
 

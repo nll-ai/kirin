@@ -81,13 +81,13 @@ ds.checkout(commit_hash)
 ### 5. Start the Web UI (Optional)
 
 ```bash
-# Using pixi (development)
+# Development (with pixi)
 pixi run kirin ui
 
-# Using uv (production)
+# Production (with uv)
 uv run kirin ui
 
-# Using uvx (one-time use)
+# One-time use (with uvx)
 uvx kirin ui
 ```
 

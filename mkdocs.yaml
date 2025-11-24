@@ -29,6 +29,8 @@ nav:
       - Commit Management: guides/commit-management.md
   - Web UI:
       - Overview: web-ui/overview.md
+      - Getting Started: web-ui/getting-started.md
+      - How-To Guide: web-ui/how-to.md
       - Catalog Management: web-ui/catalog-management.md
   - Reference:
       - API Reference: reference/api.md
