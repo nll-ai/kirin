@@ -326,7 +326,12 @@ def detect_source_file() -> Optional[str]:
 
                     # Skip IPython/Jupyter temporary files
                     normalized = filename.replace(os.sep, "/")
-                    if "/ipykernel_" in normalized or "/tmp/" in normalized:
+                    # Only skip IPython temp files, not all /tmp/ files
+                    # IPython creates files like /tmp/ipykernel_*/kernel-*.json
+                    if "/ipykernel_" in normalized or (
+                        "/tmp/" in normalized
+                        and ("ipykernel" in normalized or "ipython" in normalized)
+                    ):
                         continue
 
                     # Skip Kirin internal files
