@@ -8,7 +8,7 @@ import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import (
@@ -21,8 +21,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from loguru import logger
 from slugify import slugify
-
-from kirin.thumbnail_store import ThumbnailStore
 
 from .config import CatalogConfig, CatalogManager
 
@@ -849,15 +847,17 @@ async def view_dataset(
             files = []
             if dataset.current_commit:
                 for name, file_obj in dataset.files.items():
-                    files.append(
-                        {
-                            "name": name,
-                            "size": file_obj.size,
-                            "content_type": file_obj.content_type,
-                            "hash": file_obj.hash,
-                            "short_hash": file_obj.short_hash,
-                        }
-                    )
+                    file_data = {
+                        "name": name,
+                        "size": file_obj.size,
+                        "content_type": file_obj.content_type,
+                        "hash": file_obj.hash,
+                        "short_hash": file_obj.short_hash,
+                    }
+                    # Add metadata if present (e.g., source file links for plots)
+                    if file_obj.metadata:
+                        file_data["metadata"] = file_obj.metadata
+                    files.append(file_data)
 
             info = {
                 "description": dataset.description or "",
@@ -1162,6 +1162,12 @@ async def preview_file(
 
         kirin_catalog = catalog.to_catalog()
         dataset = kirin_catalog.get_dataset(dataset_name)
+
+        # Checkout to specific commit if provided
+        # Note: If checkout is None, dataset is already on latest commit by default
+        if checkout:
+            dataset.checkout(checkout)
+
         file_obj = dataset.get_file(file_name)
 
         if not file_obj:
@@ -1169,12 +1175,7 @@ async def preview_file(
 
         # Check if file is an image by content type or extension
         content_type = file_obj.content_type or ""
-        is_image_file = (
-            content_type.startswith("image/")
-            or file_name.lower().endswith(
-                (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico")
-            )
-        )
+        _is_image = is_image_file(file_name, content_type)
 
         # Check if file is text-based by content type
         is_text_file = (
@@ -1202,43 +1203,45 @@ async def preview_file(
 
         # Handle image files
         if is_image_file:
-            return templates.TemplateResponse(
-                "file_preview.html",
-                {
-                    "request": request,
-                    "catalog_id": catalog_id,
-                    "dataset_name": dataset_name,
-                    "file_name": file_name,
-                    "file_size": file_obj.size,
-                    "content": None,
-                    "is_binary": False,
-                    "is_image": True,
-                    "content_type": content_type,
-                    "truncated": False,
-                    "catalog": catalog,
-                    "checkout_commit": checkout,
-                },
-            )
+            template_context = {
+                "request": request,
+                "catalog_id": catalog_id,
+                "dataset_name": dataset_name,
+                "file_name": file_name,
+                "file_size": file_obj.size,
+                "content": None,
+                "is_binary": False,
+                "is_image": True,
+                "content_type": content_type,
+                "truncated": False,
+                "catalog": catalog,
+                "checkout_commit": checkout,
+            }
+            # Add file metadata if present (e.g., source file links for plots)
+            if file_obj.metadata:
+                template_context["file_metadata"] = file_obj.metadata
+            return templates.TemplateResponse("file_preview.html", template_context)
 
         if not is_text_file:
             # For binary files, show a message instead of content
-            return templates.TemplateResponse(
-                "file_preview.html",
-                {
-                    "request": request,
-                    "catalog_id": catalog_id,
-                    "dataset_name": dataset_name,
-                    "file_name": file_name,
-                    "file_size": file_obj.size,
-                    "content": None,
-                    "is_binary": True,
-                    "is_image": False,
-                    "content_type": content_type,
-                    "truncated": False,
-                    "catalog": catalog,
-                    "checkout_commit": checkout,
-                },
-            )
+            template_context = {
+                "request": request,
+                "catalog_id": catalog_id,
+                "dataset_name": dataset_name,
+                "file_name": file_name,
+                "file_size": file_obj.size,
+                "content": None,
+                "is_binary": True,
+                "is_image": False,
+                "content_type": content_type,
+                "truncated": False,
+                "catalog": catalog,
+                "checkout_commit": checkout,
+            }
+            # Add file metadata if present (e.g., source file links for plots)
+            if file_obj.metadata:
+                template_context["file_metadata"] = file_obj.metadata
+            return templates.TemplateResponse("file_preview.html", template_context)
 
         # Use local_files() context manager for file access
         try:
@@ -1254,40 +1257,42 @@ async def preview_file(
                 preview_content = "\n".join(preview_lines)
         except UnicodeDecodeError:
             # File appears to be binary despite extension
-            return templates.TemplateResponse(
-                "file_preview.html",
-                {
-                    "request": request,
-                    "catalog_id": catalog_id,
-                    "dataset_name": dataset_name,
-                    "file_name": file_name,
-                    "file_size": file_obj.size,
-                    "content": None,
-                    "is_binary": True,
-                    "is_image": False,
-                    "content_type": content_type,
-                    "truncated": False,
-                    "catalog": catalog,
-                    "checkout_commit": checkout,
-                },
-            )
-
-        return templates.TemplateResponse(
-            "file_preview.html",
-            {
+            template_context = {
                 "request": request,
                 "catalog_id": catalog_id,
                 "dataset_name": dataset_name,
                 "file_name": file_name,
                 "file_size": file_obj.size,
-                "content": preview_content,
-                "is_binary": False,
+                "content": None,
+                "is_binary": True,
                 "is_image": False,
-                "truncated": len(lines) > 1000,
+                "content_type": content_type,
+                "truncated": False,
                 "catalog": catalog,
                 "checkout_commit": checkout,
-            },
-        )
+            }
+            # Add file metadata if present (e.g., source file links for plots)
+            if file_obj.metadata:
+                template_context["file_metadata"] = file_obj.metadata
+            return templates.TemplateResponse("file_preview.html", template_context)
+
+        template_context = {
+            "request": request,
+            "catalog_id": catalog_id,
+            "dataset_name": dataset_name,
+            "file_name": file_name,
+            "file_size": file_obj.size,
+            "content": preview_content,
+            "is_binary": False,
+            "is_image": False,
+            "truncated": len(lines) > 1000,
+            "catalog": catalog,
+            "checkout_commit": checkout,
+        }
+        # Add file metadata if present (e.g., source file links for plots)
+        if file_obj.metadata:
+            template_context["file_metadata"] = file_obj.metadata
+        return templates.TemplateResponse("file_preview.html", template_context)
 
     except HTTPException:
         # Re-raise HTTP exceptions (like 404 errors) as-is
@@ -1297,20 +1302,71 @@ async def preview_file(
         raise HTTPException(status_code=500, detail=f"Failed to preview file: {str(e)}")
 
 
+def is_image_file(file_name: str, content_type: str) -> bool:
+    """Check if a file is an image based on name and content type.
+
+    Args:
+        file_name: Filename to check
+        content_type: Content type string
+
+    Returns:
+        True if file appears to be an image, False otherwise
+    """
+    return content_type.startswith("image/") or file_name.lower().endswith(
+        (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico")
+    )
+
+
+async def get_image_file(
+    catalog_id: str, dataset_name: str, file_name: str, checkout: Optional[str] = None
+):
+    """Common logic for retrieving image files from datasets.
+
+    Args:
+        catalog_id: Catalog identifier
+        dataset_name: Dataset name
+        file_name: File name to retrieve
+        checkout: Optional commit hash to checkout
+
+    Returns:
+        Tuple of (file_obj, dataset)
+
+    Raises:
+        HTTPException: If catalog, dataset, or file not found, or file is not an image
+    """
+    catalog = catalog_manager.get_catalog(catalog_id)
+    if not catalog:
+        raise HTTPException(status_code=404, detail="Catalog not found")
+
+    kirin_catalog = catalog.to_catalog()
+    dataset = kirin_catalog.get_dataset(dataset_name)
+
+    # Checkout to specific commit if provided
+    # Note: If checkout is None, dataset is already on latest commit by default
+    if checkout:
+        dataset.checkout(checkout)
+
+    file_obj = dataset.get_file(file_name)
+    if not file_obj:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    # Validate it's an image
+    content_type = file_obj.content_type or ""
+    if not is_image_file(file_name, content_type):
+        raise HTTPException(status_code=400, detail="File is not an image")
+
+    return file_obj, dataset
+
+
 @app.get("/catalog/{catalog_id}/{dataset_name}/file/{file_name}/image")
-async def serve_image(catalog_id: str, dataset_name: str, file_name: str):
+async def serve_image(
+    catalog_id: str, dataset_name: str, file_name: str, checkout: Optional[str] = None
+):
     """Serve an image file directly."""
     try:
-        catalog = catalog_manager.get_catalog(catalog_id)
-        if not catalog:
-            raise HTTPException(status_code=404, detail="Catalog not found")
-
-        kirin_catalog = catalog.to_catalog()
-        dataset = kirin_catalog.get_dataset(dataset_name)
-        file_obj = dataset.get_file(file_name)
-
-        if not file_obj:
-            raise HTTPException(status_code=404, detail="File not found")
+        file_obj, _ = await get_image_file(
+            catalog_id, dataset_name, file_name, checkout
+        )
 
         # Read image content
         image_bytes = file_obj.read_bytes()
@@ -1329,44 +1385,23 @@ async def serve_image(catalog_id: str, dataset_name: str, file_name: str):
 
 
 @app.get("/catalog/{catalog_id}/{dataset_name}/file/{file_name}/thumbnail")
-async def serve_thumbnail(catalog_id: str, dataset_name: str, file_name: str):
-    """Serve a thumbnail for an image file."""
+async def serve_thumbnail(
+    catalog_id: str, dataset_name: str, file_name: str, checkout: Optional[str] = None
+):
+    """Serve the original image file as thumbnail (WebP/SVG are already efficient)."""
     try:
-        catalog = catalog_manager.get_catalog(catalog_id)
-        if not catalog:
-            raise HTTPException(status_code=404, detail="Catalog not found")
-
-        kirin_catalog = catalog.to_catalog()
-        dataset = kirin_catalog.get_dataset(dataset_name)
-        file_obj = dataset.get_file(file_name)
-
-        if not file_obj:
-            raise HTTPException(status_code=404, detail="File not found")
-
-        # Check if file is an image
-        content_type = file_obj.content_type or ""
-        is_image = (
-            content_type.startswith("image/")
-            or file_name.lower().endswith(
-                (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico")
-            )
+        file_obj, _ = await get_image_file(
+            catalog_id, dataset_name, file_name, checkout
         )
 
-        if not is_image:
-            raise HTTPException(status_code=400, detail="File is not an image")
-
-        # Get thumbnail using ThumbnailStore
-        # Use the same filesystem as the dataset (stored in dataset.fs)
-        thumbnail_store = ThumbnailStore(dataset.root_dir, fs=dataset.fs)
-        file_content = file_obj.read_bytes()
-        thumbnail_bytes = thumbnail_store.get_or_generate_thumbnail(
-            file_obj.hash, file_content
-        )
+        # Serve the original file directly (WebP/SVG are already efficient formats)
+        image_bytes = file_obj.read_bytes()
+        content_type = file_obj.content_type or "image/png"
 
         return StreamingResponse(
-            iter([thumbnail_bytes]),
-            media_type="image/webp",
-            headers={"Content-Disposition": 'inline; filename="thumbnail.webp"'},
+            iter([image_bytes]),
+            media_type=content_type,
+            headers={"Content-Disposition": f'inline; filename="{file_name}"'},
         )
     except HTTPException:
         raise

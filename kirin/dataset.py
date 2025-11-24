@@ -1,5 +1,6 @@
 """Dataset entity for Kirin - represents a versioned collection of files with linear history."""  # noqa: E501
 
+import os
 import tempfile
 from collections.abc import MutableMapping
 from contextlib import contextmanager
@@ -15,6 +16,49 @@ from .file import File
 from .plots import save_plot as save_plot_func
 from .storage import ContentStore
 from .utils import get_filesystem, strip_protocol
+
+
+def get_image_content_type(
+    filename: str, format: Optional[str] = None
+) -> Optional[str]:
+    """Get content type for image file based on format or filename extension.
+
+    Args:
+        filename: Filename to check
+        format: Optional format override ('svg' or 'webp')
+
+    Returns:
+        Content type string or None if not determinable
+    """
+    if format:
+        return "image/svg+xml" if format == "svg" else "image/webp"
+
+    ext = filename.lower().split(".")[-1] if "." in filename else ""
+    content_types = {
+        "svg": "image/svg+xml",
+        "webp": "image/webp",
+        "png": "image/png",
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+    }
+    return content_types.get(ext)
+
+
+def get_source_file_content_type(filename: str) -> str:
+    """Get content type for source file based on extension.
+
+    Args:
+        filename: Source filename
+
+    Returns:
+        Content type string
+    """
+    if filename.endswith(".ipynb"):
+        return "application/json"
+    elif filename.endswith(".py"):
+        return "text/x-python"
+    else:
+        return "text/plain"
 
 
 class LazyLocalFiles(MutableMapping):
@@ -416,14 +460,16 @@ class Dataset:
 
     def save_plot(
         self,
-        plot_object: object,
+        plot_object: Union[  # noqa: F821
+            "matplotlib.figure.Figure", "plotly.graph_objects.Figure", object  # noqa: F821
+        ],
         filename: str,
         auto_commit: bool = False,
         message: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
         tags: Optional[List[str]] = None,
         format: Optional[str] = None,
-    ) -> Union[str, str]:
+    ) -> str:
         """Save a plot to the dataset with automatic format detection.
 
         This method saves plots from matplotlib, plotly, and other plotting
@@ -492,10 +538,14 @@ class Dataset:
         if auto_commit and not message:
             raise ValueError("message is required when auto_commit=True")
 
-        # Save plot using the plots module (returns hash and actual filename)
-        content_hash, actual_filename = save_plot_func(
-            plot_object, filename, self.storage, format=format
-        )
+        # Save plot using the plots module
+        # Returns: hash, filename, source path, source hash
+        (
+            content_hash,
+            actual_filename,
+            source_file_path,
+            source_file_hash,
+        ) = save_plot_func(plot_object, filename, self.storage, format=format)
 
         # Create a temporary file path that points to the stored content
         # We need to create a File object to use in the commit
@@ -506,29 +556,49 @@ class Dataset:
             # We need to create a File object for the stored plot
             file_size = self.storage.get_size(content_hash, actual_filename)
 
-            # Determine content type based on format
-            if format is None:
-                # Detect format from filename extension
-                if actual_filename.lower().endswith(".svg"):
-                    content_type = "image/svg+xml"
-                elif actual_filename.lower().endswith(".webp"):
-                    content_type = "image/webp"
-                else:
-                    content_type = None
-            else:
-                content_type = "image/svg+xml" if format == "svg" else "image/webp"
+            # Determine content type based on format or filename
+            content_type = get_image_content_type(actual_filename, format)
+
+            # Create plot file with source metadata if available
+            plot_metadata = {}
+            if source_file_path and source_file_hash:
+                source_filename = os.path.basename(source_file_path)
+                plot_metadata = {
+                    "source_file": source_filename,
+                    "source_hash": source_file_hash,
+                }
 
             file_obj = File(
                 hash=content_hash,
                 name=actual_filename,
                 size=file_size,
                 content_type=content_type,
+                metadata=plot_metadata,
                 _storage=self.storage,
             )
 
             # Build commit with the plot file
             builder = CommitBuilder(self.current_commit)
             builder.add_file(actual_filename, file_obj)
+
+            # If source file was detected, add it to the commit as well
+            if source_file_path and source_file_hash:
+                source_filename = os.path.basename(source_file_path)
+                source_file_size = self.storage.get_size(
+                    source_file_hash, source_filename
+                )
+
+                # Determine content type for source file
+                source_content_type = get_source_file_content_type(source_filename)
+
+                source_file_obj = File(
+                    hash=source_file_hash,
+                    name=source_filename,
+                    size=source_file_size,
+                    content_type=source_content_type,
+                    _storage=self.storage,
+                )
+                builder.add_file(source_filename, source_file_obj)
 
             # Set metadata and tags if provided
             if metadata:
@@ -547,24 +617,28 @@ class Dataset:
             )
             return commit.hash
         else:
-            # Default mode: return file path for explicit commit
+            # Default mode: return file path(s) for explicit commit
             # Since the file is already in content-addressed storage, we need to
             # create a temporary file that commit() can read from
             # The commit will store it again, but it will be deduplicated
-            import os
-            import tempfile
 
             # Create temporary file with the plot content
             temp_file = tempfile.NamedTemporaryFile(
-                mode="wb", delete=False, suffix=f".{actual_filename.split('.')[-1]}"
+                mode="wb", delete=False, suffix=f"_{actual_filename}"
             )
             try:
                 # Retrieve content from storage and write to temp file
                 content = self.storage.retrieve(content_hash, actual_filename)
                 temp_file.write(content)
                 temp_file.close()
+                temp_path = temp_file.name
 
-                # Return the temp file path (user will commit it, then we clean up)
+                # Note: Source file is already stored in ContentStore if detected
+                # In default mode, we return only the plot path for backward
+                # compatibility. Source file will be automatically included in
+                # auto_commit mode. For default mode, users can manually retrieve
+                # and commit source if needed
+                return temp_path
                 # Note: We can't clean it up here because commit() needs to read it
                 # The user is responsible for cleanup, or we could use a context manager
                 # For now, return the path - the file will be cleaned up by the OS

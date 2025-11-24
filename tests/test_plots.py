@@ -19,7 +19,7 @@ def test_save_matplotlib_figure_svg(temp_dir):
 
     # Save plot (filename extension will be changed to .svg)
     filename = "test_plot.png"
-    content_hash, actual_filename = save_plot(fig, filename, storage)
+    content_hash, actual_filename, _, _ = save_plot(fig, filename, storage)
 
     # Verify hash is returned
     assert content_hash is not None
@@ -48,7 +48,7 @@ def test_save_matplotlib_figure_webp_for_raster(temp_dir):
 
     # Save plot (will be saved as SVG by default)
     filename = "raster_plot.png"
-    content_hash, actual_filename = save_plot(fig, filename, storage)
+    content_hash, actual_filename, _, _ = save_plot(fig, filename, storage)
 
     # Verify hash is returned
     assert content_hash is not None
@@ -90,7 +90,7 @@ def test_save_plotly_figure_svg(temp_dir):
 
     # Save plot (filename extension will be changed to .svg)
     filename = "plotly_plot.png"
-    content_hash, actual_filename = save_plot(fig, filename, storage)
+    content_hash, actual_filename, _, _ = save_plot(fig, filename, storage)
 
     # Verify hash is returned
     assert content_hash is not None
@@ -114,7 +114,7 @@ def test_save_plot_with_custom_filename(temp_dir):
     ax.plot([1, 2, 3], [1, 2, 3])
 
     filename = "custom_name.svg"
-    content_hash, actual_filename = save_plot(fig, filename, storage)
+    content_hash, actual_filename, _, _ = save_plot(fig, filename, storage)
 
     # Verify file was stored with custom name
     assert actual_filename == filename
@@ -131,7 +131,7 @@ def test_save_plot_returns_hash(temp_dir):
     ax.plot([1, 2, 3], [1, 2, 3])
 
     filename = "test.png"
-    content_hash, actual_filename = save_plot(fig, filename, storage)
+    content_hash, actual_filename, _, _ = save_plot(fig, filename, storage)
 
     # Verify hash format (SHA256 hex)
     assert isinstance(content_hash, str)
@@ -169,8 +169,8 @@ def test_save_plot_deterministic_hash(temp_dir):
     ax2.plot([1, 2, 3], [1, 4, 9])
 
     filename = "test.png"
-    hash1, filename1 = save_plot(fig1, filename, storage)
-    hash2, filename2 = save_plot(fig2, filename, storage)
+    hash1, filename1, _, _ = save_plot(fig1, filename, storage)
+    hash2, filename2, _, _ = save_plot(fig2, filename, storage)
 
     # Get SVG content
     content1 = storage.retrieve(hash1, filename1).decode("utf-8")
@@ -266,7 +266,7 @@ def test_save_plot_format_detection_matplotlib_vector(temp_dir):
     ax.plot([1, 2, 3], [1, 4, 9])
 
     filename = "vector_plot.png"
-    content_hash, actual_filename = save_plot(fig, filename, storage)
+    content_hash, actual_filename, _, _ = save_plot(fig, filename, storage)
 
     # Verify it was saved with .svg extension (format detection happens internally)
     svg_filename = "vector_plot.svg"

@@ -104,7 +104,17 @@ dataset.checkout()
             </div>
 
             <div class="flex-1">
-                <div class="file-name">{{ file.name }}</div>
+                <div class="file-name">
+                    {{ file.name }}
+                    {% if file.metadata and file.metadata.source_file %}
+                    <span class="text-xs text-muted-foreground ml-2" title="Generated from {{ file.metadata.source_file }}">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle;">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14,2 14,8 20,8"></polyline>
+                        </svg>
+                    </span>
+                    {% endif %}
+                </div>
                 <div class="file-size">{{ "%.1f"|format(file.size / 1024) }} KB</div>
             </div>
 
