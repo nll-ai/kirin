@@ -644,6 +644,24 @@ body {
   max-height: 60vh;
 }
 
+.modal-body > * + * {
+  margin-top: 1.5rem;
+}
+
+#preview-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+#preview-content > .panel {
+  margin-bottom: 0;
+}
+
+#preview-content > .panel + .panel {
+  margin-top: 1.5rem;
+}
+
 .modal-footer {
   display: flex;
   align-items: center;
