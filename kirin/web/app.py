@@ -216,10 +216,16 @@ async def get_aws_profiles_endpoint():
 
 @app.get("/", response_class=HTMLResponse)
 async def list_catalogs(
-    request: Request, catalog_manager: CatalogManager = Depends(get_catalog_manager)
+    request: Request,
+    catalog_manager: CatalogManager = Depends(get_catalog_manager),
+    show_hidden: bool = False,
 ):
     """List all configured catalogs."""
-    catalogs = catalog_manager.list_catalogs()
+    # Get catalogs based on show_hidden parameter
+    if show_hidden:
+        catalogs = catalog_manager.list_all_catalogs()
+    else:
+        catalogs = catalog_manager.list_catalogs()
 
     # Simple catalog info - no connection testing, just like notebook
     catalog_infos = []
@@ -231,11 +237,13 @@ async def list_catalogs(
                 "root_dir": catalog.root_dir,
                 "status": "ready",  # Always ready, like notebook
                 "dataset_count": "?",  # Will be shown when user clicks
+                "hidden": catalog.hidden,
             }
         )
 
     return templates.TemplateResponse(
-        "catalogs.html", {"request": request, "catalogs": catalog_infos}
+        "catalogs.html",
+        {"request": request, "catalogs": catalog_infos, "show_hidden": show_hidden},
     )
 
 
@@ -824,6 +832,64 @@ async def delete_catalog(
         logger.error(f"Failed to delete catalog: {e}")
         raise HTTPException(
             status_code=500, detail=f"Failed to delete catalog: {str(e)}"
+        )
+
+
+@app.post("/catalog/{catalog_id}/hide", response_class=HTMLResponse)
+async def hide_catalog(
+    request: Request,
+    catalog_id: str,
+    catalog_manager: CatalogManager = Depends(get_catalog_manager),
+):
+    """Hide a catalog from the default view."""
+    try:
+        catalog = catalog_manager.get_catalog(catalog_id)
+        if not catalog:
+            raise HTTPException(status_code=404, detail="Catalog not found")
+
+        catalog_manager.hide_catalog(catalog_id)
+
+        # Redirect to catalog list
+        return RedirectResponse(url="/", status_code=302)
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        logger.error(f"Failed to hide catalog: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to hide catalog: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to hide catalog: {str(e)}"
+        )
+
+
+@app.post("/catalog/{catalog_id}/unhide", response_class=HTMLResponse)
+async def unhide_catalog(
+    request: Request,
+    catalog_id: str,
+    catalog_manager: CatalogManager = Depends(get_catalog_manager),
+):
+    """Unhide a catalog, making it visible in the default view."""
+    try:
+        catalog = catalog_manager.get_catalog(catalog_id)
+        if not catalog:
+            raise HTTPException(status_code=404, detail="Catalog not found")
+
+        catalog_manager.unhide_catalog(catalog_id)
+
+        # Redirect to catalog list
+        return RedirectResponse(url="/", status_code=302)
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        logger.error(f"Failed to unhide catalog: {e}")
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to unhide catalog: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to unhide catalog: {str(e)}"
         )
 
 

@@ -28,6 +28,8 @@ class CatalogConfig:
     azure_connection_string: Optional[str] = None
     # Optional CLI authentication command
     auth_command: Optional[str] = None
+    # Visibility flag for UI
+    hidden: bool = False
 
     def to_catalog(self) -> Catalog:
         """Convert this configuration to a runtime Catalog instance.
@@ -91,13 +93,19 @@ class CatalogManager:
             raise
 
     def list_catalogs(self) -> List[CatalogConfig]:
-        """List all configured catalogs."""
+        """List all configured catalogs, excluding hidden ones."""
+        catalogs_data = self._load_catalogs()
+        catalogs = [CatalogConfig(**catalog) for catalog in catalogs_data]
+        return [catalog for catalog in catalogs if not catalog.hidden]
+
+    def list_all_catalogs(self) -> List[CatalogConfig]:
+        """List all configured catalogs including hidden ones."""
         catalogs_data = self._load_catalogs()
         return [CatalogConfig(**catalog) for catalog in catalogs_data]
 
     def get_catalog(self, catalog_id: str) -> Optional[CatalogConfig]:
-        """Get a specific catalog by ID."""
-        catalogs = self.list_catalogs()
+        """Get a specific catalog by ID, including hidden ones."""
+        catalogs = self.list_all_catalogs()
         for catalog in catalogs:
             if catalog.id == catalog_id:
                 return catalog
@@ -141,6 +149,34 @@ class CatalogManager:
                 del catalogs[i]
                 self._save_catalogs(catalogs)
                 logger.info(f"Deleted catalog: {catalog_id}")
+                return
+
+        raise ValueError(f"Catalog with ID '{catalog_id}' not found")
+
+    def hide_catalog(self, catalog_id: str) -> None:
+        """Hide a catalog from the default view."""
+        catalogs = self._load_catalogs()
+
+        # Find and update catalog
+        for i, catalog in enumerate(catalogs):
+            if catalog["id"] == catalog_id:
+                catalog["hidden"] = True
+                self._save_catalogs(catalogs)
+                logger.info(f"Hidden catalog: {catalog_id}")
+                return
+
+        raise ValueError(f"Catalog with ID '{catalog_id}' not found")
+
+    def unhide_catalog(self, catalog_id: str) -> None:
+        """Unhide a catalog, making it visible in the default view."""
+        catalogs = self._load_catalogs()
+
+        # Find and update catalog
+        for i, catalog in enumerate(catalogs):
+            if catalog["id"] == catalog_id:
+                catalog["hidden"] = False
+                self._save_catalogs(catalogs)
+                logger.info(f"Unhidden catalog: {catalog_id}")
                 return
 
         raise ValueError(f"Catalog with ID '{catalog_id}' not found")

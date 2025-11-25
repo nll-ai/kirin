@@ -16,7 +16,8 @@
 <div class="max-w-2xl mx-auto">
     <div class="alert alert-warning mb-6">
         <strong>⚠️ Warning</strong><br>
-        This action cannot be undone. All datasets in this catalog will be permanently deleted.
+        This action cannot be undone. All datasets in this catalog will be permanently deleted.<br>
+        <strong>Alternative:</strong> You can hide this catalog instead to remove it from the main view without deleting it.
     </div>
 
     <div class="panel">
@@ -58,6 +59,20 @@
     {% endif %}
 
     <div class="flex gap-3">
+        <a href="/" class="btn btn-secondary">
+            Cancel
+        </a>
+
+        <form method="POST" action="/catalog/{{ catalog.id }}/hide" class="inline">
+            <button type="submit" class="btn btn-secondary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+                Hide Catalog
+            </button>
+        </form>
+
         {% if dataset_count == 0 %}
         <form method="POST" action="/catalog/{{ catalog.id }}/delete" class="inline">
             <button type="submit" class="btn btn-destructive">
@@ -71,10 +86,6 @@
             </button>
         </form>
         {% endif %}
-
-        <a href="/" class="btn btn-secondary">
-            Cancel
-        </a>
     </div>
 </div>
 {% endblock %}

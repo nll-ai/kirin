@@ -365,3 +365,243 @@ def test_catalog_config_to_catalog_with_mixed_credentials():
             azure_account_key=None,
             azure_connection_string=None,
         )
+
+
+def test_hide_catalog_success(client, temp_catalog):
+    """Test successful catalog hiding."""
+    # Create catalog
+    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    assert response.status_code == 200
+    assert "Test Catalog" in response.text
+
+    # Hide catalog
+    response = client.post("/catalog/test-catalog/hide", follow_redirects=True)
+    assert response.status_code == 200
+    # Catalog should not appear in default list
+    assert "Test Catalog" not in response.text
+
+    # Verify catalog is hidden by checking with show_hidden parameter
+    response = client.get("/?show_hidden=true")
+    assert response.status_code == 200
+    assert "Test Catalog" in response.text
+    assert "Hidden" in response.text
+
+
+def test_unhide_catalog_success(client, temp_catalog):
+    """Test successful catalog unhiding."""
+    # Create catalog
+    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    assert response.status_code == 200
+
+    # Hide catalog
+    response = client.post("/catalog/test-catalog/hide", follow_redirects=True)
+    assert response.status_code == 200
+    assert "Test Catalog" not in response.text
+
+    # Unhide catalog
+    response = client.post("/catalog/test-catalog/unhide", follow_redirects=True)
+    assert response.status_code == 200
+    # Catalog should appear in default list
+    assert "Test Catalog" in response.text
+    # Check that catalog card doesn't have "Hidden" badge
+    # (but "Show hidden catalogs" label may contain it)
+    assert (
+        '<span class="badge badge-secondary text-xs">Hidden</span>'
+        not in response.text
+    )
+
+
+def test_hide_catalog_from_delete_page(client, temp_catalog):
+    """Test hiding catalog from delete confirmation page."""
+    # Create catalog
+    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    assert response.status_code == 200
+
+    # Go to delete page
+    response = client.get("/catalog/test-catalog/delete")
+    assert response.status_code == 200
+    assert "Hide Catalog" in response.text
+
+    # Hide catalog from delete page
+    response = client.post("/catalog/test-catalog/hide", follow_redirects=True)
+    assert response.status_code == 200
+    # Catalog should not appear in default list
+    assert "Test Catalog" not in response.text
+
+
+def test_list_catalogs_hides_hidden_by_default(client, temp_catalog):
+    """Test that hidden catalogs are filtered out by default."""
+    # Create two catalogs
+    catalog1 = temp_catalog.copy()
+    catalog1["name"] = "Visible Catalog"
+    response = client.post("/catalogs/add", data=catalog1, follow_redirects=True)
+    assert response.status_code == 200
+
+    catalog2 = temp_catalog.copy()
+    catalog2["name"] = "Hidden Catalog"
+    response = client.post("/catalogs/add", data=catalog2, follow_redirects=True)
+    assert response.status_code == 200
+
+    # Hide second catalog
+    response = client.post("/catalog/hidden-catalog/hide", follow_redirects=True)
+    assert response.status_code == 200
+
+    # Default list should only show visible catalog
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "Visible Catalog" in response.text
+    assert "Hidden Catalog" not in response.text
+
+    # With show_hidden=true, both should appear
+    response = client.get("/?show_hidden=true")
+    assert response.status_code == 200
+    assert "Visible Catalog" in response.text
+    assert "Hidden Catalog" in response.text
+    assert "Hidden" in response.text
+
+
+def test_hide_catalog_not_found(client):
+    """Test hiding a non-existent catalog returns 404."""
+    response = client.post("/catalog/non-existent/hide")
+    assert response.status_code == 404
+
+
+def test_unhide_catalog_not_found(client):
+    """Test unhiding a non-existent catalog returns 404."""
+    response = client.post("/catalog/non-existent/unhide")
+    assert response.status_code == 404
+
+
+def test_hide_unhide_toggle(client, temp_catalog):
+    """Test that hide/unhide can be toggled multiple times."""
+    # Create catalog
+    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    assert response.status_code == 200
+
+    # Hide
+    response = client.post("/catalog/test-catalog/hide", follow_redirects=True)
+    assert response.status_code == 200
+    assert "Test Catalog" not in response.text
+
+    # Unhide
+    response = client.post("/catalog/test-catalog/unhide", follow_redirects=True)
+    assert response.status_code == 200
+    assert "Test Catalog" in response.text
+
+    # Hide again
+    response = client.post("/catalog/test-catalog/hide", follow_redirects=True)
+    assert response.status_code == 200
+    assert "Test Catalog" not in response.text
+
+    # Unhide again
+    response = client.post("/catalog/test-catalog/unhide", follow_redirects=True)
+    assert response.status_code == 200
+    assert "Test Catalog" in response.text
+
+
+def test_catalog_manager_hide_catalog():
+    """Test CatalogManager.hide_catalog() method directly."""
+    import tempfile
+
+    from kirin.web.config import CatalogConfig, CatalogManager
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        manager = CatalogManager(config_dir=temp_dir)
+
+        # Create a catalog
+        catalog = CatalogConfig(
+            id="test-catalog", name="Test Catalog", root_dir="/path/to/data"
+        )
+        manager.add_catalog(catalog)
+
+        # Verify it's visible
+        catalogs = manager.list_catalogs()
+        assert len(catalogs) == 1
+        assert catalogs[0].id == "test-catalog"
+        assert catalogs[0].hidden is False
+
+        # Hide it
+        manager.hide_catalog("test-catalog")
+
+        # Verify it's hidden in default list
+        catalogs = manager.list_catalogs()
+        assert len(catalogs) == 0
+
+        # Verify it's in all catalogs list
+        all_catalogs = manager.list_all_catalogs()
+        assert len(all_catalogs) == 1
+        assert all_catalogs[0].id == "test-catalog"
+        assert all_catalogs[0].hidden is True
+
+
+def test_catalog_manager_unhide_catalog():
+    """Test CatalogManager.unhide_catalog() method directly."""
+    import tempfile
+
+    from kirin.web.config import CatalogConfig, CatalogManager
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        manager = CatalogManager(config_dir=temp_dir)
+
+        # Create a catalog
+        catalog = CatalogConfig(
+            id="test-catalog", name="Test Catalog", root_dir="/path/to/data"
+        )
+        manager.add_catalog(catalog)
+
+        # Hide it
+        manager.hide_catalog("test-catalog")
+        catalogs = manager.list_catalogs()
+        assert len(catalogs) == 0
+
+        # Unhide it
+        manager.unhide_catalog("test-catalog")
+
+        # Verify it's visible again
+        catalogs = manager.list_catalogs()
+        assert len(catalogs) == 1
+        assert catalogs[0].id == "test-catalog"
+        assert catalogs[0].hidden is False
+
+
+def test_catalog_config_hidden_field_default():
+    """Test that CatalogConfig.hidden defaults to False."""
+    from kirin.web.config import CatalogConfig
+
+    catalog = CatalogConfig(
+        id="test-catalog", name="Test Catalog", root_dir="/path/to/data"
+    )
+    assert catalog.hidden is False
+
+
+def test_catalog_config_hidden_field_persistence():
+    """Test that hidden field persists through save/load cycle."""
+    import json
+    import tempfile
+    from pathlib import Path
+
+    from kirin.web.config import CatalogConfig, CatalogManager
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        manager = CatalogManager(config_dir=temp_dir)
+
+        # Create a catalog
+        catalog = CatalogConfig(
+            id="test-catalog", name="Test Catalog", root_dir="/path/to/data"
+        )
+        manager.add_catalog(catalog)
+
+        # Hide it
+        manager.hide_catalog("test-catalog")
+
+        # Verify persistence by creating new manager instance
+        manager2 = CatalogManager(config_dir=temp_dir)
+        all_catalogs = manager2.list_all_catalogs()
+        assert len(all_catalogs) == 1
+        assert all_catalogs[0].hidden is True
+
+        # Verify JSON file contains hidden field
+        config_file = Path(temp_dir) / "catalogs.json"
+        with open(config_file) as f:
+            data = json.load(f)
+            assert data["catalogs"][0]["hidden"] is True
