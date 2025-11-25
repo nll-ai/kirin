@@ -1,5 +1,9 @@
 /* Kirin Web UI - shadcn/ui inspired styling */
 
+/* ============================================
+   CSS CUSTOM PROPERTIES (Design Tokens)
+   ============================================ */
+
 :root {
   --background: 0 0% 100%;
   --foreground: 222.2 84% 4.9%;
@@ -49,15 +53,164 @@
   border-color: hsl(var(--border));
 }
 
-/* Utility classes */
+/* ============================================
+   UTILITY CLASSES (Layout, Spacing, Typography)
+   ============================================ */
+
+/* Layout - Flexbox */
 .flex {
   display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
   align-items: center;
-  align-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+.flex-1 {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Spacing - Gap */
+.gap-2 {
+  gap: 0.5rem;
 }
 
 .gap-3 {
   gap: 0.75rem;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+/* Spacing - Margin */
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Spacing - Padding */
+.p-4 {
+  padding: 1rem;
+}
+
+.pt-6 {
+  padding-top: 1.5rem;
+}
+
+.py-8 {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.py-12 {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+/* Typography - Font Size */
+.text-xs {
+  font-size: 0.75rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-lg {
+  font-size: 1.125rem;
+}
+
+/* Typography - Font Weight */
+.font-medium {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+/* Typography - Text Color */
+.text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+
+.text-primary {
+  color: hsl(var(--primary));
+}
+
+.text-destructive {
+  color: hsl(var(--destructive));
+}
+
+/* Typography - Text Alignment */
+.text-center {
+  text-align: center;
+}
+
+/* Typography - Text Decoration */
+.underline {
+  text-decoration: underline;
+}
+
+.hover\:underline:hover {
+  text-decoration: underline;
+}
+
+/* Display */
+.hidden {
+  display: none;
+}
+
+.block {
+  display: block;
+}
+
+.inline {
+  display: inline;
+}
+
+.inline-flex {
+  display: inline-flex;
+}
+
+/* Opacity */
+.opacity-60 {
+  opacity: 0.6;
+}
+
+/* Width */
+.w-full {
+  width: 100%;
 }
 
 body {
@@ -66,6 +219,10 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   line-height: 1.5;
 }
+
+/* ============================================
+   BASE STYLES & LAYOUT
+   ============================================ */
 
 /* Layout */
 .container {
@@ -119,6 +276,10 @@ body {
 .breadcrumb-separator {
   color: hsl(var(--muted-foreground));
 }
+
+/* ============================================
+   COMPONENTS (Reusable UI Elements)
+   ============================================ */
 
 /* Cards and Panels */
 .panel {
@@ -628,6 +789,12 @@ body {
   justify-content: space-between;
   padding: 1.5rem;
   border-bottom: 1px solid hsl(var(--border));
+  gap: 1rem;
+}
+
+.modal-header .flex-1 {
+  flex: 1;
+  min-width: 0;
 }
 
 .modal-title {
@@ -1012,77 +1179,6 @@ body {
   transform: rotate(-90deg);
 }
 
-/* Modal styles */
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-.modal-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-.modal-content {
-  position: relative;
-  background-color: hsl(var(--card));
-  border-radius: var(--radius);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  max-width: min(90vw, 1200px);
-  max-height: 90vh;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  z-index: 1001;
-}
-
-.modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid hsl(var(--border));
-  gap: 1rem;
-}
-
-.modal-header .flex-1 {
-  flex: 1;
-  min-width: 0;
-}
-
-.modal-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0;
-  color: hsl(var(--foreground));
-}
-
-.modal-body {
-  padding: 1.5rem;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 1.25rem 1.5rem;
-  border-top: 1px solid hsl(var(--border));
-}
 
 /* Commit navigation styles */
 .commit-nav-info {

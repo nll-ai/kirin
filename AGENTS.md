@@ -249,16 +249,118 @@ components. When working on the web UI:
 - Use grid layouts with `.grid` and responsive breakpoints
 - Use `.space-y-*` for consistent vertical spacing
 
-### CSS Architecture & Best Practices
+### CSS Architecture Decision: Component-Based + Curated Utilities
 
-**External Stylesheet System** - The project uses a centralized CSS
-architecture with all common styles in `/kirin/static/styles.css`:
+**CRITICAL ARCHITECTURAL DECISION**: This project uses a **Component-Based
+CSS architecture with curated utility classes**. This hybrid approach balances
+maintainability, flexibility, and developer experience.
 
-- **Base Template** - `base.html` includes the external stylesheet via
-  `<link rel="stylesheet" href="/static/styles.css">`
-- **No CSS Duplication** - All common component styles are defined once in
-  the external file
-- **Page-Specific Styles** - Only use `{% block extra_styles %}` for truly
+**Decision Rationale**:
+
+After architectural review, this approach was chosen because:
+
+1. **Component-Based Foundation**: The project has clear, reusable UI
+   components (`panel`, `btn`, `card`, `form-group`) that define the design
+   system. These components provide semantic meaning and consistency.
+
+2. **Utility Layer for Composition**: A curated set of utility classes
+   handles layout, spacing, and typography. These utilities compose INSIDE
+   components, not replace them.
+
+3. **Avoids Inline Styles**: Templates were falling back to inline `style=""`
+   attributes when utilities didn't exist. Adding curated utilities eliminates
+   this code smell.
+
+4. **Right Level of Abstraction**: Full utility-first (like Tailwind) would be
+   overkill for this application. Pure component-based lacks flexibility for
+   layout composition. The hybrid approach provides the right balance.
+
+**Architecture Layers**:
+
+```text
+┌─────────────────────────────────────┐
+│   COMPONENTS (Semantic, Reusable)   │
+│   .panel, .btn, .card, .form-group  │
+│   These define your design system   │
+└─────────────────────────────────────┘
+              ↓ uses
+┌─────────────────────────────────────┐
+│   UTILITIES (Layout & Spacing)      │
+│   .flex, .items-center, .gap-2       │
+│   These compose INSIDE components   │
+└─────────────────────────────────────┘
+```
+
+**Clear Boundaries**:
+
+- **Components** = What it is (`btn`, `panel`, `card`) - Semantic, reusable
+  UI elements
+- **Utilities** = How it's arranged (`flex`, `gap-*`, `text-*`) - Layout,
+  spacing, typography helpers
+
+**When to Use Components**:
+
+Use component classes for reusable UI elements:
+
+- Buttons: `.btn`, `.btn-primary`, `.btn-secondary`, `.btn-ghost`,
+  `.btn-destructive`
+- Panels/Cards: `.panel`, `.panel-header`, `.panel-content`, `.card`
+- Forms: `.form-group`, `.form-label`, `.input`, `.select`, `.textarea`
+- Navigation: `.nav-bar`, `.breadcrumb`, `.breadcrumb-separator`
+- File Items: `.file-item`, `.file-icon`, `.file-name`
+- Alerts: `.alert`, `.alert-success`, `.alert-error`, `.alert-warning`
+- Modals: `.modal`, `.modal-header`, `.modal-body`, `.modal-footer`
+- Tabs: `.tabs`, `.tab`, `.tab-content`
+
+**When to Use Utilities**:
+
+Use utility classes for layout composition and fine-tuning:
+
+- **Layout**: `.flex`, `.items-center`, `.justify-between`, `.gap-2`, `.gap-4`
+- **Typography**: `.text-sm`, `.text-muted-foreground`, `.font-medium`,
+  `.font-semibold`
+- **Spacing**: `.p-4`, `.mb-2`, `.mt-4`, `.space-y-4`, `.space-y-6`
+- **Display**: `.hidden`, `.block`, `.inline-flex`
+- **Grid**: `.grid`, `.grid-cols-1`, `.grid-cols-2`, `.md:grid-cols-2`
+
+**Usage Pattern**:
+
+```html
+<!-- ✅ CORRECT - Component structure with utilities for layout -->
+<div class="panel">
+    <div class="panel-header">
+        <h2 class="panel-title">Title</h2>
+    </div>
+    <div class="panel-content">
+        <!-- Utilities used INSIDE components for layout -->
+        <div class="flex items-center gap-2 mb-4">
+            <span class="text-sm text-muted-foreground">Label:</span>
+            <button class="btn btn-primary">Action</button>
+        </div>
+    </div>
+</div>
+
+<!-- ❌ WRONG - Don't rebuild components with utilities -->
+<div class="bg-card border border-border rounded-lg p-6">
+    <h2 class="text-lg font-semibold mb-4">Title</h2>
+    <button class="bg-primary text-primary-foreground px-4 py-2 rounded-md">
+        Action
+    </button>
+</div>
+
+<!-- ❌ WRONG - Don't use inline styles -->
+<div style="display: flex; align-items: center; gap: 1rem;">
+    <button class="btn btn-primary">Action</button>
+</div>
+```
+
+**External Stylesheet System**:
+
+- **Location**: All styles in `/kirin/web/static/styles.css`
+- **Base Template**: `base.html` includes via `<link rel="stylesheet"
+  href="/static/styles.css">`
+- **No Duplication**: All component styles defined once in the external file
+- **Page-Specific Styles**: Only use `{% block extra_styles %}` for truly
   page-specific CSS that can't be reused
 
 **Template Structure Guidelines**:
@@ -284,13 +386,16 @@ architecture with all common styles in `/kirin/static/styles.css`:
     <div class="header">
         <!-- Page title and description -->
     </div>
-    <div class="content-container">
+    <div class="space-y-6">
         <div class="panel">
             <div class="panel-header">
                 <h2 class="panel-title">Title</h2>
             </div>
             <div class="panel-content">
-                <!-- Content -->
+                <!-- Use utilities for layout composition -->
+                <div class="flex items-center gap-2">
+                    <button class="btn btn-primary">Action</button>
+                </div>
             </div>
         </div>
     </div>
@@ -300,11 +405,13 @@ architecture with all common styles in `/kirin/static/styles.css`:
 
 **Styling Guidelines**:
 
-1. **Always use the CSS custom properties** instead of hardcoded colors
-2. **Follow the established component patterns** from existing templates
-3. **Use semantic class names** that match shadcn/ui conventions
-4. **Maintain consistency** with the existing design system
-5. **Test responsive behavior** on different screen sizes
+1. **Always use CSS custom properties** instead of hardcoded colors
+2. **Use components for structure** - Components define what UI elements are
+3. **Use utilities for composition** - Utilities define how elements are
+   arranged
+4. **Never use inline styles** - Always use utility classes or components
+5. **Maintain consistency** with the existing design system
+6. **Test responsive behavior** on different screen sizes
 
 **Component Standards**:
 
@@ -313,39 +420,90 @@ architecture with all common styles in `/kirin/static/styles.css`:
 - **Panels**: Always use `.panel` > `.panel-header` > `.panel-content`
   structure, `padding: 1.25rem 1.5rem` for headers, `padding: 1.5rem` for
   content, `border: 1px solid hsl(var(--border))`
+- **Buttons**: Use `.btn` base class with modifiers (`.btn-primary`,
+  `.btn-secondary`, etc.)
 
 **Common Mistakes to Avoid**:
 
-❌ **DON'T** copy CSS from other templates - use the external stylesheet
-❌ **DON'T** use generic CSS classes like `bg-white`, `rounded-lg`,
-  `shadow-md`
+❌ **DON'T** rebuild components with utilities - Use `.panel`, not
+  `.bg-card.border.rounded-lg`
+❌ **DON'T** use inline styles - Use utility classes instead
+❌ **DON'T** copy CSS from other templates - Use the external stylesheet
 ❌ **DON'T** create custom styling that doesn't match the design system
 ❌ **DON'T** add common component styles to individual templates
+❌ **DON'T** use utilities to replace components - `.btn` is better than
+  `.bg-primary.text-white.px-4.py-2`
 
-✅ **DO** use the external stylesheet for all common components
+✅ **DO** use components for UI elements (`btn`, `panel`, `card`)
+✅ **DO** use utilities for layout and spacing (`flex`, `gap-*`, `text-*`)
+✅ **DO** compose utilities INSIDE components
+✅ **DO** use the external stylesheet for all common styles
 ✅ **DO** only add page-specific CSS when absolutely necessary
-✅ **DO** use the established component classes from the stylesheet
 ✅ **DO** maintain consistency with the shadcn/ui design system
 
 **Examples**:
 
 ```html
-<!-- Good: Using shadcn/ui patterns -->
+<!-- ✅ CORRECT - Component with utilities for layout -->
 <div class="panel">
     <div class="panel-header">
         <h2 class="panel-title">Title</h2>
     </div>
     <div class="panel-content">
-        <button class="btn btn-primary">Action</button>
+        <div class="flex items-center justify-between gap-4">
+            <span class="text-sm text-muted-foreground">Description</span>
+            <button class="btn btn-primary">Action</button>
+        </div>
     </div>
 </div>
 
-<!-- Avoid: Custom styling that doesn't follow the system -->
-<div class="bg-white rounded-lg shadow-md p-6">
-    <h2 class="text-xl font-semibold mb-4">Title</h2>
-    <button class="bg-blue-600 text-white px-4 py-2 rounded-md">Action</button>
+<!-- ❌ WRONG - Rebuilding component with utilities -->
+<div class="bg-card border border-border rounded-lg p-6">
+    <h2 class="text-lg font-semibold mb-4">Title</h2>
+    <button class="bg-primary text-primary-foreground px-4 py-2 rounded-md">
+        Action
+    </button>
+</div>
+
+<!-- ❌ WRONG - Inline styles instead of utilities -->
+<div style="display: flex; align-items: center; gap: 1rem;">
+    <button class="btn btn-primary">Action</button>
 </div>
 ```
+
+**Reference Documentation**:
+
+- **CSS File**: `/kirin/web/static/styles.css` - Contains all component and
+  utility definitions
+- **Base Template**: `/kirin/web/templates/base.html` - Shows how stylesheet
+  is included
+- **Example Templates**: `/kirin/web/templates/dataset_view.html`,
+  `/kirin/web/templates/catalogs.html` - Show component + utility usage
+- **Design System**: Based on shadcn/ui patterns - See
+  [shadcn/ui](https://ui.shadcn.com/) for component inspiration
+
+**Adding New Utilities**:
+
+When adding new utility classes:
+
+1. **Check if component exists first** - Don't create utilities that duplicate
+   component functionality
+2. **Follow naming conventions** - Use descriptive names (`flex`,
+   `items-center`, `gap-2`)
+3. **Use CSS custom properties** - Reference design tokens (`hsl(var(--primary))`)
+4. **Add to utilities section** - Keep utilities organized in
+   `/kirin/web/static/styles.css`
+5. **Document usage** - Update this section if adding new utility categories
+
+**Adding New Components**:
+
+When adding new component classes:
+
+1. **Follow shadcn/ui patterns** - Use established component structure
+2. **Use CSS custom properties** - Reference design tokens for theming
+3. **Make reusable** - Components should work across multiple pages
+4. **Add variants** - Use modifier classes (`.btn-primary`, `.alert-error`)
+5. **Document usage** - Update component standards section above
 
 ## Development Guidelines
 
