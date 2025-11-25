@@ -7,6 +7,8 @@
 #     "loguru",
 #     "matplotlib",
 #     "numpy",
+#     "marimo>=0.17.0",
+#     "pyzmq",
 # ]
 #
 # [tool.uv.sources]
@@ -23,7 +25,7 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import marimo as mo
-    return
+    return (mo,)
 
 
 @app.cell
@@ -41,6 +43,7 @@ def _():
 @app.cell(hide_code=True)
 def _(np, plt):
     # Generate correlated data with correlation ~0.75
+    np.random.seed(49)  # Set random seed for reproducibility
     n_points = 100
 
     # Generate x values
@@ -72,7 +75,7 @@ def _(np, plt):
 
     fig = plt.gcf()
     fig
-    return (fig,)
+    return fig, x, y
 
 
 @app.cell
@@ -82,11 +85,33 @@ def _():
 
 
 @app.cell
+def _(x, y):
+    import polars as pl
+
+    df = pl.DataFrame({'x': x, 'y': y})
+    df.write_csv("./correlated_data.csv")
+    df
+    return df, pl
+
+
+@app.cell
 def _(kirin):
     catalog = kirin.Catalog(root_dir="/tmp/analysis_plot/")
+    catalog
+    return (catalog,)
+
+
+@app.cell
+def _(catalog):
     dataset = catalog.get_dataset("plots")
     dataset
     return (dataset,)
+
+
+@app.cell
+def _(dataset):
+    dataset.commit(message="Commit of correlated data.", add_files=["./correlated_data.csv"])
+    return
 
 
 @app.cell
@@ -101,7 +126,81 @@ def _(dataset, fig):
 
 
 @app.cell
+def _(kirin):
+    dataset_autodata = kirin.Dataset(
+        root_dir="/tmp/analysis_plot/",
+        name="auto-updating-data"
+    )
+
+
+    # Checkout to latest commit (HEAD)
+    dataset_autodata.checkout()
+
+    return (dataset_autodata,)
+
+
+@app.cell
 def _():
+    from datetime import date
+    return (date,)
+
+
+@app.cell
+def _(df, pl):
+    # Add 5 more rows to the dataframe previously defined, overwrite correlated_data.csv
+    # Assume df is defined previously (in a previous cell)
+    last_row = df.tail(2)
+    # Repeat last row 5 times
+    new_rows = pl.concat([last_row] * 10)
+
+    # Append new rows to df
+    df2 = pl.concat([df, new_rows])
+
+    # Overwrite CSV
+    df2.write_csv("correlated_data.csv")
+
+    return
+
+
+@app.cell
+def _(dataset_autodata, date):
+    dataset_autodata.commit(message=f"Auto-updated file on {date.today()}", add_files=["./correlated_data.csv"], metadata={"operator": "Eric Name"})
+    return
+
+
+@app.cell
+def _(dataset_autodata, pl):
+    dataset_autodata.checkout("ace7ad2c950d72813d3")
+    with dataset_autodata.local_files() as dataset_autodata_files:
+        df3 = pl.read_csv(dataset_autodata_files["correlated_data.csv"])
+
+    df3
+    return
+
+
+@app.cell
+def _(kirin):
+    dataset_gcp = kirin.Dataset(
+        root_dir="gs://kirin-test-bucket",
+        name="test-checkout"
+    )
+
+
+    # Checkout to latest commit (HEAD)
+    dataset_gcp.checkout("16e52c01f893d3bd395d891f7dcb91ecaee5485ab03c23d308cee72f8b267a6b")
+    dataset_gcp
+    return (dataset_gcp,)
+
+
+@app.cell
+def _(dataset_gcp, mo):
+    from pathlib import Path
+
+    with dataset_gcp.local_files() as local_files:
+        file_path = local_files["tmp55y4l46r.txt"]
+        contents = Path(file_path).read_text()
+
+    mo.md(contents)
     return
 
 
