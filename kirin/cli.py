@@ -13,6 +13,10 @@ from .web.config import CatalogManager
 app = typer.Typer()
 
 
+# Default port for Kirin UI (chosen to minimize collision probability)
+DEFAULT_UI_PORT = 9123
+
+
 def find_free_port() -> int:
     """Find a free port on the system."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -23,11 +27,15 @@ def find_free_port() -> int:
 
 
 @app.command()
-def ui() -> None:
+def ui(
+    port: int = typer.Option(
+        DEFAULT_UI_PORT,
+        "--port",
+        "-p",
+        help=f"Port to run the web interface on (default: {DEFAULT_UI_PORT})",
+    ),
+) -> None:
     """Launch the Kirin web interface."""
-    port = find_free_port()
-    logger.info(f"Using random port: {port}")
-
     logger.info(f"Starting Kirin web interface on 127.0.0.1:{port}")
     logger.info("PERF: Web interface starting with auto-reload enabled")
 
