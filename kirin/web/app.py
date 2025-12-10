@@ -5,10 +5,11 @@ import os
 import shutil
 import subprocess
 import tempfile
+import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import (
@@ -26,6 +27,11 @@ from .config import CatalogConfig, CatalogManager
 
 # Global catalog manager
 catalog_manager = CatalogManager()
+
+# Cache for catalog dataset counts with TTL (time-to-live)
+# Key: (catalog_id, show_hidden), Value: (dataset_count, status, timestamp)
+_catalog_count_cache: Dict[Tuple[str, bool], Tuple[int | str, str, float]] = {}
+CACHE_TTL_SECONDS = 60  # Cache for 60 seconds
 
 
 async def safe_catalog_operation(func, timeout_seconds=10, *args, **kwargs):
@@ -227,16 +233,118 @@ async def list_catalogs(
     else:
         catalogs = catalog_manager.list_catalogs()
 
-    # Simple catalog info - no connection testing, just like notebook
+    # Calculate dataset count for each catalog with timeout protection and caching
     catalog_infos = []
+    current_time = time.time()
+
+    # Clean up expired cache entries
+    expired_keys = [
+        key
+        for key, (_, _, timestamp) in _catalog_count_cache.items()
+        if current_time - timestamp > CACHE_TTL_SECONDS
+    ]
+    for key in expired_keys:
+        del _catalog_count_cache[key]
+
     for catalog in catalogs:
+        cache_key = (catalog.id, show_hidden)
+
+        # Check cache first
+        if cache_key in _catalog_count_cache:
+            cached_count, cached_status, cached_timestamp = _catalog_count_cache[
+                cache_key
+            ]
+            if current_time - cached_timestamp <= CACHE_TTL_SECONDS:
+                # Use cached value
+                dataset_count = cached_count
+                status = cached_status
+                logger.debug(
+                    f"Using cached dataset count for catalog: {catalog.name} "
+                    f"(count: {dataset_count}, "
+                    f"age: {current_time - cached_timestamp:.1f}s)"
+                )
+                catalog_infos.append(
+                    {
+                        "id": catalog.id,
+                        "name": catalog.name,
+                        "root_dir": catalog.root_dir,
+                        "status": status,
+                        "dataset_count": dataset_count,
+                        "hidden": catalog.hidden,
+                    }
+                )
+                continue
+
+        # Not in cache or expired - calculate dataset count
+        dataset_count = "?"
+        status = "ready"
+
+        # Skip authentication for hidden catalogs unless explicitly viewing them
+        # This prevents over-eager auth when toggling "show hidden catalogs"
+        should_authenticate = catalog.auth_command and (
+            not catalog.hidden or show_hidden
+        )
+
+        # Try to get dataset count with timeout protection
+        try:
+            # Proactive authentication: only run for visible catalogs
+            # or when viewing hidden
+            if should_authenticate:
+                logger.info(
+                    f"Running proactive authentication for catalog: {catalog.name}"
+                )
+                auth_success, auth_message = await execute_auth_command(
+                    catalog.auth_command, timeout_seconds=30
+                )
+                if auth_success:
+                    logger.info(f"Proactive authentication successful: {auth_message}")
+                else:
+                    logger.warning(f"Proactive authentication failed: {auth_message}")
+            elif catalog.hidden and not show_hidden:
+                # Hidden catalog not being viewed - skip auth and dataset count
+                logger.debug(
+                    f"Skipping auth and dataset count for hidden catalog: "
+                    f"{catalog.name}"
+                )
+                catalog_infos.append(
+                    {
+                        "id": catalog.id,
+                        "name": catalog.name,
+                        "root_dir": catalog.root_dir,
+                        "status": status,
+                        "dataset_count": dataset_count,
+                        "hidden": catalog.hidden,
+                    }
+                )
+                continue
+
+            # Get dataset count with shorter timeout for listing page
+            dataset_names = await safe_catalog_operation(
+                lambda: catalog.to_catalog().datasets(), timeout_seconds=5
+            )
+            dataset_count = len(dataset_names)
+            status = "connected"
+        except asyncio.TimeoutError:
+            logger.warning(f"Timeout getting dataset count for catalog: {catalog.name}")
+            status = "timeout"
+            dataset_count = "?"
+        except Exception as e:
+            logger.warning(
+                f"Error getting dataset count for catalog {catalog.name}: {e}"
+            )
+            status = "error"
+            dataset_count = "?"
+
+        # Store in cache
+        _catalog_count_cache[cache_key] = (dataset_count, status, current_time)
+
         catalog_infos.append(
             {
                 "id": catalog.id,
                 "name": catalog.name,
                 "root_dir": catalog.root_dir,
-                "status": "ready",  # Always ready, like notebook
-                "dataset_count": "?",  # Will be shown when user clicks
+                "status": status,
+                "dataset_count": dataset_count,
                 "hidden": catalog.hidden,
             }
         )
@@ -859,9 +967,7 @@ async def hide_catalog(
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         logger.error(f"Failed to hide catalog: {e}")
-        raise HTTPException(
-            status_code=500, detail=f"Failed to hide catalog: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to hide catalog: {str(e)}")
 
 
 @app.post("/catalog/{catalog_id}/unhide", response_class=HTMLResponse)

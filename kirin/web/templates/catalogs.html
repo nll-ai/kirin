@@ -57,7 +57,11 @@
                         {% if catalog.status == 'connected' %}Connected{% elif catalog.status == 'error' %}Error{% else %}Unknown{% endif %}
                     </span>
                     <span class="text-sm text-muted-foreground">
+                        {% if catalog.dataset_count == "?" %}
+                        Unknown ? datasets
+                        {% else %}
                         {{ catalog.dataset_count }} dataset{{ 's' if catalog.dataset_count != 1 else '' }}
+                        {% endif %}
                     </span>
                 </div>
             </div>
