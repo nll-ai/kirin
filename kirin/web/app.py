@@ -37,7 +37,7 @@ CACHE_TTL_SECONDS = 60  # Cache for 60 seconds
 # Global authentication cache - tracks when each catalog was last authenticated
 # Key: catalog_id, Value: timestamp of last successful authentication
 _auth_cache: Dict[str, float] = {}
-AUTH_CACHE_TTL_SECONDS = 300  # Cache authentication for 5 minutes (300 seconds)
+AUTH_CACHE_TTL_SECONDS = 1800  # Cache authentication for 30 minutes (1800 seconds)
 
 
 async def safe_catalog_operation(func, timeout_seconds=10, *args, **kwargs):
@@ -163,14 +163,17 @@ async def ensure_catalog_authenticated(
         auth_age = current_time - auth_timestamp
 
         if auth_age <= AUTH_CACHE_TTL_SECONDS:
+            # Reset TTL since we're successfully using the cached auth
+            _auth_cache[catalog_id] = current_time
             logger.info(
                 f"✅ Using cached authentication for catalog {catalog_id} "
                 f"(authenticated {auth_age:.1f}s ago, "
-                f"ttl={AUTH_CACHE_TTL_SECONDS}s)"
+                f"ttl reset to {AUTH_CACHE_TTL_SECONDS}s)"
             )
             return (
                 True,
-                f"Using cached authentication (authenticated {auth_age:.1f}s ago)",
+                f"Using cached authentication "
+                f"(authenticated {auth_age:.1f}s ago, TTL reset)",
             )
 
         logger.info(
