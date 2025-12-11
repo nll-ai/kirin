@@ -4,6 +4,7 @@
 #     "kirin",
 #     "pandas",
 #     "marimo>=0.17.0",
+#     "pyzmq",
 # ]
 #
 # [tool.uv.sources]
@@ -19,7 +20,6 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import marimo as mo
-
     return (mo,)
 
 
@@ -376,7 +376,7 @@ def _(csv_file, data_dir, dataset):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Step 10: Understanding Content-Addressed Storage
+    ## Understanding Content-Addressed Storage
 
     One of Kirin's key features is content-addressed storage. This means:
 
@@ -386,6 +386,16 @@ def _(mo):
 
     Even though the files have different names, they have the same content
     hash, so Kirin stores them only once!
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Step 10: Removing Files
+
+    You can also remove files from a dataset.
     """)
     return
 
@@ -404,17 +414,7 @@ def _(dataset):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Step 11: Removing Files
-
-    You can also remove files from a dataset.
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## Step 12: Combining Operations
+    ## Step 11: Combining Operations
 
     You can add and remove files in the same commit.
     """)
@@ -423,20 +423,23 @@ def _(mo):
 
 @app.cell
 def _(data_dir, dataset):
-    # Create a new file
-    updated_config = data_dir / "config_v2.json"
-    updated_config.write_text("""{
-    "version": "2.0",
-    "description": "Updated configuration",
-    "columns": ["name", "age", "city", "country"]
+    # Create a summary report file
+    summary_report = data_dir / "monthly_summary.json"
+    summary_report.write_text("""{
+    "period": "2024-01",
+    "total_records": 3,
+    "average_age": 35.0,
+    "cities": ["New York", "San Francisco", "Chicago"],
+    "generated_at": "2024-01-15T10:00:00Z"
     }
     """)
 
-    # Update dataset: add new file, remove old one
+    # Add summary report and remove detailed processing log
+    # These are different types of files: summary vs detailed logs
     update_commit = dataset.commit(
-        message="Update configuration to v2",
-        add_files=[str(updated_config)],
-        remove_files=["config.json"],
+        message="Add monthly summary, remove detailed processing logs",
+        add_files=[str(summary_report)],
+        remove_files=["results.txt"],
     )
 
     print("✅ Updated dataset")
