@@ -1021,21 +1021,25 @@ demonstrates:
 **Marimo Notebook Best Practices**:
 
 When creating Marimo notebooks, follow these patterns for reliable
-execution:
+execution. **Note**: For tutorial and how-to guide notebooks, follow the
+exemplar pattern in `docs/tutorials/first-dataset.py` (see "Marimo
+Notebook Writing Standards" section below).
 
-**Simple Cell Pattern (RECOMMENDED)**:
+**Simple Cell Pattern (For Non-Tutorial Notebooks)**:
 
 ```python
 # All cells use simple _() naming
 @app.cell
 def _():
-    """Setup dataset for workflow."""
+    # Setup dataset for workflow
     # Create resources and return them
+    dataset = create_dataset()
+    temp_dir = get_temp_dir()
     return dataset, temp_dir
 
 @app.cell
 def _(dataset):
-    """Process step with dataset."""
+    # Process step with dataset
     # Work with dataset directly
     assert condition
     print("✅ Step completed")
@@ -1043,7 +1047,7 @@ def _(dataset):
 
 @app.cell
 def _(dataset, temp_dir):
-    """Another step with multiple dependencies."""
+    # Another step with multiple dependencies
     # Use both variables
     return
 ```
@@ -1051,6 +1055,7 @@ def _(dataset, temp_dir):
 **Key Requirements**:
 
 - **Simple Cell Names** - Use `_()` for all cells to avoid complexity
+- **No Docstrings** - Do not use docstrings in `@app.cell` functions
 - **No Test Functions** - Execute workflow steps directly in cells
 - **No Fixtures** - Each cell does what it needs to do
 - **Clear Dependencies** - Use explicit parameter names to declare what
@@ -1110,65 +1115,515 @@ we edit a notebook.
 - ❌ Trailing whitespace
 - ❌ Multiple consecutive blank lines
 
-## Marimo Markdown Cell Pattern
+## Marimo Notebook Writing Standards
 
-**CRITICAL**: When writing markdown cells in Marimo notebooks, use the
-string concatenation pattern instead of f-strings or multi-line strings
-with `mo.md()`.
+**CRITICAL**: All Marimo notebooks in the Kirin project must follow the
+exemplar pattern established in `docs/tutorials/first-dataset.py`. This
+ensures consistency, readability, and maintainability across all tutorial
+and how-to guide notebooks.
 
-**Required Pattern**:
+**Diataxis Framework**: This project uses the Diataxis framework to
+categorize documentation. Marimo notebooks are used for **Tutorials** and
+**How-To Guides**, which have distinct purposes and writing styles:
+
+- **Tutorials** (`docs/tutorials/`): Learning-oriented, narrative-driven
+  guides that teach concepts progressively. Assume minimal prior knowledge.
+- **How-To Guides** (`docs/how-to/`): Task-oriented guides that help
+  users accomplish specific goals. Assume users know the basics.
+
+### Exemplar Reference
+
+**Reference Notebook**: `docs/tutorials/first-dataset.py` serves as the
+exemplar for **tutorial** notebooks. When creating tutorial notebooks,
+always refer to this file as the standard.
+
+### Core Principles
+
+**1. Markdown-Only Cells with `hide_code=True`**:
+
+All cells that contain only markdown content must use `hide_code=True`:
 
 ```python
-# ✅ CORRECT - String concatenation pattern
-str_content = ""
-str_content += "**Section Title:**\n"
-str_content += f"- **Item 1**: {variable1}\n"
-str_content += f"- **Item 2**: {variable2}\n"
-str_content += "\n**Subsection:**\n"
-str_content += "```python\n"
-str_content += "code_example()\n"
-str_content += "```\n"
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Step 1: Understanding Datasets
 
-mo.md(str_content)
+    A **dataset** in Kirin is a collection of versioned files. Think of it
+    like a Git repository, but specifically designed for data files.
+    """)
+    return
 ```
 
-**Why This Pattern**:
+**2. No Docstrings in App Cells**:
 
-- **Marimo Compatibility**: Avoids issues with nested f-strings and complex
-  string formatting
-- **Reliable Rendering**: Ensures markdown content renders correctly in
-  Marimo
-- **Maintainable**: Easy to modify and extend markdown content
-- **Consistent**: Works reliably across different Marimo versions
-
-**Avoid These Patterns**:
+Code cells should NOT have docstrings. All explanatory text belongs in
+separate markdown cells:
 
 ```python
-# ❌ WRONG - Multi-line f-strings
-mo.md(f"""
-**Section Title:**
-- **Item 1**: {variable1}
-- **Item 2**: {variable2}
+# ✅ CORRECT - No docstring, explanation in markdown cell above
+@app.cell
+def _(dataset):
+    commit_hash = dataset.commit(
+        message="Initial commit",
+        add_files=["file.csv"],
+    )
+    return
+
+# ❌ WRONG - Don't use docstrings in app cells
+@app.cell
+def _(dataset):
+    """Create initial commit with sample data."""
+    commit_hash = dataset.commit(...)
+    return
+```
+
+**3. Descriptive Variable Names**:
+
+Use informative variable names without underscore prefixes:
+
+```python
+# ✅ CORRECT - Descriptive names
+current_commit = dataset.get_commit(commit_hash)
+updated_history = dataset.history()
+first_commit = history[-1]
+history_commit = updated_history[0]
+
+# ❌ WRONG - Underscore prefixes or unclear names
+_commit = dataset.get_commit(commit_hash)
+h = dataset.history()
+c = history[-1]
+```
+
+**4. Interleaved Markdown and Code Structure**:
+
+Markdown explanation cells must come BEFORE their corresponding code cells:
+
+```python
+# ✅ CORRECT - Markdown first, then code
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Step 3: Making Your First Commit
+
+    Now let's add these files to our dataset.
+    """)
+    return
+
+@app.cell
+def _(dataset, files):
+    commit_hash = dataset.commit(
+        message="Initial commit",
+        add_files=files,
+    )
+    return
+
+# ❌ WRONG - Code before explanation
+@app.cell
+def _(dataset, files):
+    commit_hash = dataset.commit(...)
+    return
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Step 3: Making Your First Commit...""")
+    return
+```
+
+**5. Markdown Cell Pattern**:
+
+Use raw triple-quoted strings with `mo.md()` for all markdown content:
+
+```python
+# ✅ CORRECT - Raw triple-quoted strings
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Step 1: Understanding Datasets
+
+    A **dataset** in Kirin is a collection of versioned files.
+
+    - A **name** that identifies it
+    - A **linear commit history** that tracks changes
+    - **Files** stored using content-addressed storage
+    """)
+    return
+```
+
+**6. Step-by-Step Progression**:
+
+Structure tutorials as clear, numbered steps with markdown explanations:
+
+```python
+# Step 1: Markdown explanation
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Step 1: Understanding Datasets...""")
+    return
+
+# Step 1: Code implementation
+@app.cell
+def _():
+    # Implementation code
+    return
+
+# Step 2: Markdown explanation
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Step 2: Preparing Your First Files...""")
+    return
+
+# Step 2: Code implementation
+@app.cell
+def _():
+    # Implementation code
+    return
+```
+
+**7. Concept Explanations vs Steps**:
+
+Some sections explain concepts rather than being numbered steps. Use
+descriptive headings. **Note**: Concept explanations are more common in
+tutorials than in how-to guides:
+
+```python
+# ✅ CORRECT - Concept explanation (not a numbered step)
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Understanding Content-Addressed Storage
+
+    One of Kirin's key features is content-addressed storage. This means:
+    - Files are stored by their content hash
+    - Identical files are automatically deduplicated
+    """)
+    return
+
+# ❌ WRONG - Don't number concept explanations
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Step 10: Understanding Content-Addressed Storage...""")
+    return
+```
+
+**8. Proper Cell Dependencies**:
+
+Always return variables that subsequent cells need, and declare dependencies
+explicitly:
+
+```python
+# ✅ CORRECT - Clear dependencies and returns
+@app.cell
+def _():
+    dataset = create_dataset()
+    return (dataset,)
+
+@app.cell
+def _(dataset):
+    commit_hash = dataset.commit(...)
+    return (commit_hash,)
+
+# ❌ WRONG - Missing return or unclear dependencies
+@app.cell
+def _():
+    dataset = create_dataset()
+    # Missing return statement
+
+@app.cell
+def _():
+    # Unclear where dataset comes from
+    commit_hash = dataset.commit(...)
+```
+
+**9. Clean Separation of Concerns**:
+
+Keep markdown-only cells separate from code cells. Never mix markdown and
+code in the same cell:
+
+```python
+# ✅ CORRECT - Separate cells
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Explanation text""")
+    return
+
+@app.cell
+def _():
+    # Code here
+    return
+
+# ❌ WRONG - Don't mix markdown and code
+@app.cell
+def _(mo):
+    mo.md(r"""## Explanation""")
+    # Code mixed in same cell
+    result = do_something()
+    return
+```
+
+### Markdown Content Guidelines
+
+**Raw String Pattern**:
+
+Use raw triple-quoted strings (`r"""..."""`) for markdown content to avoid
+escaping issues:
+
+```python
+# ✅ CORRECT - Raw strings
+mo.md(r"""
+## Step 1: Title
+
+This is the explanation text with **bold** and `code`.
+
+- Bullet point 1
+- Bullet point 2
 """)
 
-# ❌ WRONG - Nested f-strings in loops
-for item in items:
-    mo.md(f"**{item.title}**: {item.value}")
-
-# ❌ WRONG - Complex string formatting
-mo.md(f"**Title**: {complex_expression if condition else 'default'}")
+# ❌ WRONG - Regular strings (may need escaping)
+mo.md("""
+## Step 1: Title
+This text might need \\ escaping
+""")
 ```
 
-**Best Practices**:
+**Line Length in Markdown**:
 
-- **Initialize Empty String**: Always start with `str_content = ""`
-- **Explicit Newlines**: Add `\n` at the end of each line for proper
-  formatting
-- **Consistent Indentation**: Use consistent spacing for code blocks and
-  lists
-- **Single mo.md() Call**: Use only one `mo.md()` call per cell at the end
-- **Variable Substitution**: Use f-strings within the concatenation pattern
-  for dynamic content
+Keep markdown content lines within reasonable length (88 characters) for
+readability, but don't sacrifice clarity for strict line limits:
+
+```python
+# ✅ CORRECT - Reasonable line length
+mo.md(r"""
+## Step 1: Understanding Datasets
+
+A **dataset** in Kirin is a collection of versioned files. Think of it
+like a Git repository, but specifically designed for data files.
+""")
+
+# ✅ ALSO ACCEPTABLE - Longer lines for clarity
+mo.md(r"""
+## Step 1: Understanding Datasets
+
+A **dataset** in Kirin is a collection of versioned files. Think of it like a Git repository, but specifically designed for data files. Each dataset has a name, a linear commit history, and files stored using content-addressed storage.
+""")
+```
+
+### Complete Example Structure
+
+Here's the complete structure pattern from the exemplar:
+
+```python
+# Import cell
+@app.cell
+def _():
+    import marimo as mo
+    return (mo,)
+
+# Title markdown
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""# Your First Dataset...""")
+    return
+
+# Prerequisites markdown
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Prerequisites...""")
+    return
+
+# Setup code
+@app.cell
+def _():
+    # Setup code here
+    return
+
+# Step 1 explanation
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Step 1: Understanding...""")
+    return
+
+# Step 1 code
+@app.cell
+def _():
+    # Step 1 implementation
+    return
+
+# Step 2 explanation
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""## Step 2: Preparing...""")
+    return
+
+# Step 2 code
+@app.cell
+def _():
+    # Step 2 implementation
+    return
+
+# ... continue pattern
+```
+
+### Writing Tutorials vs How-To Guides
+
+**CRITICAL**: Tutorials and how-to guides serve different purposes and
+require different writing approaches. Follow the appropriate pattern for
+each type.
+
+#### Tutorials (`docs/tutorials/`)
+
+**Purpose**: Learning-oriented, narrative-driven guides that teach concepts
+progressively. Assume minimal prior knowledge.
+
+**Key Characteristics**:
+
+- **Learning-Oriented**: Focus on teaching new users how to use Kirin
+- **Narrative-Driven**: Tell a story that builds understanding step by step
+- **Progressive**: Each step builds on previous concepts
+- **Explanatory**: Explain both "how" and "why"
+- **Hands-On**: Provide practical steps with learning outcomes
+
+**Writing Pattern**:
+
+```python
+# ✅ CORRECT - Tutorial structure
+# 1. Introduction markdown (explains what you'll learn)
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Step 1: Understanding Datasets
+
+    A **dataset** in Kirin is a collection of versioned files. Think of it
+    like a Git repository, but specifically designed for data files. Each
+    dataset has:
+
+    - A **name** that identifies it
+    - A **linear commit history** that tracks changes over time
+    - **Files** that are stored using content-addressed storage
+    """)
+    return
+
+# 2. Code implementation (demonstrates the concept)
+@app.cell
+def _():
+    from kirin import Catalog
+    dataset = Catalog(root_dir="...").create_dataset("my_dataset", ...)
+    return (dataset,)
+
+# 3. Explanation markdown (discusses what happened)
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    **What just happened?**
+
+    - Kirin created a new dataset with a unique name
+    - The dataset is ready to accept files
+    - We can now start adding files to track changes
+    """)
+    return
+```
+
+**Tutorial Guidelines**:
+
+- **Start with "What You'll Learn"** - Set expectations upfront
+- **Include Prerequisites** - List what users need to know/have
+- **Progressive Complexity** - Start simple, build to more complex concepts
+- **Concept Explanations** - Include sections that explain underlying
+  concepts (not just numbered steps)
+- **Rich Explanations** - Explain both what to do and why it matters
+- **Learning Outcomes** - Each step should teach something new
+- **Summary Section** - End with a summary of what was learned
+
+#### How-To Guides (`docs/how-to/`)
+
+**Purpose**: Task-oriented guides that help users accomplish specific goals
+efficiently. Assume users know the basics.
+
+**Key Characteristics**:
+
+- **Task-Oriented**: Focus on helping users achieve specific goals
+- **Assume Competence**: Target users familiar with Kirin basics
+- **Concise**: Provide clear sequences without unnecessary explanations
+- **Action-Focused**: Emphasize "how" over "why"
+- **Modular**: Steps can be more independent (less sequential dependency)
+
+**Writing Pattern**:
+
+```python
+# ✅ CORRECT - How-to guide structure
+# 1. Brief task description (what you'll accomplish)
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Track Model Training Data
+
+    This guide shows you how to version control your machine learning models
+    and training data using Kirin.
+    """)
+    return
+
+# 2. Direct code implementation (how to do it)
+@app.cell
+def _():
+    from kirin import Dataset
+    model_registry = Dataset(root_dir="...", name="sentiment_classifier")
+    # Create and commit model files
+    commit_hash = model_registry.commit(
+        message="Initial model v1.0",
+        add_files=["model.pkl", "training_data.csv"],
+    )
+    return (commit_hash, model_registry)
+
+# 3. Brief outcome note (what happened, if needed)
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    Your model and training data are now versioned. You can track changes
+    over time and compare different model versions.
+    """)
+    return
+```
+
+**How-To Guide Guidelines**:
+
+- **Clear Task Title** - State exactly what the guide accomplishes
+- **Minimal Prerequisites** - Assume users know basics (link to tutorials
+  if needed)
+- **Direct Instructions** - Get to the point quickly
+- **Actionable Steps** - Focus on what to do, not extensive explanations
+- **Brief Context** - Only include essential background information
+- **Link to Explanations** - Reference tutorials or reference docs for
+  deeper understanding
+- **Outcome-Focused** - Emphasize the result, not the learning process
+
+#### Comparison Table
+
+| Aspect | Tutorials | How-To Guides |
+|--------|-----------|---------------|
+| **Purpose** | Teach concepts | Accomplish tasks |
+| **Audience** | Beginners | Users with basics |
+| **Structure** | Sequential, narrative | Task-focused, modular |
+| **Explanations** | Rich, explain "why" | Concise, focus on "how" |
+| **Concept Sections** | Common (explain concepts) | Rare (link to explanations) |
+| **Prerequisites** | Detailed list | Minimal (assume competence) |
+| **Summary** | Learning outcomes | Task completion |
+
+### Validation Requirements
+
+**MANDATORY**: All Marimo notebooks must:
+
+1. **Pass `uvx marimo check`** - Run `uvx marimo check <notebook.py>` and
+   fix all errors
+2. **Follow cell dependency rules** - No circular dependencies, all variables
+   properly returned
+3. **Use `hide_code=True`** - For all markdown-only cells
+4. **No docstrings** - In any `@app.cell` functions
+5. **Descriptive variable names** - No underscore prefixes, clear and
+   informative names
+6. **Interleaved structure** - Markdown explanations before code
+7. **Proper returns** - All cells return variables needed by subsequent cells
+8. **Appropriate style** - Follow tutorial or how-to guide patterns based on
+   file location (`docs/tutorials/` vs `docs/how-to/`)
 
 ## Testing Guidelines
 
