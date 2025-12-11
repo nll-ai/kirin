@@ -22,22 +22,43 @@ nav:
       - Quickstart: getting-started/quickstart.md
       - Installation: getting-started/installation.md
       - Core Concepts: getting-started/core-concepts.md
-  - Guides:
-      - Basic Usage: guides/basic-usage.md
-      - Cloud Storage: guides/cloud-storage.md
-      - Working with Files: guides/working-with-files.md
-      - Commit Management: guides/commit-management.md
+  - Tutorials:
+      - "Your First Dataset": tutorials/first-dataset.md
+      - "Working with Commits": tutorials/commits.md
+      - "Cloud Storage Overview": tutorials/cloud-storage.md
+      - "Web UI Basics": tutorials/web-ui-basics.md
+  - How-To Guides:
+      - "Track Model Training Data": how-to/track-model-data.md
+      - "Manage Multiple Datasets": how-to/manage-multiple-datasets.md
+      - "Set Up S3 Storage": how-to/setup-s3.md
+      - "Set Up GCS Storage": how-to/setup-gcs.md
+      - "Set Up Azure Storage": how-to/setup-azure.md
+      - "Version Control Your Data Pipeline": how-to/version-control-pipeline.md
+      - "Work with Data Libraries": how-to/work-with-data-libraries.md
+  - Reference:
+      - API:
+          - "Dataset": reference/api/dataset.md
+          - "File": reference/api/file.md
+          - "Commit": reference/api/commit.md
+          - "Catalog": reference/api/catalog.md
+          - "Storage": reference/api/storage.md
+      - CLI:
+          - "Kirin CLI": reference/cli/kirin.md
+      - "Storage Format": reference/storage-format.md
+  - Explanation:
+      - "Architecture Overview": explanation/architecture.md
+      - "Content-Addressed Storage": explanation/content-addressing.md
+      - "Linear vs Branching": explanation/linear-vs-branching.md
+      - "Storage Backends": explanation/storage-backends.md
   - Web UI:
       - Overview: web-ui/overview.md
       - Getting Started: web-ui/getting-started.md
       - How-To Guide: web-ui/how-to.md
       - Catalog Management: web-ui/catalog-management.md
-  - Reference:
-      - API Reference: reference/api.md
-      - Storage Format: reference/storage-format.md
-  - Architecture:
-      - Overview: architecture/overview.md
   - Cloud Storage Auth: cloud-storage-auth.md
+
+hooks:
+  - docs/hooks.py
 
 plugins:
   - search
@@ -57,13 +78,17 @@ plugins:
 markdown_extensions:
   - codehilite
   - admonition
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
   - markdown.extensions.attr_list
 
 extra_css:
   - apidocs.css
 
 extra_javascript:
+  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
   - config.js
 
 repo_name: "nll-ai/kirin"
