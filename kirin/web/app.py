@@ -29,9 +29,15 @@ from .config import CatalogConfig, CatalogManager
 catalog_manager = CatalogManager()
 
 # Cache for catalog dataset counts with TTL (time-to-live)
-# Key: (catalog_id, show_hidden), Value: (dataset_count, status, timestamp)
-_catalog_count_cache: Dict[Tuple[str, bool], Tuple[int | str, str, float]] = {}
+# Key: catalog_id (dataset count doesn't depend on show_hidden)
+# Value: (dataset_count, status, timestamp)
+_catalog_count_cache: Dict[str, Tuple[int | str, str, float]] = {}
 CACHE_TTL_SECONDS = 60  # Cache for 60 seconds
+
+# Global authentication cache - tracks when each catalog was last authenticated
+# Key: catalog_id, Value: timestamp of last successful authentication
+_auth_cache: Dict[str, float] = {}
+AUTH_CACHE_TTL_SECONDS = 300  # Cache authentication for 5 minutes (300 seconds)
 
 
 async def safe_catalog_operation(func, timeout_seconds=10, *args, **kwargs):
@@ -127,6 +133,73 @@ async def execute_auth_command(
     except Exception as e:
         logger.error(f"Auth command error: {auth_command} - {e}")
         return False, f"Authentication command error: {str(e)}"
+
+
+async def ensure_catalog_authenticated(
+    catalog_id: str, auth_command: str, timeout_seconds: int = 30
+) -> tuple[bool, str]:
+    """Ensure catalog is authenticated, using cache to avoid repeated auth.
+
+    This function checks if the catalog was authenticated recently (within
+    AUTH_CACHE_TTL_SECONDS). If yes, skips authentication. If no, runs
+    authentication and caches the result.
+
+    Args:
+        catalog_id: Unique identifier for the catalog
+        auth_command: CLI command to execute for authentication
+        timeout_seconds: Timeout in seconds (default 30)
+
+    Returns:
+        Tuple of (success: bool, message: str)
+    """
+    if not auth_command or not auth_command.strip():
+        return False, "No auth command provided"
+
+    current_time = time.time()
+
+    # Check authentication cache
+    if catalog_id in _auth_cache:
+        auth_timestamp = _auth_cache[catalog_id]
+        auth_age = current_time - auth_timestamp
+
+        if auth_age <= AUTH_CACHE_TTL_SECONDS:
+            logger.info(
+                f"✅ Using cached authentication for catalog {catalog_id} "
+                f"(authenticated {auth_age:.1f}s ago, "
+                f"ttl={AUTH_CACHE_TTL_SECONDS}s)"
+            )
+            return (
+                True,
+                f"Using cached authentication (authenticated {auth_age:.1f}s ago)",
+            )
+
+        logger.info(
+            f"⏰ Authentication cache expired for catalog {catalog_id} "
+            f"(age: {auth_age:.1f}s > ttl: {AUTH_CACHE_TTL_SECONDS}s)"
+        )
+
+    # Authentication not cached or expired - run auth
+    logger.info(
+        f"🔄 Authentication cache miss for catalog {catalog_id} - "
+        f"running authentication"
+    )
+    success, message = await execute_auth_command(auth_command, timeout_seconds)
+
+    # Cache successful authentication
+    if success:
+        _auth_cache[catalog_id] = current_time
+        logger.info(
+            f"💾 Cached authentication for catalog {catalog_id} "
+            f"(will be valid for {AUTH_CACHE_TTL_SECONDS}s)"
+        )
+    else:
+        # On failure, don't cache (so we can retry on next request)
+        logger.warning(
+            f"❌ Authentication failed for catalog {catalog_id} - "
+            f"not caching (will retry on next request)"
+        )
+
+    return success, message
 
 
 def get_aws_profiles():
@@ -227,11 +300,18 @@ async def list_catalogs(
     show_hidden: bool = False,
 ):
     """List all configured catalogs."""
+    logger.info(
+        f"🔵 list_catalogs called: show_hidden={show_hidden} "
+        f"(type: {type(show_hidden).__name__})"
+    )
+
     # Get catalogs based on show_hidden parameter
     if show_hidden:
         catalogs = catalog_manager.list_all_catalogs()
     else:
         catalogs = catalog_manager.list_catalogs()
+
+    logger.info(f"📋 Found {len(catalogs)} catalog(s) to process")
 
     # Calculate dataset count for each catalog with timeout protection and caching
     catalog_infos = []
@@ -243,25 +323,45 @@ async def list_catalogs(
         for key, (_, _, timestamp) in _catalog_count_cache.items()
         if current_time - timestamp > CACHE_TTL_SECONDS
     ]
+    if expired_keys:
+        logger.info(f"🧹 Cleaning up {len(expired_keys)} expired cache entry(ies)")
     for key in expired_keys:
         del _catalog_count_cache[key]
 
+    logger.info(
+        f"💾 Cache state: {len(_catalog_count_cache)} entry(ies) "
+        f"remaining after cleanup"
+    )
+
     for catalog in catalogs:
-        cache_key = (catalog.id, show_hidden)
+        # Cache key is just catalog.id - dataset count doesn't depend on show_hidden
+        cache_key = catalog.id
+        logger.info(
+            f"🔍 Processing catalog: {catalog.name} "
+            f"(id: {catalog.id}, hidden: {catalog.hidden}, "
+            f"has_auth: {bool(catalog.auth_command)})"
+        )
+        logger.info(f"🔑 Cache key: {cache_key} (catalog_id={catalog.id!r})")
 
         # Check cache first
         if cache_key in _catalog_count_cache:
             cached_count, cached_status, cached_timestamp = _catalog_count_cache[
                 cache_key
             ]
-            if current_time - cached_timestamp <= CACHE_TTL_SECONDS:
+            cache_age = current_time - cached_timestamp
+            logger.info(
+                f"✅ CACHE HIT for {catalog.name}: "
+                f"count={cached_count}, status={cached_status}, "
+                f"age={cache_age:.1f}s, ttl={CACHE_TTL_SECONDS}s"
+            )
+            if cache_age <= CACHE_TTL_SECONDS:
                 # Use cached value
                 dataset_count = cached_count
                 status = cached_status
-                logger.debug(
-                    f"Using cached dataset count for catalog: {catalog.name} "
-                    f"(count: {dataset_count}, "
-                    f"age: {current_time - cached_timestamp:.1f}s)"
+                logger.info(
+                    f"✅ Using cached dataset count for catalog: {catalog.name} "
+                    f"(count: {dataset_count}, age: {cache_age:.1f}s) - "
+                    f"SKIPPING AUTHENTICATION"
                 )
                 catalog_infos.append(
                     {
@@ -274,8 +374,19 @@ async def list_catalogs(
                     }
                 )
                 continue
+            else:
+                logger.info(
+                    f"⏰ Cache expired for {catalog.name} "
+                    f"(age: {cache_age:.1f}s > ttl: {CACHE_TTL_SECONDS}s)"
+                )
+        else:
+            logger.info(f"❌ CACHE MISS for {catalog.name} (key not found)")
 
         # Not in cache or expired - calculate dataset count
+        logger.info(
+            f"🔄 Cache miss or expired for {catalog.name} - "
+            f"will calculate dataset count"
+        )
         dataset_count = "?"
         status = "ready"
 
@@ -285,26 +396,40 @@ async def list_catalogs(
             not catalog.hidden or show_hidden
         )
 
+        logger.info(
+            f"🔐 Authentication decision for {catalog.name}: "
+            f"should_authenticate={should_authenticate} "
+            f"(has_auth_command={bool(catalog.auth_command)}, "
+            f"hidden={catalog.hidden}, show_hidden={show_hidden})"
+        )
+
         # Try to get dataset count with timeout protection
         try:
             # Proactive authentication: only run for visible catalogs
             # or when viewing hidden
             if should_authenticate:
-                logger.info(
-                    f"Running proactive authentication for catalog: {catalog.name}"
+                logger.warning(
+                    f"🚨 AUTHENTICATION TRIGGERED for catalog: {catalog.name} "
+                    f"(auth_command: {catalog.auth_command})"
                 )
-                auth_success, auth_message = await execute_auth_command(
-                    catalog.auth_command, timeout_seconds=30
+                auth_success, auth_message = await ensure_catalog_authenticated(
+                    catalog.id, catalog.auth_command, timeout_seconds=30
                 )
                 if auth_success:
-                    logger.info(f"Proactive authentication successful: {auth_message}")
+                    logger.info(
+                        f"✅ Proactive authentication successful for "
+                        f"{catalog.name}: {auth_message}"
+                    )
                 else:
-                    logger.warning(f"Proactive authentication failed: {auth_message}")
+                    logger.warning(
+                        f"❌ Proactive authentication failed for "
+                        f"{catalog.name}: {auth_message}"
+                    )
             elif catalog.hidden and not show_hidden:
                 # Hidden catalog not being viewed - skip auth and dataset count
-                logger.debug(
-                    f"Skipping auth and dataset count for hidden catalog: "
-                    f"{catalog.name}"
+                logger.info(
+                    f"⏭️  Skipping auth and dataset count for hidden catalog: "
+                    f"{catalog.name} (not being viewed)"
                 )
                 catalog_infos.append(
                     {
@@ -317,25 +442,41 @@ async def list_catalogs(
                     }
                 )
                 continue
+            else:
+                logger.info(
+                    f"⏭️  Skipping authentication for {catalog.name} "
+                    f"(no auth_command configured)"
+                )
 
             # Get dataset count with shorter timeout for listing page
+            logger.info(f"📊 Getting dataset count for {catalog.name} (timeout: 5s)")
             dataset_names = await safe_catalog_operation(
                 lambda: catalog.to_catalog().datasets(), timeout_seconds=5
             )
             dataset_count = len(dataset_names)
             status = "connected"
+            logger.info(
+                f"✅ Successfully got dataset count for {catalog.name}: "
+                f"{dataset_count} dataset(s)"
+            )
         except asyncio.TimeoutError:
-            logger.warning(f"Timeout getting dataset count for catalog: {catalog.name}")
+            logger.warning(
+                f"⏱️  Timeout getting dataset count for catalog: {catalog.name}"
+            )
             status = "timeout"
             dataset_count = "?"
         except Exception as e:
             logger.warning(
-                f"Error getting dataset count for catalog {catalog.name}: {e}"
+                f"❌ Error getting dataset count for catalog {catalog.name}: {e}"
             )
             status = "error"
             dataset_count = "?"
 
         # Store in cache
+        logger.info(
+            f"💾 Storing in cache: {catalog.name} -> "
+            f"count={dataset_count}, status={status}, key={cache_key}"
+        )
         _catalog_count_cache[cache_key] = (dataset_count, status, current_time)
 
         catalog_infos.append(
@@ -440,8 +581,8 @@ async def list_datasets(
     # Proactive authentication: run auth command if available before attempting to list
     if catalog.auth_command:
         logger.info(f"Running proactive authentication for catalog: {catalog.name}")
-        auth_success, auth_message = await execute_auth_command(
-            catalog.auth_command, timeout_seconds=30
+        auth_success, auth_message = await ensure_catalog_authenticated(
+            catalog.id, catalog.auth_command, timeout_seconds=30
         )
         if auth_success:
             logger.info(f"Proactive authentication successful: {auth_message}")
@@ -709,8 +850,8 @@ async def authenticate_catalog(
     logger.info(
         f"Executing auth command for catalog {catalog.name}: {catalog.auth_command}"
     )
-    success, message = await execute_auth_command(
-        catalog.auth_command, timeout_seconds=30
+    success, message = await ensure_catalog_authenticated(
+        catalog.id, catalog.auth_command, timeout_seconds=30
     )
 
     return JSONResponse(
