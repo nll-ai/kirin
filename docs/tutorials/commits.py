@@ -108,7 +108,7 @@ def _(mo):
 @app.cell
 def _(data_dir, dataset, datetime):
     # Create first commit
-    file1 = data_dir / "data_v1.csv"
+    file1 = data_dir / "data.csv"
     file1.write_text("name,value\nA,10\nB,20\n")
 
     commit_msg1 = f"Initial data - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
@@ -120,14 +120,15 @@ def _(data_dir, dataset, datetime):
 
 @app.cell
 def _(data_dir, dataset, datetime):
-    # Create second commit
-    file2 = data_dir / "data_v2.csv"
+    # Create second commit with updated data (same filename - versioning!)
+    file2 = data_dir / "data.csv"
     file2.write_text("name,value\nA,10\nB,20\nC,30\n")
 
     commit_msg2 = f"Add more data - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     commit_hash2 = dataset.commit(message=commit_msg2, add_files=[str(file2)])
 
     print(f"✅ Created second commit: {commit_hash2[:8]}")
+    print("   Note: Same filename - versioning handled by commits!")
     return
 
 

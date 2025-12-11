@@ -1083,7 +1083,10 @@ we edit a notebook.
 2. **Run Marimo Check**: Execute `uvx marimo check /path/to/notebook.py`
 3. **Fix Issues**: Address any validation errors or warnings
 4. **Re-run Check**: Continue until the notebook passes validation
-5. **Verify Functionality**: Ensure the notebook runs correctly
+5. **Run Notebook**: Execute `uv run /path/to/notebook.py` to verify it runs
+   correctly as a script and produces expected output
+6. **Verify Functionality**: Ensure all cells execute successfully and output
+   is correct
 
 **Common Marimo Check Issues**:
 
@@ -1110,6 +1113,10 @@ we edit a notebook.
   for reactive dependencies
 - ❌ **Fragmented Logic**: Combine related operations into single cells for
   better organization
+- ❌ **Version Numbers in Filenames**: Never use version numbers (v1, v2,
+  etc.) in filenames when demonstrating versioning. Use the same filenames
+  and let Kirin's commit system handle versioning. This showcases the
+  actual versioning capability rather than manual filename management.
 - ❌ Inconsistent list formatting
 - ❌ Missing language specification in code blocks
 - ❌ Trailing whitespace
@@ -1464,6 +1471,87 @@ def _():
 # ... continue pattern
 ```
 
+### Demonstrating Versioning in Notebooks
+
+**CRITICAL**: When demonstrating versioning capabilities in notebooks, never
+use version numbers in filenames. Use the same filenames across commits and
+let Kirin's commit system handle versioning.
+
+**The Problem**:
+
+Using version numbers in filenames (e.g., `model_weights_v1.pt`,
+`model_weights_v2.pt`) defeats the purpose of demonstrating versioning. It
+shows manual filename management instead of Kirin's versioning capabilities.
+
+**The Solution**:
+
+Use the same filenames across different commits. Kirin's commit system
+tracks different versions of files with the same name through the commit
+history.
+
+**Example Pattern**:
+
+```python
+# ✅ CORRECT - Same filenames, versioning handled by commits
+@app.cell
+def _(Path, model, temp_dir, torch):
+    # First version
+    model_path = Path(temp_dir) / "models" / "model_weights.pt"
+    torch.save(model.state_dict(), model_path)
+    config_path = Path(temp_dir) / "models" / "config.json"
+    config_path.write_text('{"version": "1.0.0"}')
+    return config_path, model_path
+
+@app.cell
+def _(model_registry, model_path, config_path):
+    # Commit first version
+    commit1 = model_registry.commit(
+        message="Initial model v1.0",
+        add_files=[str(model_path), str(config_path)],
+    )
+    return (commit1,)
+
+@app.cell
+def _(Path, improved_model, temp_dir, torch):
+    # Second version - SAME FILENAMES
+    model_path = Path(temp_dir) / "models" / "model_weights.pt"
+    torch.save(improved_model.state_dict(), model_path)
+    config_path = Path(temp_dir) / "models" / "config.json"
+    config_path.write_text('{"version": "2.0.0"}')
+    return config_path, model_path
+
+@app.cell
+def _(model_registry, model_path, config_path):
+    # Commit second version - showcases versioning
+    commit2 = model_registry.commit(
+        message="Improved model v2.0",
+        add_files=[str(model_path), str(config_path)],
+    )
+    return (commit2,)
+
+# ❌ WRONG - Version numbers in filenames
+improved_model_path = Path(temp_dir) / "models" / "model_weights_v2.pt"
+improved_config_path = Path(temp_dir) / "models" / "config_v2.json"
+```
+
+**Why This Matters**:
+
+- **Shows Real Versioning**: Demonstrates that Kirin tracks file versions
+  through commits, not filenames
+- **Real-World Pattern**: Matches how versioning actually works in practice
+- **Highlights Commit System**: Emphasizes that commits are the versioning
+  mechanism
+- **Better Examples**: Users learn the correct pattern for their own workflows
+
+**Key Principle**:
+
+Version information belongs in:
+
+- ✅ Commit messages
+- ✅ Commit metadata
+- ✅ Commit tags
+- ❌ NOT in filenames
+
 ### Writing Tutorials vs How-To Guides
 
 **CRITICAL**: Tutorials and how-to guides serve different purposes and
@@ -1614,15 +1702,17 @@ def _(mo):
 
 1. **Pass `uvx marimo check`** - Run `uvx marimo check <notebook.py>` and
    fix all errors
-2. **Follow cell dependency rules** - No circular dependencies, all variables
+2. **Run successfully with `uv run`** - Execute `uv run <notebook.py>` to
+   verify the notebook runs correctly as a script and produces expected output
+3. **Follow cell dependency rules** - No circular dependencies, all variables
    properly returned
-3. **Use `hide_code=True`** - For all markdown-only cells
-4. **No docstrings** - In any `@app.cell` functions
-5. **Descriptive variable names** - No underscore prefixes, clear and
+4. **Use `hide_code=True`** - For all markdown-only cells
+5. **No docstrings** - In any `@app.cell` functions
+6. **Descriptive variable names** - No underscore prefixes, clear and
    informative names
-6. **Interleaved structure** - Markdown explanations before code
-7. **Proper returns** - All cells return variables needed by subsequent cells
-8. **Appropriate style** - Follow tutorial or how-to guide patterns based on
+7. **Interleaved structure** - Markdown explanations before code
+8. **Proper returns** - All cells return variables needed by subsequent cells
+9. **Appropriate style** - Follow tutorial or how-to guide patterns based on
    file location (`docs/tutorials/` vs `docs/how-to/`)
 
 ## Testing Guidelines
