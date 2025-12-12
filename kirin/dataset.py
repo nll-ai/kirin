@@ -884,3 +884,180 @@ class Dataset:
             f"Dataset(name='{self.name}', description='{self.description}', "
             f"root_dir='{self.root_dir}')"
         )
+
+    def _repr_html_(self) -> str:
+        """Generate HTML representation of the dataset for notebook display.
+
+        The variable name used in code snippets can be customized by setting
+        `dataset._repr_variable_name = "your_variable_name"` before displaying.
+
+        Returns:
+            HTML string with dataset information, files, and commit history
+        """
+        from .html_repr import (
+            escape_html,
+            format_file_size,
+            generate_file_access_code,
+            get_file_icon_html,
+            get_inline_css,
+            get_inline_javascript,
+        )
+
+        # Get variable name from instance attribute, default to "dataset"
+        variable_name = getattr(self, "_repr_variable_name", "dataset")
+
+        html_parts = ['<div class="kirin-dataset-view">']
+
+        # Add inline CSS
+        html_parts.append(f"<style>{get_inline_css()}</style>")
+
+        # Dataset header panel
+        html_parts.append('<div class="panel">')
+        html_parts.append('<div class="panel-header">')
+        html_parts.append(f'<h2 class="panel-title">{escape_html(self.name)}</h2>')
+        html_parts.append("</div>")
+        html_parts.append('<div class="panel-content">')
+
+        # Dataset metadata
+        html_parts.append('<div class="space-y-4">')
+        if self.description:
+            html_parts.append(
+                f'<p class="text-muted-foreground">{escape_html(self.description)}</p>'
+            )
+
+        commit_count = self.commit_store.get_commit_count()
+        html_parts.append(
+            f'<div class="flex items-center gap-4">'
+            f'<span class="text-sm text-muted-foreground">'
+            f"Commits: {commit_count}</span>"
+        )
+
+        if self.current_commit:
+            total_size = self.current_commit.get_total_size()
+            html_parts.append(
+                f'<span class="text-sm text-muted-foreground">'
+                f"Size: {format_file_size(total_size)}</span>"
+            )
+        html_parts.append("</div>")
+
+        # Current commit info
+        if self.current_commit:
+            html_parts.append(
+                f'<div><span class="text-sm text-muted-foreground">'
+                f"Current Commit:</span> "
+                f'<span class="commit-hash">'
+                f"{escape_html(self.current_commit.short_hash)}</span> "
+                f'<span class="text-sm">'
+                f"{escape_html(self.current_commit.message)}</span></div>"
+            )
+        else:
+            html_parts.append('<p class="text-muted-foreground">No commits yet</p>')
+
+        html_parts.append("</div>")  # space-y-4
+        html_parts.append("</div>")  # panel-content
+        html_parts.append("</div>")  # panel
+
+        # Files list (from current commit)
+        if self.current_commit and self.current_commit.files:
+            html_parts.append('<div class="panel">')
+            html_parts.append('<div class="panel-header">')
+            html_parts.append('<h3 class="panel-title">Files</h3>')
+            html_parts.append("</div>")
+            html_parts.append('<div class="panel-content">')
+
+            for filename, file_obj in sorted(self.files.items()):
+                # Create unique code ID for this file
+                code_id = (
+                    f"code-{self.name}-"
+                    f"{filename.replace('.', '-').replace('/', '-').replace(' ', '-')}"
+                )
+                html_parts.append(
+                    f'<div class="file-item" data-code-id="{code_id}" '
+                    f'style="cursor: pointer;">'
+                )
+                html_parts.append(
+                    f'<div class="file-icon">'
+                    f"{get_file_icon_html(filename, file_obj.content_type)}</div>"
+                )
+                html_parts.append(
+                    f'<div class="file-name">{escape_html(filename)}</div>'
+                )
+                # Generate the code to copy
+                var_name = getattr(self, "_repr_variable_name", "dataset")
+                code_to_copy = (
+                    f"# Get path to local clone of file\n"
+                    f"with {var_name}.local_files() as files:\n"
+                    f'    file_path = files["{escape_html(filename)}"]'
+                )
+                # Escape for HTML attribute (but keep newlines)
+                code_attr = escape_html(code_to_copy).replace("\n", "&#10;")
+                html_parts.append(
+                    f'<button class="btn btn-sm btn-ghost copy-code-btn" '
+                    f'data-code-id="{code_id}" '
+                    f'data-code="{code_attr}" '
+                    f'data-filename="{escape_html(filename)}" '
+                    f'title="Copy code to access file">'
+                    f"Copy Code to Access</button>"
+                )
+                html_parts.append(
+                    f'<div class="file-size">{format_file_size(file_obj.size)}</div>'
+                )
+                html_parts.append("</div>")
+
+                # Add code snippet for accessing this file (hidden by default)
+                html_parts.append(
+                    generate_file_access_code(code_id, filename, variable_name)
+                )
+
+            html_parts.append("</div>")  # panel-content
+            html_parts.append("</div>")  # panel
+        elif self.current_commit:
+            html_parts.append('<div class="panel">')
+            html_parts.append('<div class="panel-content">')
+            html_parts.append(
+                '<p class="text-muted-foreground">No files in current commit</p>'
+            )
+            html_parts.append("</div>")
+            html_parts.append("</div>")
+
+        # Commit history (limited to last 10 for performance)
+        history = self.history(limit=10)
+        if history:
+            html_parts.append('<div class="panel">')
+            html_parts.append('<div class="panel-header">')
+            html_parts.append('<h3 class="panel-title">Recent Commits</h3>')
+            html_parts.append("</div>")
+            html_parts.append('<div class="panel-content">')
+
+            for commit in history:
+                html_parts.append('<div class="commit-item">')
+                html_parts.append(
+                    f'<div class="flex items-center justify-between gap-4">'
+                    f"<div>"
+                    f'<span class="commit-hash">'
+                    f"{escape_html(commit.short_hash)}</span> "
+                    f'<span class="commit-message">'
+                    f"{escape_html(commit.message)}</span>"
+                    f"</div>"
+                    f'<span class="commit-timestamp">'
+                    f"{escape_html(commit.timestamp.strftime('%Y-%m-%d %H:%M:%S'))}"
+                    f"</span>"
+                    f"</div>"
+                )
+                html_parts.append(
+                    f'<div class="text-sm text-muted-foreground mt-2">'
+                    f"{len(commit.files)} files, "
+                    f"{format_file_size(commit.get_total_size())}"
+                    f"</div>"
+                )
+                html_parts.append("</div>")  # commit-item
+
+            html_parts.append("</div>")  # panel-content
+            html_parts.append("</div>")  # panel
+
+        # Add inline JavaScript
+        html_parts.append(get_inline_javascript())
+
+        html_parts.append("</div>")  # kirin-dataset-view
+
+        return "".join(html_parts)

@@ -20,6 +20,7 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import marimo as mo
+
     return (mo,)
 
 
@@ -73,13 +74,13 @@ def _():
     catalog = Catalog(root_dir=temp_dir)
 
     # Create a new dataset
-    dataset = catalog.create_dataset(
+    my_first_dataset = catalog.create_dataset(
         "my_first_dataset", description="My first Kirin dataset for learning"
     )
-
-    print(f"✅ Created dataset: {dataset.name}")
-    print(f"   Dataset root: {dataset.root_dir}")
-    return Path, dataset, temp_dir
+    # Set variable name for code snippets in HTML representation
+    my_first_dataset._repr_variable_name = "my_first_dataset"
+    my_first_dataset
+    return Path, my_first_dataset, temp_dir
 
 
 @app.cell(hide_code=True)
@@ -94,6 +95,16 @@ def _(mo):
     - A **name** that identifies it
     - A **linear commit history** that tracks changes over time
     - **Files** that are stored using content-addressed storage
+    """)
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Step 2: Preparing Your First Files
+
+    Before we can commit files, let's create some sample data files to work with.
     """)
     return
 
@@ -127,26 +138,16 @@ def _(temp_dir):
     return config_file, csv_file, data_dir
 
 
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## Step 2: Preparing Your First Files
-
-    Before we can commit files, let's create some sample data files to work with.
-    """)
-    return
-
-
 @app.cell
-def _(config_file, csv_file, dataset):
+def _(config_file, csv_file, my_first_dataset):
     # Commit files to the dataset
-    commit_hash = dataset.commit(
+    my_first_dataset.commit(
         message="Initial commit: Add sample data and configuration",
         add_files=[str(csv_file), str(config_file)],
     )
 
-    print(f"✅ Created commit: {commit_hash}")
-    print(f"   Short hash: {commit_hash[:8]}")
+    # Display the current commit with rich HTML
+    my_first_dataset.current_commit
     return
 
 
@@ -168,16 +169,9 @@ def _(mo):
 
 
 @app.cell
-def _(dataset):
-    # Get the commit history
-    history = dataset.history()
-
-    print(f"📊 Total commits: {len(history)}")
-    print("\nCommit history:")
-    for current_commit in history:
-        print(f"  {current_commit.short_hash}: {current_commit.message}")
-        print(f"    Files: {current_commit.list_files()}")
-        print(f"    Date: {current_commit.timestamp}")
+def _(my_first_dataset):
+    # Display the dataset which shows commit history
+    my_first_dataset
     return
 
 
@@ -193,18 +187,9 @@ def _(mo):
 
 
 @app.cell
-def _(dataset):
-    # List files in the current commit
-    files = dataset.files
-    print(f"📁 Files in current commit: {list(files.keys())}")
-
-    # Get information about a specific file
-    file_obj = dataset.get_file("data.csv")
-    if file_obj:
-        print("\n📄 File details:")
-        print(f"   Name: {file_obj.name}")
-        print(f"   Size: {file_obj.size} bytes")
-        print(f"   Hash: {file_obj.hash[:16]}...")
+def _(my_first_dataset):
+    # Display the dataset which shows files in the current commit
+    my_first_dataset
     return
 
 
@@ -219,9 +204,9 @@ def _(mo):
 
 
 @app.cell
-def _(Path, dataset):
+def _(Path, my_first_dataset):
     # Access files as local paths
-    with dataset.local_files() as local_files:
+    with my_first_dataset.local_files() as local_files:
         # Files are lazily downloaded when accessed
         csv_path = local_files["data.csv"]
         config_path = local_files["config.json"]
@@ -266,7 +251,7 @@ def _(mo):
 
 
 @app.cell
-def _(data_dir, dataset):
+def _(data_dir, my_first_dataset):
     from datetime import datetime
 
     # Create a new file
@@ -282,12 +267,13 @@ def _(data_dir, dataset):
     commit_msg = (
         f"Add analysis results - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     )
-    new_commit_hash = dataset.commit(
+    my_first_dataset.commit(
         message=commit_msg,
         add_files=[str(results_file)],
     )
 
-    print(f"✅ Created new commit: {new_commit_hash[:8]}")
+    # Display the current commit with rich HTML
+    my_first_dataset.current_commit
     return
 
 
@@ -302,15 +288,10 @@ def _(mo):
 
 
 @app.cell
-def _(dataset):
-    # Get updated history
-    updated_history = dataset.history()
-
-    print(f"📊 Total commits: {len(updated_history)}")
-    print("\nFull commit history:")
-    for i, history_commit in enumerate(updated_history, 1):
-        print(f"{i}. {history_commit.short_hash}: {history_commit.message}")
-        print(f"   Files: {', '.join(history_commit.list_files())}")
+def _(my_first_dataset):
+    # Display the dataset which shows updated commit history
+    updated_history = my_first_dataset.history()
+    my_first_dataset
     return (updated_history,)
 
 
@@ -326,20 +307,17 @@ def _(mo):
 
 
 @app.cell
-def _(dataset, updated_history):
+def _(my_first_dataset, updated_history):
     # Get the first commit
     first_commit = updated_history[-1]  # Oldest commit is last in history
-    print(f"🔍 First commit: {first_commit.short_hash}")
 
-    # Checkout the first commit
-    dataset.checkout(first_commit.hash)
+    # Checkout the first commit and display it
+    my_first_dataset.checkout(first_commit.hash)
+    first_commit
 
-    # See what files are available
-    print(f"\n📁 Files in first commit: {list(dataset.files.keys())}")
-
-    # Checkout the latest commit
-    dataset.checkout()  # No argument = latest commit
-    print(f"\n📁 Files in latest commit: {list(dataset.files.keys())}")
+    # Checkout the latest commit and display the dataset
+    my_first_dataset.checkout()  # No argument = latest commit
+    my_first_dataset
     return
 
 
@@ -354,17 +332,19 @@ def _(mo):
 
 
 @app.cell
-def _(csv_file, data_dir, dataset):
+def _(csv_file, data_dir, my_first_dataset):
     # Create a file with the same content as data.csv
     duplicate_file = data_dir / "data_copy.csv"
     duplicate_file.write_text(csv_file.read_text())
 
     # Commit the duplicate
-    dataset.commit(message="Add duplicate file", add_files=[str(duplicate_file)])
+    my_first_dataset.commit(
+        message="Add duplicate file", add_files=[str(duplicate_file)]
+    )
 
     # Check the file objects
-    original = dataset.get_file("data.csv")
-    duplicate = dataset.get_file("data_copy.csv")
+    original = my_first_dataset.get_file("data.csv")
+    duplicate = my_first_dataset.get_file("data_copy.csv")
 
     print("🔍 Content-Addressed Storage Demo:")
     print(f"   Original file hash: {original.hash}")
@@ -401,13 +381,14 @@ def _(mo):
 
 
 @app.cell
-def _(dataset):
+def _(my_first_dataset):
     # Remove a file
-    dataset.commit(message="Remove duplicate file", remove_files=["data_copy.csv"])
+    my_first_dataset.commit(
+        message="Remove duplicate file", remove_files=["data_copy.csv"]
+    )
 
-    # Verify the file is gone
-    print("✅ Removed file")
-    print(f"   Files after removal: {list(dataset.files.keys())}")
+    # Display the dataset to see updated state
+    my_first_dataset
     return
 
 
@@ -422,7 +403,7 @@ def _(mo):
 
 
 @app.cell
-def _(data_dir, dataset):
+def _(data_dir, my_first_dataset):
     # Create a summary report file
     summary_report = data_dir / "monthly_summary.json"
     summary_report.write_text("""{
@@ -436,15 +417,14 @@ def _(data_dir, dataset):
 
     # Add summary report and remove detailed processing log
     # These are different types of files: summary vs detailed logs
-    update_commit = dataset.commit(
+    my_first_dataset.commit(
         message="Add monthly summary, remove detailed processing logs",
         add_files=[str(summary_report)],
         remove_files=["results.txt"],
     )
 
-    print("✅ Updated dataset")
-    print(f"   Commit: {update_commit[:8]}")
-    print(f"   Files after update: {list(dataset.files.keys())}")
+    # Display the dataset to see updated state
+    my_first_dataset
     return
 
 
