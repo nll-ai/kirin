@@ -111,3 +111,137 @@ class Catalog:
             description=description,
             fs=self.fs,
         )
+
+    def _repr_html_(self) -> str:
+        """Generate HTML representation of the catalog for notebook display.
+
+        Returns:
+            HTML string with catalog information and dataset list
+        """
+        from .html_repr import (
+            escape_html,
+            format_file_size,
+            get_inline_css,
+            get_inline_javascript,
+        )
+
+        html_parts = ['<div class="kirin-catalog-view">']
+
+        # Add inline CSS
+        html_parts.append(f"<style>{get_inline_css()}</style>")
+
+        # Catalog header panel
+        html_parts.append('<div class="panel">')
+        html_parts.append('<div class="panel-header">')
+        html_parts.append('<h2 class="panel-title">Catalog</h2>')
+        html_parts.append("</div>")
+        html_parts.append('<div class="panel-content">')
+
+        # Catalog metadata
+        html_parts.append('<div class="space-y-4">')
+        html_parts.append(
+            f'<div><span class="text-sm text-muted-foreground">Root Directory:</span> '
+            f'<span class="text-sm">{escape_html(self.root_dir)}</span></div>'
+        )
+
+        dataset_names = self.datasets()
+        dataset_count = len(dataset_names)
+        html_parts.append(
+            f'<div><span class="text-sm text-muted-foreground">'
+            f"Datasets: {dataset_count}</span></div>"
+        )
+
+        html_parts.append("</div>")  # space-y-4
+        html_parts.append("</div>")  # panel-content
+        html_parts.append("</div>")  # panel
+
+        # Datasets list
+        if dataset_names:
+            html_parts.append('<div class="panel">')
+            html_parts.append('<div class="panel-header">')
+            html_parts.append('<h3 class="panel-title">Datasets</h3>')
+            html_parts.append("</div>")
+            html_parts.append('<div class="panel-content">')
+
+            total_size = 0
+            for dataset_name in sorted(dataset_names):
+                try:
+                    dataset = self.get_dataset(dataset_name)
+
+                    html_parts.append('<div class="commit-item">')
+                    html_parts.append(
+                        f'<div class="flex items-center justify-between gap-4">'
+                        f"<div>"
+                        f'<div class="font-semibold">{escape_html(dataset_name)}</div>'
+                    )
+
+                    if dataset.description:
+                        html_parts.append(
+                            f'<div class="text-sm text-muted-foreground">'
+                            f"{escape_html(dataset.description)}</div>"
+                        )
+
+                    html_parts.append("</div>")
+                    html_parts.append("</div>")
+
+                    # Dataset stats
+                    if dataset.current_commit:
+                        commit = dataset.current_commit
+                        file_count = len(commit.files)
+                        dataset_size = commit.get_total_size()
+                        total_size += dataset_size
+
+                        html_parts.append(
+                            f'<div class="text-sm text-muted-foreground mt-2">'
+                            f'<span class="commit-hash">'
+                            f"{escape_html(commit.short_hash)}</span> "
+                            f"<span>{escape_html(commit.message)}</span>"
+                            f"</div>"
+                        )
+                        html_parts.append(
+                            f'<div class="text-sm text-muted-foreground">'
+                            f"{file_count} files, {format_file_size(dataset_size)}"
+                            f"</div>"
+                        )
+                    else:
+                        html_parts.append(
+                            '<div class="text-sm text-muted-foreground">'
+                            "No commits</div>"
+                        )
+
+                    html_parts.append("</div>")  # commit-item
+                except Exception:
+                    # If we can't load a dataset, just show the name
+                    html_parts.append('<div class="commit-item">')
+                    html_parts.append(
+                        f'<div class="font-semibold">{escape_html(dataset_name)}</div>'
+                    )
+                    html_parts.append("</div>")
+
+            # Catalog statistics
+            if total_size > 0:
+                html_parts.append('<div class="mt-4 pt-4 border-t">')
+                html_parts.append(
+                    f'<div class="text-sm text-muted-foreground">'
+                    f"Total size across all datasets: {format_file_size(total_size)}"
+                    f"</div>"
+                )
+                html_parts.append("</div>")
+
+            html_parts.append("</div>")  # panel-content
+            html_parts.append("</div>")  # panel
+        else:
+            html_parts.append('<div class="panel">')
+            html_parts.append('<div class="panel-content">')
+            html_parts.append(
+                '<p class="text-muted-foreground">No datasets in catalog</p>'
+            )
+            html_parts.append("</div>")
+            html_parts.append("</div>")
+
+        # Add inline JavaScript
+        html_parts.append(get_inline_javascript())
+
+        html_parts.append("</div>")  # kirin-catalog-view
+
+        return "".join(html_parts)

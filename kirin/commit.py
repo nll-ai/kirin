@@ -161,6 +161,117 @@ class Commit:
             f"files={len(self.files)})"
         )
 
+    def _repr_html_(self) -> str:
+        """Generate HTML representation of the commit for notebook display.
+
+        Returns:
+            HTML string with commit information and file list
+        """
+        from .html_repr import (
+            escape_html,
+            format_file_size,
+            get_file_icon_html,
+            get_inline_css,
+            get_inline_javascript,
+        )
+
+        html_parts = ['<div class="kirin-commit-view">']
+
+        # Add inline CSS
+        html_parts.append(f"<style>{get_inline_css()}</style>")
+
+        # Commit header panel
+        html_parts.append('<div class="panel">')
+        html_parts.append('<div class="panel-header">')
+        html_parts.append('<h2 class="panel-title">Commit</h2>')
+        html_parts.append("</div>")
+        html_parts.append('<div class="panel-content">')
+
+        # Commit metadata
+        html_parts.append('<div class="space-y-4">')
+        html_parts.append(
+            f'<div><span class="text-sm text-muted-foreground">Hash:</span> '
+            f'<span class="commit-hash">'
+            f"{escape_html(self.short_hash)}</span></div>"
+        )
+
+        html_parts.append(
+            f'<div><span class="text-sm text-muted-foreground">Message:</span> '
+            f'<span class="commit-message">{escape_html(self.message)}</span></div>'
+        )
+
+        html_parts.append(
+            f'<div><span class="text-sm text-muted-foreground">Timestamp:</span> '
+            f'<span class="commit-timestamp">'
+            f"{escape_html(self.timestamp.strftime('%Y-%m-%d %H:%M:%S'))}"
+            f"</span></div>"
+        )
+
+        if self.parent_hash:
+            html_parts.append(
+                f'<div><span class="text-sm text-muted-foreground">Parent:</span> '
+                f'<span class="commit-hash">'
+                f"{escape_html(self.parent_hash[:8])}</span></div>"
+            )
+        else:
+            html_parts.append('<div><span class="badge">Initial Commit</span></div>')
+
+        # Commit stats
+        file_count = len(self.files)
+        total_size = sum(f.size for f in self.files.values())
+        html_parts.append(
+            f'<div class="flex items-center gap-4">'
+            f'<span class="text-sm text-muted-foreground">'
+            f"Files: {file_count}</span> "
+            f'<span class="text-sm text-muted-foreground">'
+            f"Size: {format_file_size(total_size)}</span>"
+            f"</div>"
+        )
+
+        html_parts.append("</div>")  # space-y-4
+        html_parts.append("</div>")  # panel-content
+        html_parts.append("</div>")  # panel
+
+        # Files list
+        if self.files:
+            html_parts.append('<div class="panel">')
+            html_parts.append('<div class="panel-header">')
+            html_parts.append('<h3 class="panel-title">Files</h3>')
+            html_parts.append("</div>")
+            html_parts.append('<div class="panel-content">')
+
+            for filename, file_obj in sorted(self.files.items()):
+                html_parts.append('<div class="file-item">')
+                html_parts.append(
+                    f'<div class="file-icon">'
+                    f"{get_file_icon_html(filename, file_obj.content_type)}</div>"
+                )
+                html_parts.append(
+                    f'<div class="file-name">{escape_html(filename)}</div>'
+                )
+                html_parts.append(
+                    f'<div class="file-size">{format_file_size(file_obj.size)}</div>'
+                )
+                html_parts.append("</div>")
+
+            html_parts.append("</div>")  # panel-content
+            html_parts.append("</div>")  # panel
+        else:
+            html_parts.append('<div class="panel">')
+            html_parts.append('<div class="panel-content">')
+            html_parts.append(
+                '<p class="text-muted-foreground">No files in this commit</p>'
+            )
+            html_parts.append("</div>")
+            html_parts.append("</div>")
+
+        # Add inline JavaScript
+        html_parts.append(get_inline_javascript())
+
+        html_parts.append("</div>")  # kirin-commit-view
+
+        return "".join(html_parts)
+
 
 class CommitBuilder:
     """Builder for creating new commits.
