@@ -4,11 +4,15 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
+  pull-requests: write
 
 jobs:
   build-docs:
@@ -18,21 +22,33 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - uses: prefix-dev/setup-pixi@v0.9.3
         with:
           cache: true
           environments: docs
+          cache-write: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
 
       - name: Build docs
         run: pixi run build-docs
 
       - name: Upload Pages artifact
+        if: github.ref_name == 'main'
         uses: actions/upload-pages-artifact@v4
         with:
           path: site
 
+      - name: Deploy PR Preview
+        if: github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'
+        uses: rossjrw/pr-preview-action@v1.6.3
+        with:
+          source-dir: ./site
+          preview-branch: gh-pages
+
   deploy:
+    if: github.ref_name == 'main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

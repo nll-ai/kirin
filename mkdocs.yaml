@@ -22,48 +22,44 @@ nav:
       - Quickstart: getting-started/quickstart.md
       - Installation: getting-started/installation.md
       - Core Concepts: getting-started/core-concepts.md
-  - Guides:
-      - Basic Usage: guides/basic-usage.md
-      - Cloud Storage: guides/cloud-storage.md
-      - Working with Files: guides/working-with-files.md
-      - Commit Management: guides/commit-management.md
+  - Tutorials:
+      - "Your First Dataset": tutorials/first-dataset.md
+      - "Working with Commits": tutorials/commits.md
+      - "Cloud Storage Overview": tutorials/cloud-storage.md
+  - How-To Guides:
+      - "Track Model Training Data": how-to/track-model-data.md
+      - "Manage Multiple Datasets": how-to/manage-multiple-datasets.md
+      - "Setup Cloud Storage": how-to/setup-cloud-storage.md
+      - "Version Control Your Data Pipeline": how-to/version-control-pipeline.md
+  - Reference:
+      - "Storage Format": reference/storage-format.md
   - Web UI:
       - Overview: web-ui/overview.md
       - Getting Started: web-ui/getting-started.md
       - How-To Guide: web-ui/how-to.md
       - Catalog Management: web-ui/catalog-management.md
-  - Reference:
-      - API Reference: reference/api.md
-      - Storage Format: reference/storage-format.md
-  - Architecture:
-      - Overview: architecture/overview.md
   - Cloud Storage Auth: cloud-storage-auth.md
+
+hooks:
+  - docs/hooks.py
 
 plugins:
   - search
-  - mkdocstrings:
-      default_handler: python
-      handlers:
-        python:
-          rendering:
-            show_source: true
-          # https://github.com/mkdocstrings/mkdocstrings/issues/278#issuecomment-831411193
-          selection:
-            docstring_style: restructured-text
-      # custom_templates: templates
-      watch:
-        - kirin
 # Taken from here: https://squidfunk.github.io/mkdocs-material/extensions/codehilite/
 markdown_extensions:
   - codehilite
   - admonition
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
   - markdown.extensions.attr_list
 
 extra_css:
   - apidocs.css
 
 extra_javascript:
+  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
   - config.js
 
 repo_name: "nll-ai/kirin"
