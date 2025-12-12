@@ -182,9 +182,9 @@ def _(mo):
 
 
 @app.cell
-def _(dataset):
+def _(my_dataset):
     # Display the dataset which shows files in the current commit
-    dataset
+    my_dataset
     return
 
 
@@ -199,9 +199,9 @@ def _(mo):
 
 
 @app.cell
-def _(Path, dataset):
+def _(Path, my_dataset):
     # Access files as local paths
-    with dataset.local_files() as local_files:
+    with my_dataset.local_files() as local_files:
         # Files are lazily downloaded when accessed
         csv_path = local_files["data.csv"]
         config_path = local_files["config.json"]
@@ -246,7 +246,7 @@ def _(mo):
 
 
 @app.cell
-def _(data_dir, dataset):
+def _(data_dir, my_dataset):
     from datetime import datetime
 
     # Create a new file
@@ -262,13 +262,13 @@ def _(data_dir, dataset):
     commit_msg = (
         f"Add analysis results - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
     )
-    dataset.commit(
+    my_dataset.commit(
         message=commit_msg,
         add_files=[str(results_file)],
     )
 
     # Display the current commit with rich HTML
-    dataset.current_commit
+    my_dataset.current_commit
     return
 
 
@@ -283,10 +283,10 @@ def _(mo):
 
 
 @app.cell
-def _(dataset):
+def _(my_dataset):
     # Display the dataset which shows updated commit history
-    updated_history = dataset.history()
-    dataset
+    updated_history = my_dataset.history()
+    my_dataset
     return (updated_history,)
 
 
@@ -302,17 +302,17 @@ def _(mo):
 
 
 @app.cell
-def _(dataset, updated_history):
+def _(my_dataset, updated_history):
     # Get the first commit
     first_commit = updated_history[-1]  # Oldest commit is last in history
 
     # Checkout the first commit and display it
-    dataset.checkout(first_commit.hash)
+    my_dataset.checkout(first_commit.hash)
     first_commit
 
     # Checkout the latest commit and display the dataset
-    dataset.checkout()  # No argument = latest commit
-    dataset
+    my_dataset.checkout()  # No argument = latest commit
+    my_dataset
     return
 
 
@@ -327,17 +327,17 @@ def _(mo):
 
 
 @app.cell
-def _(csv_file, data_dir, dataset):
+def _(csv_file, data_dir, my_dataset):
     # Create a file with the same content as data.csv
     duplicate_file = data_dir / "data_copy.csv"
     duplicate_file.write_text(csv_file.read_text())
 
     # Commit the duplicate
-    dataset.commit(message="Add duplicate file", add_files=[str(duplicate_file)])
+    my_dataset.commit(message="Add duplicate file", add_files=[str(duplicate_file)])
 
     # Check the file objects
-    original = dataset.get_file("data.csv")
-    duplicate = dataset.get_file("data_copy.csv")
+    original = my_dataset.get_file("data.csv")
+    duplicate = my_dataset.get_file("data_copy.csv")
 
     print("🔍 Content-Addressed Storage Demo:")
     print(f"   Original file hash: {original.hash}")
@@ -374,12 +374,12 @@ def _(mo):
 
 
 @app.cell
-def _(dataset):
+def _(my_dataset):
     # Remove a file
-    dataset.commit(message="Remove duplicate file", remove_files=["data_copy.csv"])
+    my_dataset.commit(message="Remove duplicate file", remove_files=["data_copy.csv"])
 
     # Display the dataset to see updated state
-    dataset
+    my_dataset
     return
 
 
@@ -394,7 +394,7 @@ def _(mo):
 
 
 @app.cell
-def _(data_dir, dataset):
+def _(data_dir, my_dataset):
     # Create a summary report file
     summary_report = data_dir / "monthly_summary.json"
     summary_report.write_text("""{
@@ -408,14 +408,14 @@ def _(data_dir, dataset):
 
     # Add summary report and remove detailed processing log
     # These are different types of files: summary vs detailed logs
-    dataset.commit(
+    my_dataset.commit(
         message="Add monthly summary, remove detailed processing logs",
         add_files=[str(summary_report)],
         remove_files=["results.txt"],
     )
 
     # Display the dataset to see updated state
-    dataset
+    my_dataset
     return
 
 
