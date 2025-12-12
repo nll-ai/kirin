@@ -33,7 +33,9 @@ def convert_marimo_to_markdown():
 
             try:
                 # Run marimo export using uvx (no need to install marimo separately)
-                subprocess.run(
+                # Answer "y" to sandbox prompt (both y and n work, produce identical output)
+                # Use capture_output=True like llamabot to avoid hanging on prompts
+                result = subprocess.run(
                     [
                         "uvx",
                         "marimo",
@@ -44,9 +46,23 @@ def convert_marimo_to_markdown():
                         str(md_file),
                     ],
                     check=True,
-                    capture_output=True,
+                    capture_output=True,  # Capture all output to avoid hanging on prompts
                     text=True,
+                    input="y\n",  # Answer "yes" to sandbox prompt automatically (stdin is auto-set to PIPE)
+                    timeout=60,  # 60 second timeout to prevent infinite hangs
                 )
+
+                # Verify the file was actually created
+                if not md_file.exists():
+                    stderr_output = result.stderr if result.stderr else "No stderr captured"
+                    stdout_output = result.stdout if result.stdout else "No stdout captured"
+                    raise FileNotFoundError(
+                        f"Export command succeeded (exit code {result.returncode}) "
+                        f"but output file was not created: {md_file.absolute()}\n"
+                        f"Working directory: {Path.cwd()}\n"
+                        f"stdout: {stdout_output}\n"
+                        f"stderr: {stderr_output}"
+                    )
 
                 # Read generated markdown
                 content = md_file.read_text()
@@ -115,12 +131,24 @@ def convert_marimo_to_markdown():
                 md_file.write_text(content)
                 print(f"  Successfully converted {notebook.name}")
 
+            except subprocess.TimeoutExpired as e:
+                print(f"  ⚠️  Timeout converting {notebook.name} (took longer than 60 seconds)")
+                print(f"  This might indicate an issue with the notebook file.")
+                if e.stderr:
+                    stderr_output = e.stderr.decode() if isinstance(e.stderr, bytes) else e.stderr
+                    print(f"  stderr: {stderr_output}")
             except subprocess.CalledProcessError as e:
-                print(f"  Error converting {notebook.name}: {e}")
-                print(f"  stdout: {e.stdout}")
-                print(f"  stderr: {e.stderr}")
+                print(f"  ❌ Error converting {notebook.name}: {e}")
+                if e.stdout:
+                    print(f"  stdout: {e.stdout}")
+                if e.stderr:
+                    print(f"  stderr: {e.stderr}")
+            except FileNotFoundError as e:
+                print(f"  ❌ File not found error: {e}")
             except Exception as e:
-                print(f"  Unexpected error converting {notebook.name}: {e}")
+                print(f"  ❌ Unexpected error converting {notebook.name}: {type(e).__name__}: {e}")
+                import traceback
+                traceback.print_exc()
 
 
 if __name__ == "__main__":
