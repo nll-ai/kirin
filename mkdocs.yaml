@@ -30,9 +30,7 @@ nav:
   - How-To Guides:
       - "Track Model Training Data": how-to/track-model-data.md
       - "Manage Multiple Datasets": how-to/manage-multiple-datasets.md
-      - "Set Up S3 Storage": how-to/setup-s3.md
-      - "Set Up GCS Storage": how-to/setup-gcs.md
-      - "Set Up Azure Storage": how-to/setup-azure.md
+      - "Setup Cloud Storage": how-to/setup-cloud-storage.md
       - "Version Control Your Data Pipeline": how-to/version-control-pipeline.md
       - "Work with Data Libraries": how-to/work-with-data-libraries.md
   - Reference:
