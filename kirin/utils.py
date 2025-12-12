@@ -373,3 +373,19 @@ def detect_source_file() -> Optional[str]:
     except Exception as e:
         logger.warning(f"Failed to detect source file: {e}")
         return None
+
+
+def detect_variable_name(default: str = "dataset") -> str:
+    """Return the default variable name for code snippets.
+
+    This function currently just returns the default value. Frame detection
+    for automatic variable name detection is not implemented due to
+    complexity with notebook environments.
+
+    Args:
+        default: Default variable name to return
+
+    Returns:
+        The default variable name
+    """
+    return default

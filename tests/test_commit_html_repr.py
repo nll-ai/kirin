@@ -247,3 +247,38 @@ def test_commit_html_repr_valid_html(mock_storage):
     # Basic HTML structure checks
     assert html.strip().startswith("<")
     assert "</div>" in html or html.count("<div") == html.count("</div>")
+
+
+def test_commit_html_repr_includes_file_access_code(mock_storage):
+    """Test that commit HTML includes copy code button and checkout line."""
+    file1 = File(
+        hash="abc123",
+        name="file1.txt",
+        size=100,
+        content_type="text/plain",
+        _storage=mock_storage,
+    )
+
+    commit = Commit(
+        hash="commit123",
+        message="Test commit",
+        timestamp=datetime.now(),
+        parent_hash=None,
+        files={"file1.txt": file1},
+    )
+
+    html = commit._repr_html_()
+
+    # Check for copy button
+    assert "copy-code-btn" in html
+    assert "Copy Code to Access" in html
+    assert "data-code-id=" in html
+    assert "data-code=" in html
+
+    # Check for checkout line in the code
+    assert "checkout" in html.lower()
+    assert "commit123" in html  # Commit hash should be in the code
+
+    # Check for code snippet
+    assert "code-snippet" in html
+    assert "file1.txt" in html

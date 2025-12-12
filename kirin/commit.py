@@ -170,10 +170,14 @@ class Commit:
         from .html_repr import (
             escape_html,
             format_file_size,
+            generate_commit_file_access_code,
             get_file_icon_html,
             get_inline_css,
             get_inline_javascript,
         )
+
+        # Get variable name: default (commits are frozen, can't set attribute)
+        variable_name = "dataset"
 
         html_parts = ['<div class="kirin-commit-view">']
 
@@ -241,7 +245,14 @@ class Commit:
             html_parts.append('<div class="panel-content">')
 
             for filename, file_obj in sorted(self.files.items()):
-                html_parts.append('<div class="file-item">')
+                code_id = (
+                    f"code-commit-{self.hash[:8]}-"
+                    f"{filename.replace('.', '-').replace('/', '-').replace(' ', '-')}"
+                )
+                html_parts.append(
+                    f'<div class="file-item" data-code-id="{code_id}" '
+                    f'style="cursor: pointer;">'
+                )
                 html_parts.append(
                     f'<div class="file-icon">'
                     f"{get_file_icon_html(filename, file_obj.content_type)}</div>"
@@ -249,10 +260,35 @@ class Commit:
                 html_parts.append(
                     f'<div class="file-name">{escape_html(filename)}</div>'
                 )
+                # Generate the code to copy (with checkout)
+                code_to_copy = (
+                    f"# Checkout this commit first\n"
+                    f'{variable_name}.checkout("{self.hash}")\n'
+                    f"# Get path to local clone of file\n"
+                    f"with {variable_name}.local_files() as files:\n"
+                    f'    file_path = files["{escape_html(filename)}"]'
+                )
+                # Escape for HTML attribute (but keep newlines)
+                code_attr = escape_html(code_to_copy).replace("\n", "&#10;")
+                html_parts.append(
+                    f'<button class="btn btn-sm btn-ghost copy-code-btn" '
+                    f'data-code-id="{code_id}" '
+                    f'data-code="{code_attr}" '
+                    f'data-filename="{escape_html(filename)}" '
+                    f'title="Copy code to access file">'
+                    f"Copy Code to Access</button>"
+                )
                 html_parts.append(
                     f'<div class="file-size">{format_file_size(file_obj.size)}</div>'
                 )
                 html_parts.append("</div>")
+
+                # Add code snippet for accessing this file (hidden by default)
+                html_parts.append(
+                    generate_commit_file_access_code(
+                        code_id, filename, self.hash, variable_name=variable_name
+                    )
+                )
 
             html_parts.append("</div>")  # panel-content
             html_parts.append("</div>")  # panel
