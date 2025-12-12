@@ -1,0 +1,2449 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://nll-ai.github.io/kirin/cloud-storage-auth/">
+      
+      
+        <link rel="prev" href="../web-ui/catalog-management/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>Cloud Storage Auth - kirin</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.618322db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../apidocs.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cloud-storage-authentication-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="kirin" class="md-header__button md-logo" aria-label="kirin" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            kirin
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Cloud Storage Auth
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/nll-ai/kirin" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    nll-ai/kirin
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="kirin" class="md-nav__button md-logo" aria-label="kirin" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+
+    </a>
+    kirin
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/nll-ai/kirin" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    nll-ai/kirin
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/core-concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/first-dataset.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Dataset
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/commits.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Working with Commits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/cloud-storage.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud Storage Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/track-model-data.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track Model Training Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/manage-multiple-datasets.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manage Multiple Datasets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/setup-cloud-storage.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Cloud Storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/version-control-pipeline.md" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Version Control Your Data Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/storage-format/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Web UI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../web-ui/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../web-ui/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../web-ui/how-to/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../web-ui/catalog-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Catalog Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud Storage Auth
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud Storage Auth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#new-cloud-agnostic-authentication-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Cloud-Agnostic Authentication (Recommended)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="New Cloud-Agnostic Authentication (Recommended)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#awss3-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AWS/S3 Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcpgcs-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GCP/GCS Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure-blob-storage-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Azure Blob Storage Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#web-ui-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web UI Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#legacy-authentication-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legacy Authentication Methods
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#google-cloud-storage-gcs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Google Cloud Storage (GCS)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Google Cloud Storage (GCS)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#error-you-might-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error You Might See
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#solutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Solutions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Solutions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-application-default-credentials-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: Application Default Credentials (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-service-account-key-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: Service Account Key File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-environment-variable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3: Environment Variable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-4-pass-credentials-directly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 4: Pass Credentials Directly
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#amazon-s3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Amazon S3
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Amazon S3">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-aws-cli-credentials-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: AWS CLI Credentials (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-pass-credentials-explicitly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3: Pass Credentials Explicitly
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#s3-compatible-services-minio-backblaze-b2-digitalocean-spaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        S3-Compatible Services (Minio, Backblaze B2, DigitalOcean Spaces)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="S3-Compatible Services (Minio, Backblaze B2, DigitalOcean Spaces)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#minio-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minio Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backblaze-b2-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backblaze B2 Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#azure-blob-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Azure Blob Storage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Azure Blob Storage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-azure-cli-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: Azure CLI Credentials
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-connection-string" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: Connection String
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-account-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3: Account Key
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#general-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General Pattern
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-without-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Without Credentials
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#issue-anonymous-caller-or-access-denied" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: "Anonymous caller" or "Access Denied"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-permission-denied" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: "Permission denied"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-bucket-does-not-exist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: "Bucket does not exist"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-import-errors-like-no-module-named-s3fs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: Import errors like "No module named 's3fs'"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Known Issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#macos-python-313-ssl-certificate-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS Python 3.13 SSL Certificate Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#web-ui-auto-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web UI Auto-Authentication
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Web UI Auto-Authentication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuring-auto-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuring Auto-Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-auto-authentication-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Auto-Authentication Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#benefits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Benefits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timeout-protection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timeout Protection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#new-cloud-agnostic-authentication-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New Cloud-Agnostic Authentication (Recommended)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="New Cloud-Agnostic Authentication (Recommended)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#awss3-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        AWS/S3 Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#gcpgcs-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        GCP/GCS Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#azure-blob-storage-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Azure Blob Storage Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#web-ui-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web UI Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#legacy-authentication-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legacy Authentication Methods
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#google-cloud-storage-gcs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Google Cloud Storage (GCS)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Google Cloud Storage (GCS)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#error-you-might-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Error You Might See
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#solutions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Solutions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Solutions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-application-default-credentials-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: Application Default Credentials (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-service-account-key-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: Service Account Key File
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-environment-variable" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3: Environment Variable
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-4-pass-credentials-directly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 4: Pass Credentials Directly
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#amazon-s3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Amazon S3
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Amazon S3">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-aws-cli-credentials-recommended" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: AWS CLI Credentials (Recommended)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-pass-credentials-explicitly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3: Pass Credentials Explicitly
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#s3-compatible-services-minio-backblaze-b2-digitalocean-spaces" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        S3-Compatible Services (Minio, Backblaze B2, DigitalOcean Spaces)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="S3-Compatible Services (Minio, Backblaze B2, DigitalOcean Spaces)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#minio-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minio Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#backblaze-b2-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Backblaze B2 Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#azure-blob-storage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Azure Blob Storage
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Azure Blob Storage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-azure-cli-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: Azure CLI Credentials
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-connection-string" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: Connection String
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-account-key" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3: Account Key
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#general-pattern" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        General Pattern
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing-without-credentials" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing Without Credentials
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#issue-anonymous-caller-or-access-denied" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: "Anonymous caller" or "Access Denied"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-permission-denied" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: "Permission denied"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-bucket-does-not-exist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: "Bucket does not exist"
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#issue-import-errors-like-no-module-named-s3fs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issue: Import errors like "No module named 's3fs'"
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#known-issues" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known Issues
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Known Issues">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#macos-python-313-ssl-certificate-verification" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        macOS Python 3.13 SSL Certificate Verification
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#web-ui-auto-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Web UI Auto-Authentication
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Web UI Auto-Authentication">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#configuring-auto-authentication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuring Auto-Authentication
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-auto-authentication-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How Auto-Authentication Works
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#benefits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Benefits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timeout-protection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Timeout Protection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="cloud-storage-authentication-guide">Cloud Storage Authentication Guide</h1>
+<p>When using <code>kirin</code> with cloud storage backends (S3, GCS, Azure, etc.), you need
+to provide authentication credentials. This guide shows you how to authenticate
+with different cloud providers using the new cloud-agnostic authentication parameters.</p>
+<h2 id="new-cloud-agnostic-authentication-recommended">New Cloud-Agnostic Authentication (Recommended)</h2>
+<p>Kirin now supports cloud-agnostic authentication parameters that work across
+all cloud providers:</p>
+<h3 id="awss3-authentication">AWS/S3 Authentication</h3>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">kirin</span><span class="w"> </span><span class="kn">import</span> <span class="n">Catalog</span><span class="p">,</span> <span class="n">Dataset</span>
+
+<span class="c1"># Using AWS profile</span>
+<span class="n">catalog</span> <span class="o">=</span> <span class="n">Catalog</span><span class="p">(</span>
+    <span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;s3://my-bucket/data&quot;</span><span class="p">,</span>
+    <span class="n">aws_profile</span><span class="o">=</span><span class="s2">&quot;my-profile&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Using Dataset with AWS profile</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span>
+    <span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;s3://my-bucket/data&quot;</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my-dataset&quot;</span><span class="p">,</span>
+    <span class="n">aws_profile</span><span class="o">=</span><span class="s2">&quot;my-profile&quot;</span>
+<span class="p">)</span>
+</code></pre></div>
+<h3 id="gcpgcs-authentication">GCP/GCS Authentication</h3>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">kirin</span><span class="w"> </span><span class="kn">import</span> <span class="n">Catalog</span><span class="p">,</span> <span class="n">Dataset</span>
+
+<span class="c1"># Using service account key file</span>
+<span class="n">catalog</span> <span class="o">=</span> <span class="n">Catalog</span><span class="p">(</span>
+    <span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;gs://my-bucket/data&quot;</span><span class="p">,</span>
+    <span class="n">gcs_token</span><span class="o">=</span><span class="s2">&quot;/path/to/service-account.json&quot;</span><span class="p">,</span>
+    <span class="n">gcs_project</span><span class="o">=</span><span class="s2">&quot;my-project&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Using Dataset with GCS credentials</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span>
+    <span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;gs://my-bucket/data&quot;</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my-dataset&quot;</span><span class="p">,</span>
+    <span class="n">gcs_token</span><span class="o">=</span><span class="s2">&quot;/path/to/service-account.json&quot;</span><span class="p">,</span>
+    <span class="n">gcs_project</span><span class="o">=</span><span class="s2">&quot;my-project&quot;</span>
+<span class="p">)</span>
+</code></pre></div>
+<h3 id="azure-blob-storage-authentication">Azure Blob Storage Authentication</h3>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">kirin</span><span class="w"> </span><span class="kn">import</span> <span class="n">Catalog</span><span class="p">,</span> <span class="n">Dataset</span>
+
+<span class="c1"># Using connection string</span>
+<span class="n">catalog</span> <span class="o">=</span> <span class="n">Catalog</span><span class="p">(</span>
+    <span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;az://my-container/data&quot;</span><span class="p">,</span>
+    <span class="n">azure_connection_string</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;AZURE_CONNECTION_STRING&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+
+<span class="c1"># Using account name and key</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span>
+    <span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;az://my-container/data&quot;</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my-dataset&quot;</span><span class="p">,</span>
+    <span class="n">azure_account_name</span><span class="o">=</span><span class="s2">&quot;my-account&quot;</span><span class="p">,</span>
+    <span class="n">azure_account_key</span><span class="o">=</span><span class="s2">&quot;my-key&quot;</span>
+<span class="p">)</span>
+</code></pre></div>
+<h3 id="web-ui-integration">Web UI Integration</h3>
+<p>The web UI also supports cloud authentication through the
+<code>CatalogConfig.to_catalog()</code> method:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">kirin.web.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">CatalogConfig</span>
+
+<span class="c1"># Create catalog config with cloud auth</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">CatalogConfig</span><span class="p">(</span>
+    <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;my-catalog&quot;</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;My Catalog&quot;</span><span class="p">,</span>
+    <span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;s3://my-bucket/data&quot;</span><span class="p">,</span>
+    <span class="n">aws_profile</span><span class="o">=</span><span class="s2">&quot;my-profile&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Convert to runtime catalog</span>
+<span class="n">catalog</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">to_catalog</span><span class="p">()</span>
+</code></pre></div>
+<h2 id="legacy-authentication-methods">Legacy Authentication Methods</h2>
+<p>The following sections show the legacy authentication methods that still work
+but are less convenient than the new cloud-agnostic approach.</p>
+<h2 id="google-cloud-storage-gcs">Google Cloud Storage (GCS)</h2>
+<h3 id="error-you-might-see">Error You Might See</h3>
+<div class="highlight"><pre><span></span><code>gcsfs.retry.HttpError: Anonymous caller does not have storage.objects.list access
+to the Google Cloud Storage bucket. Permission &#39;storage.objects.list&#39; denied on
+resource (or it may not exist)., 401
+</code></pre></div>
+<h3 id="solutions">Solutions</h3>
+<h4 id="option-1-application-default-credentials-recommended">Option 1: Application Default Credentials (Recommended)</h4>
+<p>Use <code>gcloud</code> CLI to set up credentials:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Install gcloud CLI first, then:</span>
+gcloud<span class="w"> </span>auth<span class="w"> </span>application-default<span class="w"> </span>login
+</code></pre></div>
+<p>Then use kirin normally:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">kirin.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+
+<span class="c1"># Will automatically use your gcloud credentials</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;gs://my-bucket/datasets&quot;</span><span class="p">,</span> <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h4 id="option-2-service-account-key-file">Option 2: Service Account Key File</h4>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">kirin.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">fsspec</span>
+
+<span class="c1"># Create filesystem with service account</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="n">fsspec</span><span class="o">.</span><span class="n">filesystem</span><span class="p">(</span>
+    <span class="s1">&#39;gs&#39;</span><span class="p">,</span>
+    <span class="n">token</span><span class="o">=</span><span class="s1">&#39;/path/to/service-account-key.json&#39;</span>
+<span class="p">)</span>
+
+<span class="c1"># Pass it to Dataset</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span>
+    <span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;gs://my-bucket/datasets&quot;</span><span class="p">,</span>
+    <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">,</span>
+    <span class="n">fs</span><span class="o">=</span><span class="n">fs</span>  <span class="c1"># Use authenticated filesystem</span>
+<span class="p">)</span>
+</code></pre></div>
+<h4 id="option-3-environment-variable">Option 3: Environment Variable</h4>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">GOOGLE_APPLICATION_CREDENTIALS</span><span class="o">=</span><span class="s2">&quot;/path/to/service-account-key.json&quot;</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">kirin.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+
+<span class="c1"># Will automatically use the credentials from environment variable</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;gs://my-bucket/datasets&quot;</span><span class="p">,</span> <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h4 id="option-4-pass-credentials-directly">Option 4: Pass Credentials Directly</h4>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">fsspec</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">kirin.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+
+<span class="n">fs</span> <span class="o">=</span> <span class="n">fsspec</span><span class="o">.</span><span class="n">filesystem</span><span class="p">(</span>
+    <span class="s1">&#39;gs&#39;</span><span class="p">,</span>
+    <span class="n">project</span><span class="o">=</span><span class="s1">&#39;my-project-id&#39;</span><span class="p">,</span>
+    <span class="n">token</span><span class="o">=</span><span class="s1">&#39;cloud&#39;</span>  <span class="c1"># Uses gcloud credentials</span>
+<span class="p">)</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;gs://my-bucket/datasets&quot;</span><span class="p">,</span> <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="amazon-s3">Amazon S3</h2>
+<h3 id="option-1-aws-cli-credentials-recommended">Option 1: AWS CLI Credentials (Recommended)</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># Configure AWS credentials</span>
+aws<span class="w"> </span>configure
+</code></pre></div>
+<p>Then use normally:</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">kirin.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;s3://my-bucket/datasets&quot;</span><span class="p">,</span> <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="option-2-environment-variables">Option 2: Environment Variables</h3>
+<div class="highlight"><pre><span></span><code><span class="nb">export</span><span class="w"> </span><span class="nv">AWS_ACCESS_KEY_ID</span><span class="o">=</span><span class="s2">&quot;your-access-key&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">AWS_SECRET_ACCESS_KEY</span><span class="o">=</span><span class="s2">&quot;your-secret-key&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">AWS_DEFAULT_REGION</span><span class="o">=</span><span class="s2">&quot;us-east-1&quot;</span>
+</code></pre></div>
+<h3 id="option-3-pass-credentials-explicitly">Option 3: Pass Credentials Explicitly</h3>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">fsspec</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">kirin.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+
+<span class="n">fs</span> <span class="o">=</span> <span class="n">fsspec</span><span class="o">.</span><span class="n">filesystem</span><span class="p">(</span>
+    <span class="s1">&#39;s3&#39;</span><span class="p">,</span>
+    <span class="n">key</span><span class="o">=</span><span class="s1">&#39;your-access-key&#39;</span><span class="p">,</span>
+    <span class="n">secret</span><span class="o">=</span><span class="s1">&#39;your-secret-key&#39;</span><span class="p">,</span>
+    <span class="n">client_kwargs</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;region_name&#39;</span><span class="p">:</span> <span class="s1">&#39;us-east-1&#39;</span><span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;s3://my-bucket/datasets&quot;</span><span class="p">,</span> <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="s3-compatible-services-minio-backblaze-b2-digitalocean-spaces">S3-Compatible Services (Minio, Backblaze B2, DigitalOcean Spaces)</h2>
+<h3 id="minio-example">Minio Example</h3>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">fsspec</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">kirin.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+
+<span class="n">fs</span> <span class="o">=</span> <span class="n">fsspec</span><span class="o">.</span><span class="n">filesystem</span><span class="p">(</span>
+    <span class="s1">&#39;s3&#39;</span><span class="p">,</span>
+    <span class="n">key</span><span class="o">=</span><span class="s1">&#39;your-access-key&#39;</span><span class="p">,</span>
+    <span class="n">secret</span><span class="o">=</span><span class="s1">&#39;your-secret-key&#39;</span><span class="p">,</span>
+    <span class="n">client_kwargs</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;endpoint_url&#39;</span><span class="p">:</span> <span class="s1">&#39;http://localhost:9000&#39;</span>  <span class="c1"># Your Minio endpoint</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;s3://my-bucket/datasets&quot;</span><span class="p">,</span> <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="backblaze-b2-example">Backblaze B2 Example</h3>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">fsspec</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">kirin.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+
+<span class="n">fs</span> <span class="o">=</span> <span class="n">fsspec</span><span class="o">.</span><span class="n">filesystem</span><span class="p">(</span>
+    <span class="s1">&#39;s3&#39;</span><span class="p">,</span>
+    <span class="n">key</span><span class="o">=</span><span class="s1">&#39;your-application-key-id&#39;</span><span class="p">,</span>
+    <span class="n">secret</span><span class="o">=</span><span class="s1">&#39;your-application-key&#39;</span><span class="p">,</span>
+    <span class="n">client_kwargs</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;endpoint_url&#39;</span><span class="p">:</span> <span class="s1">&#39;https://s3.us-west-002.backblazeb2.com&#39;</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;s3://my-bucket/datasets&quot;</span><span class="p">,</span> <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="azure-blob-storage">Azure Blob Storage</h2>
+<h3 id="option-1-azure-cli-credentials">Option 1: Azure CLI Credentials</h3>
+<div class="highlight"><pre><span></span><code>az<span class="w"> </span>login
+</code></pre></div>
+<h3 id="option-2-connection-string">Option 2: Connection String</h3>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">fsspec</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">kirin.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+
+<span class="n">fs</span> <span class="o">=</span> <span class="n">fsspec</span><span class="o">.</span><span class="n">filesystem</span><span class="p">(</span>
+    <span class="s1">&#39;az&#39;</span><span class="p">,</span>
+    <span class="n">connection_string</span><span class="o">=</span><span class="s1">&#39;your-connection-string&#39;</span>
+<span class="p">)</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;az://container/path&quot;</span><span class="p">,</span> <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="option-3-account-key">Option 3: Account Key</h3>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">fsspec</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">kirin.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+
+<span class="n">fs</span> <span class="o">=</span> <span class="n">fsspec</span><span class="o">.</span><span class="n">filesystem</span><span class="p">(</span>
+    <span class="s1">&#39;az&#39;</span><span class="p">,</span>
+    <span class="n">account_name</span><span class="o">=</span><span class="s1">&#39;your-account-name&#39;</span><span class="p">,</span>
+    <span class="n">account_key</span><span class="o">=</span><span class="s1">&#39;your-account-key&#39;</span>
+<span class="p">)</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;az://container/path&quot;</span><span class="p">,</span> <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="general-pattern">General Pattern</h2>
+<p>For any cloud provider, the recommended pattern is:</p>
+<ol>
+<li><strong>New Cloud-Agnostic Approach (Recommended)</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">kirin</span><span class="w"> </span><span class="kn">import</span> <span class="n">Catalog</span><span class="p">,</span> <span class="n">Dataset</span>
+
+<span class="c1"># For AWS/S3</span>
+<span class="n">catalog</span> <span class="o">=</span> <span class="n">Catalog</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;s3://bucket/path&quot;</span><span class="p">,</span> <span class="n">aws_profile</span><span class="o">=</span><span class="s2">&quot;my-profile&quot;</span><span class="p">)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;s3://bucket/path&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">,</span>
+                 <span class="n">aws_profile</span><span class="o">=</span><span class="s2">&quot;my-profile&quot;</span><span class="p">)</span>
+
+<span class="c1"># For GCS</span>
+<span class="n">catalog</span> <span class="o">=</span> <span class="n">Catalog</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;gs://bucket/path&quot;</span><span class="p">,</span> <span class="n">gcs_token</span><span class="o">=</span><span class="s2">&quot;/path/to/key.json&quot;</span><span class="p">,</span>
+                 <span class="n">gcs_project</span><span class="o">=</span><span class="s2">&quot;my-project&quot;</span><span class="p">)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;gs://bucket/path&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">,</span>
+                 <span class="n">gcs_token</span><span class="o">=</span><span class="s2">&quot;/path/to/key.json&quot;</span><span class="p">,</span> <span class="n">gcs_project</span><span class="o">=</span><span class="s2">&quot;my-project&quot;</span><span class="p">)</span>
+
+<span class="c1"># For Azure</span>
+<span class="n">catalog</span> <span class="o">=</span> <span class="n">Catalog</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;az://container/path&quot;</span><span class="p">,</span> <span class="n">azure_connection_string</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">)</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;az://container/path&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">,</span> <span class="n">azure_connection_string</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">)</span>
+</code></pre></div>
+<ol>
+<li><strong>Auto-detect (works if credentials are already configured)</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;protocol://bucket/path&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">)</span>
+</code></pre></div>
+<ol>
+<li><strong>Legacy explicit authentication (still supported)</strong>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">fsspec</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">kirin.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+
+<span class="c1"># Create authenticated filesystem</span>
+<span class="n">fs</span> <span class="o">=</span> <span class="n">fsspec</span><span class="o">.</span><span class="n">filesystem</span><span class="p">(</span><span class="s1">&#39;protocol&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">auth_kwargs</span><span class="p">)</span>
+
+<span class="c1"># Pass to Dataset</span>
+<span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;protocol://bucket/path&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">,</span> <span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="testing-without-credentials">Testing Without Credentials</h2>
+<p>For local development/testing without cloud access, you can use:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># In-memory filesystem (no cloud needed)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">kirin.dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;memory://test-data&quot;</span><span class="p">,</span> <span class="n">dataset_name</span><span class="o">=</span><span class="s2">&quot;my_data&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<h3 id="issue-anonymous-caller-or-access-denied">Issue: "Anonymous caller" or "Access Denied"</h3>
+<ul>
+<li><strong>Cause</strong>: No credentials provided</li>
+<li><strong>Solution</strong>: Set up credentials using one of the methods above</li>
+</ul>
+<h3 id="issue-permission-denied">Issue: "Permission denied"</h3>
+<ul>
+<li><strong>Cause</strong>: Credentials don't have required permissions</li>
+<li><strong>Solution</strong>: Ensure your IAM role/service account has read/write permissions
+  on the bucket</li>
+</ul>
+<h3 id="issue-bucket-does-not-exist">Issue: "Bucket does not exist"</h3>
+<ul>
+<li><strong>Cause</strong>: Bucket name is incorrect or doesn't exist</li>
+<li><strong>Solution</strong>: Create the bucket first or check the bucket name</li>
+</ul>
+<h3 id="issue-import-errors-like-no-module-named-s3fs">Issue: Import errors like "No module named 's3fs'"</h3>
+<ul>
+<li><strong>Cause</strong>: Cloud storage package not installed</li>
+<li><strong>Solution</strong>: Install required package:</li>
+</ul>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>s3fs<span class="w">      </span><span class="c1"># For S3</span>
+pip<span class="w"> </span>install<span class="w"> </span>gcsfs<span class="w">     </span><span class="c1"># For GCS</span>
+pip<span class="w"> </span>install<span class="w"> </span>adlfs<span class="w">     </span><span class="c1"># For Azure</span>
+</code></pre></div>
+<h2 id="known-issues">Known Issues</h2>
+<h3 id="macos-python-313-ssl-certificate-verification">macOS Python 3.13 SSL Certificate Verification</h3>
+<p>On macOS with Python 3.13, you may encounter SSL certificate verification
+errors when using cloud storage backends. This is a known Python/macOS issue.</p>
+<p><strong>Workaround</strong>: The web UI skips connection testing during backend creation.
+Backends are validated when actually used. If you encounter SSL errors during
+actual usage, install certificates:</p>
+<div class="highlight"><pre><span></span><code>/Applications/Python<span class="se">\ </span><span class="m">3</span>.13/Install<span class="se">\ </span>Certificates.command
+</code></pre></div>
+<p>Or use <code>certifi</code>:</p>
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>certifi
+</code></pre></div>
+<h2 id="web-ui-auto-authentication">Web UI Auto-Authentication</h2>
+<p><strong>NEW</strong>: The Kirin web UI can automatically execute authentication
+commands when needed.</p>
+<h3 id="configuring-auto-authentication">Configuring Auto-Authentication</h3>
+<p>When creating or editing a catalog in the web UI, you can provide an
+optional authentication command:</p>
+<p><strong>AWS S3:</strong></p>
+<div class="highlight"><pre><span></span><code>Auth Command: aws sso login --profile {{ aws_profile }}
+</code></pre></div>
+<p><strong>GCP GCS:</strong></p>
+<div class="highlight"><pre><span></span><code>Auth Command: gcloud auth login
+</code></pre></div>
+<p><strong>Azure Blob Storage:</strong></p>
+<div class="highlight"><pre><span></span><code>Auth Command: az login
+</code></pre></div>
+<h3 id="how-auto-authentication-works">How Auto-Authentication Works</h3>
+<ol>
+<li><strong>Catalog Access</strong>: When you click on a catalog, Kirin attempts to
+   connect</li>
+<li><strong>Authentication Check</strong>: If authentication fails or times out, Kirin
+   checks for stored auth command</li>
+<li><strong>Auto-Execution</strong>: If found, Kirin executes the command automatically
+   (30-second timeout)</li>
+<li><strong>Retry</strong>: If authentication succeeds, Kirin retries loading the
+   datasets</li>
+<li><strong>Feedback</strong>: Success/failure messages are shown in the UI</li>
+</ol>
+<h3 id="benefits">Benefits</h3>
+<ul>
+<li><strong>No manual CLI</strong>: Authentication happens automatically in the web UI</li>
+<li><strong>Faster workflow</strong>: No need to switch to terminal and run commands</li>
+<li><strong>Clear feedback</strong>: You see exactly what happened (success or failure)</li>
+<li><strong>Manual fallback</strong>: You can still authenticate manually if needed</li>
+</ul>
+<h3 id="timeout-protection">Timeout Protection</h3>
+<p>To prevent the UI from hanging on slow or failed connections:</p>
+<ul>
+<li><strong>10-second timeout</strong> for catalog operations (listing datasets)</li>
+<li><strong>5-second timeout</strong> for individual dataset loading</li>
+<li><strong>30-second timeout</strong> for authentication commands</li>
+<li><strong>Clear error messages</strong> when timeouts occur</li>
+</ul>
+<h3 id="security-considerations">Security Considerations</h3>
+<ul>
+<li><strong>Commands are stored locally</strong> in your catalog configuration file</li>
+<li><strong>No passwords stored</strong>: Auth commands only contain profile names or
+  trigger browser-based OAuth</li>
+<li><strong>Subprocess isolation</strong>: Commands run in isolated subprocesses with
+  timeout protection</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/ericmjl" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["instant", "tabs"], "search": "../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+        <script src="../config.js"></script>
+      
+    
+  </body>
+</html>
