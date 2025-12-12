@@ -513,24 +513,10 @@ def _(Path, model_registry):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Summary
+    ## View Registry Statistics
 
-    Your model registry now tracks:
-
-    - ✅ Content-addressed storage (automatic deduplication)
-    - ✅ Lazy loading (files only downloaded when needed)
-    - ✅ Rich metadata tracking (hyperparameters, metrics, etc.)
-    - ✅ Flexible tagging system (staging, versions, domains)
-    - ✅ Powerful querying (by metadata, tags, or custom filters)
-    - ✅ Model comparison and diffing
-    - ✅ Linear history (simple, no branching complexity)
-    - ✅ Cloud storage support (works with S3, GCS, Azure)
-
-    **Use Cases:**
-    - Model experiment tracking
-    - A/B testing different model versions
-    - Model deployment staging (dev → staging → production)
-    - Reproducible ML workflows
+    Get an overview of your model registry including total commits, files,
+    and tag distribution.
     """)
     return
 
@@ -555,6 +541,31 @@ def _(model_registry):
         print(f"   {tag}: {count}")
 
     return all_commits, tag_counts
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Summary
+
+    Your model registry now tracks:
+
+    - ✅ Content-addressed storage (automatic deduplication)
+    - ✅ Lazy loading (files only downloaded when needed)
+    - ✅ Rich metadata tracking (hyperparameters, metrics, etc.)
+    - ✅ Flexible tagging system (staging, versions, domains)
+    - ✅ Powerful querying (by metadata, tags, or custom filters)
+    - ✅ Model comparison and diffing
+    - ✅ Linear history (simple, no branching complexity)
+    - ✅ Cloud storage support (works with S3, GCS, Azure)
+
+    **Use Cases:**
+    - Model experiment tracking
+    - A/B testing different model versions
+    - Model deployment staging (dev → staging → production)
+    - Reproducible ML workflows
+    """)
+    return
 
 
 if __name__ == "__main__":
