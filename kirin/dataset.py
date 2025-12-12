@@ -903,7 +903,7 @@ class Dataset:
             get_inline_javascript,
         )
 
-        # Get variable name from instance attribute, default to "dataset"
+        # Get variable name: manual override > default
         variable_name = getattr(self, "_repr_variable_name", "dataset")
 
         html_parts = ['<div class="kirin-dataset-view">']

@@ -74,7 +74,7 @@ def _():
     catalog = Catalog(root_dir=temp_dir)
 
     # Create a new dataset
-    dataset = catalog.create_dataset(
+    commit_demo_dataset = catalog.create_dataset(
         "commit_demo", description="Demo dataset for commit tutorial"
     )
 
@@ -82,9 +82,9 @@ def _():
     data_dir = temp_dir / "sample_data"
     data_dir.mkdir(exist_ok=True)
 
-    print(f"✅ Created dataset: {dataset.name}")
-    print(f"   Dataset root: {dataset.root_dir}")
-    return data_dir, dataset, datetime
+    print(f"✅ Created dataset: {commit_demo_dataset.name}")
+    print(f"   Dataset root: {commit_demo_dataset.root_dir}")
+    return commit_demo_dataset, data_dir, datetime
 
 
 @app.cell(hide_code=True)
@@ -106,26 +106,30 @@ def _(mo):
 
 
 @app.cell
-def _(data_dir, dataset, datetime):
+def _(commit_demo_dataset, data_dir, datetime):
     # Create first commit
     file1 = data_dir / "data.csv"
     file1.write_text("name,value\nA,10\nB,20\n")
 
     commit_msg1 = f"Initial data - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    commit_hash1 = dataset.commit(message=commit_msg1, add_files=[str(file1)])
+    commit_hash1 = commit_demo_dataset.commit(
+        message=commit_msg1, add_files=[str(file1)]
+    )
 
     print(f"✅ Created first commit: {commit_hash1[:8]}")
     return
 
 
 @app.cell
-def _(data_dir, dataset, datetime):
+def _(commit_demo_dataset, data_dir, datetime):
     # Create second commit with updated data (same filename - versioning!)
     file2 = data_dir / "data.csv"
     file2.write_text("name,value\nA,10\nB,20\nC,30\n")
 
     commit_msg2 = f"Add more data - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    commit_hash2 = dataset.commit(message=commit_msg2, add_files=[str(file2)])
+    commit_hash2 = commit_demo_dataset.commit(
+        message=commit_msg2, add_files=[str(file2)]
+    )
 
     print(f"✅ Created second commit: {commit_hash2[:8]}")
     print("   Note: Same filename - versioning handled by commits!")
@@ -133,9 +137,9 @@ def _(data_dir, dataset, datetime):
 
 
 @app.cell
-def _(dataset):
+def _(commit_demo_dataset):
     # Get the current commit and explore its properties
-    current_commit = dataset.current_commit
+    current_commit = commit_demo_dataset.current_commit
     if current_commit:
         print("📊 Commit Properties:")
         print(f"   Hash: {current_commit.hash}")
@@ -182,9 +186,9 @@ def _(mo):
 
 
 @app.cell
-def _(dataset):
+def _(commit_demo_dataset):
     # Get all commits (newest to oldest)
-    history = dataset.history()
+    history = commit_demo_dataset.history()
     # Reverse to show oldest first for tutorial clarity
     history_oldest_first = list(reversed(history))
 
@@ -230,9 +234,9 @@ def _(mo):
 
 
 @app.cell
-def _(dataset):
+def _(commit_demo_dataset):
     # Get only the 5 most recent commits
-    recent_commits = dataset.history(limit=5)
+    recent_commits = commit_demo_dataset.history(limit=5)
 
     print(f"📊 Recent commits: {len(recent_commits)}")
     for recent_commit in recent_commits:
@@ -252,10 +256,10 @@ def _(mo):
 
 
 @app.cell
-def _(dataset, history):
+def _(commit_demo_dataset, history):
     # Get a specific commit (using the oldest commit for demonstration)
     oldest_commit_hash = history[-1].hash  # Oldest is last in newest-first list
-    retrieved_commit = dataset.get_commit(oldest_commit_hash)
+    retrieved_commit = commit_demo_dataset.get_commit(oldest_commit_hash)
 
     if retrieved_commit:
         print(f"✅ Retrieved commit: {retrieved_commit.short_hash}")
@@ -279,36 +283,38 @@ def _(mo):
 
 
 @app.cell
-def _(dataset):
+def _(commit_demo_dataset):
     # Checkout the latest commit (default)
-    dataset.checkout()
+    commit_demo_dataset.checkout()
     current_commit_hash = (
-        dataset.current_commit.short_hash if dataset.current_commit else "None"
+        commit_demo_dataset.current_commit.short_hash
+        if commit_demo_dataset.current_commit
+        else "None"
     )
     print(f"📂 Current commit: {current_commit_hash}")
-    print(f"   Files: {list(dataset.files.keys())}")
+    print(f"   Files: {list(commit_demo_dataset.files.keys())}")
     return
 
 
 @app.cell
-def _(dataset, history):
+def _(commit_demo_dataset, history):
     # Checkout a specific commit (using the oldest commit)
     oldest_commit_for_checkout = history[-1]  # Oldest is last in newest-first list
-    dataset.checkout(oldest_commit_for_checkout.hash)
+    commit_demo_dataset.checkout(oldest_commit_for_checkout.hash)
 
     print("\n📂 After checkout:")
-    print(f"   Current commit: {dataset.current_commit.short_hash}")
-    print(f"   Files: {list(dataset.files.keys())}")
+    print(f"   Current commit: {commit_demo_dataset.current_commit.short_hash}")
+    print(f"   Files: {list(commit_demo_dataset.files.keys())}")
     return
 
 
 @app.cell
-def _(dataset):
+def _(commit_demo_dataset):
     # Checkout latest again
-    dataset.checkout()  # No argument = latest
+    commit_demo_dataset.checkout()  # No argument = latest
     print("\n📂 Back to latest:")
-    print(f"   Current commit: {dataset.current_commit.short_hash}")
-    print(f"   Files: {list(dataset.files.keys())}")
+    print(f"   Current commit: {commit_demo_dataset.current_commit.short_hash}")
+    print(f"   Files: {list(commit_demo_dataset.files.keys())}")
     return
 
 
@@ -335,13 +341,15 @@ def _(mo):
 
 
 @app.cell
-def _(dataset, history):
+def _(commit_demo_dataset, history):
     # Get two commits to compare (oldest vs newest)
     oldest_commit = history[-1]  # Oldest is last in newest-first list
     newest_commit = history[0]  # Newest is first in newest-first list
 
     # Compare them (oldest first, then newest)
-    comparison = dataset.compare_commits(oldest_commit.hash, newest_commit.hash)
+    comparison = commit_demo_dataset.compare_commits(
+        oldest_commit.hash, newest_commit.hash
+    )
 
     print("📊 Commit Comparison:")
     print("=" * 50)
@@ -396,26 +404,26 @@ def _(mo):
 
 
 @app.cell
-def _(data_dir, dataset, datetime):
+def _(commit_demo_dataset, data_dir, datetime):
     # Create commits with file changes
     file3 = data_dir / "data_v3.csv"
     file3.write_text("name,value\nA,10\nB,20\nC,30\nD,40\n")
 
     commit_msg3 = f"Add more rows - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    dataset.commit(message=commit_msg3, add_files=[str(file3)])
+    commit_demo_dataset.commit(message=commit_msg3, add_files=[str(file3)])
 
     # Remove a file
     commit_msg4 = f"Remove old file - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    dataset.commit(message=commit_msg4, remove_files=["data_v1.csv"])
+    commit_demo_dataset.commit(message=commit_msg4, remove_files=["data_v1.csv"])
 
     print("✅ Created additional commits with file changes")
     return
 
 
 @app.cell
-def _(dataset):
+def _(commit_demo_dataset):
     # Update history
-    updated_history = dataset.history()
+    updated_history = commit_demo_dataset.history()
 
     # Compare adjacent commits (going from newest to oldest)
     print("📊 Comparing adjacent commits (newest → oldest):")
@@ -453,13 +461,13 @@ def _(mo):
 
 
 @app.cell
-def _(data_dir, dataset, datetime):
+def _(commit_demo_dataset, data_dir, datetime):
     # Create a commit with metadata and tags
     file4 = data_dir / "model_v1.pkl"
     file4.write_text("fake model data")
 
     commit_msg5 = f"Add trained model - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-    dataset.commit(
+    commit_demo_dataset.commit(
         message=commit_msg5,
         add_files=[str(file4)],
         metadata={
@@ -475,9 +483,9 @@ def _(data_dir, dataset, datetime):
 
 
 @app.cell
-def _(dataset):
+def _(commit_demo_dataset):
     # Access metadata and tags
-    latest_commit = dataset.current_commit
+    latest_commit = commit_demo_dataset.current_commit
     if latest_commit:
         print(f"📊 Commit: {latest_commit.short_hash}")
         print(f"   Metadata: {latest_commit.metadata}")
@@ -498,9 +506,9 @@ def _(mo):
 
 
 @app.cell
-def _(dataset):
+def _(commit_demo_dataset):
     # Find commits by tags
-    production_commits = dataset.find_commits(tags=["production"])
+    production_commits = commit_demo_dataset.find_commits(tags=["production"])
     print(f"🏷️  Production commits: {len(production_commits)}")
     for prod_commit in production_commits:
         print(f"   {prod_commit.short_hash}: {prod_commit.message}")
@@ -508,9 +516,9 @@ def _(dataset):
 
 
 @app.cell
-def _(dataset):
+def _(commit_demo_dataset):
     # Find commits by metadata filter
-    high_accuracy_commits = dataset.find_commits(
+    high_accuracy_commits = commit_demo_dataset.find_commits(
         metadata_filter=lambda m: m.get("accuracy", 0) > 0.9
     )
     print(f"\n📊 High accuracy commits: {len(high_accuracy_commits)}")
@@ -522,13 +530,13 @@ def _(dataset):
 
 
 @app.cell
-def _(dataset):
+def _(commit_demo_dataset):
     # Find commits by message content
-    def find_by_message(dataset, search_term):
-        history = dataset.history()
+    def find_by_message(commit_demo_dataset, search_term):
+        history = commit_demo_dataset.history()
         return [c for c in history if search_term.lower() in c.message.lower()]
 
-    model_commits = find_by_message(dataset, "model")
+    model_commits = find_by_message(commit_demo_dataset, "model")
     print(f"\n🔍 Commits with 'model' in message: {len(model_commits)}")
     for msg_commit in model_commits:
         print(f"   {msg_commit.short_hash}: {msg_commit.message}")
@@ -547,9 +555,9 @@ def _(mo):
 
 
 @app.cell
-def _(dataset):
-    def analyze_commits(dataset):
-        history = dataset.history()
+def _(commit_demo_dataset):
+    def analyze_commits(commit_demo_dataset):
+        history = commit_demo_dataset.history()
 
         if not history:
             print("No commits found")
@@ -587,7 +595,7 @@ def _(dataset):
             print(f"   First commit: {first_date.strftime('%Y-%m-%d %H:%M')}")
             print(f"   Last commit: {last_date.strftime('%Y-%m-%d %H:%M')}")
 
-    analyze_commits(dataset)
+    analyze_commits(commit_demo_dataset)
     return
 
 
@@ -603,10 +611,10 @@ def _(mo):
 
 
 @app.cell
-def _(dataset, updated_history):
+def _(commit_demo_dataset, dataset, updated_history):
     # Get files from a specific commit (using oldest for demonstration)
     target_commit = updated_history[-1]  # Oldest is last in newest-first list
-    dataset.checkout(target_commit.hash)
+    commit_demo_dataset.checkout(target_commit.hash)
 
     print(f"📁 Files in commit {target_commit.short_hash}:")
     with dataset.local_files() as local_files:
@@ -645,11 +653,17 @@ def _(mo):
     mo.md(r"""
     ```python
     # Sequential data processing pipeline
-    dataset.commit(message="Add raw data", add_files=["raw_data.csv"])
+    commit_demo_dataset.commit(
+        message="Add raw data", add_files=["raw_data.csv"]
+    )
     # ... process data ...
-    dataset.commit(message="Add cleaned data", add_files=["cleaned_data.csv"])
+    commit_demo_dataset.commit(
+        message="Add cleaned data", add_files=["cleaned_data.csv"]
+    )
     # ... analyze data ...
-    dataset.commit(message="Add analysis results", add_files=["results.csv"])
+    commit_demo_dataset.commit(
+        message="Add analysis results", add_files=["results.csv"]
+    )
     ```
     """)
     return
@@ -670,14 +684,14 @@ def _(mo):
     mo.md(r"""
     ```python
     # Track different experiments
-    dataset.commit(
+    commit_demo_dataset.commit(
         message="Experiment 1: Random Forest",
         add_files=["rf_model.pkl", "rf_results.csv"],
         metadata={"model": "RandomForest", "accuracy": 0.85},
         tags=["experiment", "rf"]
     )
 
-    dataset.commit(
+    commit_demo_dataset.commit(
         message="Experiment 2: Gradient Boosting",
         add_files=["gb_model.pkl", "gb_results.csv"],
         metadata={"model": "GradientBoosting", "accuracy": 0.90},
@@ -703,13 +717,13 @@ def _(mo):
     mo.md(r"""
     ```python
     # Version your data releases
-    dataset.commit(
+    commit_demo_dataset.commit(
         message="Release v1.0: Initial dataset",
         add_files=["dataset_v1.csv"],
         tags=["release", "v1.0"]
     )
 
-    dataset.commit(
+    commit_demo_dataset.commit(
         message="Release v1.1: Added features",
         add_files=["dataset_v1.1.csv"],
         tags=["release", "v1.1"]
@@ -747,20 +761,20 @@ def _(mo):
     mo.md(r"""
     ```python
     # ✅ Good: Descriptive and specific
-    dataset.commit(
+    commit_demo_dataset.commit(
         message="Add Q1 2024 sales data with customer demographics",
         add_files=["sales_q1_2024.csv"]
     )
 
     # ✅ Good: Explains the change
-    dataset.commit(
+    commit_demo_dataset.commit(
         message="Fix data quality issues: remove duplicates and handle missing values",
         add_files=["customers_cleaned.csv"]
     )
 
     # ❌ Bad: Vague and unhelpful
-    dataset.commit(message="Update", add_files=["data.csv"])
-    dataset.commit(message="Fix", add_files=["file.csv"])
+    commit_demo_dataset.commit(message="Update", add_files=["data.csv"])
+    commit_demo_dataset.commit(message="Fix", add_files=["file.csv"])
     ```
     """)
     return
@@ -783,16 +797,16 @@ def _(mo):
     mo.md(r"""
     ```python
     # ✅ Good: Single logical change
-    dataset.commit(message="Add customer data", add_files=["customers.csv"])
+    commit_demo_dataset.commit(message="Add customer data", add_files=["customers.csv"])
 
     # ✅ Good: Related changes together
-    dataset.commit(
+    commit_demo_dataset.commit(
         message="Update customer data and add validation rules",
         add_files=["customers_updated.csv", "validation_rules.json"]
     )
 
     # ❌ Bad: Unrelated changes
-    dataset.commit(
+    commit_demo_dataset.commit(
         message="Add customer data and fix bug",
         add_files=["customers.csv", "bug_fix.py"]
     )
@@ -818,13 +832,17 @@ def _(mo):
     mo.md(r"""
     ```python
     # ✅ Good: Commit after each logical step
-    dataset.commit(message="Add raw data", add_files=["raw_data.csv"])
+    commit_demo_dataset.commit(
+        message="Add raw data", add_files=["raw_data.csv"]
+    )
     # ... process data ...
-    dataset.commit(message="Add cleaned data", add_files=["cleaned_data.csv"])
+    commit_demo_dataset.commit(
+        message="Add cleaned data", add_files=["cleaned_data.csv"]
+    )
 
     # ❌ Bad: Too many changes in one commit
     # ... many processing steps ...
-    dataset.commit(
+    commit_demo_dataset.commit(
         message="All changes",
         add_files=["file1.csv", "file2.csv", "file3.csv", ...],
     )
@@ -855,9 +873,9 @@ def _(mo):
 
 
 @app.cell
-def _(dataset, updated_history):
-    def find_commit_by_hash(dataset, partial_hash):
-        history = dataset.history()
+def _(commit_demo_dataset, updated_history):
+    def find_commit_by_hash(commit_demo_dataset, partial_hash):
+        history = commit_demo_dataset.history()
         for commit in history:
             if commit.hash.startswith(partial_hash):
                 return commit
@@ -868,7 +886,7 @@ def _(dataset, updated_history):
     partial_hash = None
     if updated_history:
         partial_hash = updated_history[-1].hash[:8]  # Oldest is last
-        found_commit = find_commit_by_hash(dataset, partial_hash)
+        found_commit = find_commit_by_hash(commit_demo_dataset, partial_hash)
         if found_commit:
             print(f"✅ Found: {found_commit.short_hash} - {found_commit.message}")
     return
@@ -887,19 +905,22 @@ def _(mo):
 
 @app.cell
 def _(dataset, updated_history):
-    def recover_to_commit(dataset, commit_hash):
-        commit = dataset.get_commit(commit_hash)
+    def recover_to_commit(commit_demo_dataset, commit_hash):
+        commit = commit_demo_dataset.get_commit(commit_hash)
         if not commit:
             print(f"❌ Commit {commit_hash} not found")
             return False
 
         # Checkout the commit
-        dataset.checkout(commit_hash)
+        commit_demo_dataset.checkout(commit_hash)
 
         # Verify
-        if dataset.current_commit and dataset.current_commit.hash == commit_hash:
+        if (
+            commit_demo_dataset.current_commit
+            and commit_demo_dataset.current_commit.hash == commit_hash
+        ):
             print(f"✅ Successfully recovered to commit {commit_hash[:8]}")
-            print(f"   Message: {dataset.current_commit.message}")
+            print(f"   Message: {commit_demo_dataset.current_commit.message}")
             return True
         else:
             print("❌ Failed to recover")

@@ -2,6 +2,11 @@
 
 Advanced file operations and integration patterns for data science workflows.
 
+**Notebook Tip**: When working in Jupyter or Marimo notebooks, displaying a
+dataset (e.g., `dataset`) shows an interactive HTML view. Click "Copy Code to
+Access" on any file to get code snippets that automatically use your variable
+name!
+
 ## File Access Patterns
 
 ### Local Files Context Manager (Recommended)

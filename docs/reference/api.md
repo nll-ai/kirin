@@ -58,6 +58,88 @@ Dataset(
   matching criteria
 - `compare_commits(hash1, hash2)` - Compare metadata between two commits
 
+#### Notebook Integration
+
+Kirin provides rich HTML representations for datasets, commits, and catalogs that
+display beautifully in Jupyter and Marimo notebooks.
+
+##### HTML Representation
+
+When you display a `Dataset`, `Commit`, or `Catalog` object in a notebook cell,
+Kirin automatically generates an interactive HTML view with:
+
+- **File Lists**: Click on any file to reveal/hide code snippets showing how to
+  access it
+- **Copy Code to Access Button**: Each file has a button that copies Python code
+  to your clipboard with the correct variable name
+- **Commit History**: Visual display of commit history with metadata
+- **File Metadata**: File sizes, content types, and icons
+
+**Example:**
+
+```python
+from kirin import Dataset
+
+dataset = Dataset(root_dir="/path/to/data", name="my_dataset")
+
+# Display in notebook - shows interactive HTML
+dataset
+```
+
+##### Variable Names in Code Snippets
+
+By default, code snippets use generic variable names ("dataset", "commit", or
+"catalog") based on the class type. You can customize the variable name used
+in code snippets by setting the `_repr_variable_name` attribute.
+
+**Default Behavior:**
+
+```python
+dataset = Dataset(root_dir="/path/to/data", name="my_dataset")
+
+# Display in notebook - code snippets use "dataset" by default
+dataset
+```
+
+When you click "Copy Code to Access" on a file, the copied code will use the
+default variable name:
+
+```python
+# Get path to local clone of file
+with dataset.local_files() as files:
+    file_path = files["data.csv"]
+```
+
+**Custom Variable Names:**
+
+If you want code snippets to use a different variable name, set the
+`_repr_variable_name` attribute:
+
+```python
+my_dataset = Dataset(root_dir="/path/to/data", name="my_dataset")
+my_dataset._repr_variable_name = "my_dataset"
+
+# Now code snippets will use "my_dataset" instead of "dataset"
+my_dataset  # Display in notebook
+```
+
+When you click "Copy Code to Access", the copied code will use your custom
+variable name:
+
+```python
+# Get path to local clone of file
+with my_dataset.local_files() as files:
+    file_path = files["data.csv"]
+```
+
+**Note:** The `_repr_variable_name` attribute is only used for HTML
+representation and doesn't affect the actual dataset object.
+
+**Known Limitation (as of December 2025)**: The "Copy Code to Access" button
+does not work within Marimo notebooks running inside VSCode due to clipboard
+API restrictions. The button works correctly when viewing notebooks in a web
+browser.
+
 #### Method Details
 
 ##### `commit(message, add_files=None, remove_files=None, metadata=None, tags=None)`
@@ -526,6 +608,45 @@ with dataset.local_files() as local_files:
 
 Represents an immutable snapshot of files at a point in time with optional
 metadata and tags.
+
+#### Commit Notebook Integration
+
+Commits also support rich HTML representation in notebooks. When you display a
+`Commit` object, you'll see:
+
+- **Commit Metadata**: Hash, message, timestamp, and parent commit
+- **File List**: All files in the commit with interactive access
+- **Copy Code to Access**: Each file has a button that copies code including a
+  checkout step
+
+**Example:**
+
+```python
+from kirin import Dataset
+
+dataset = Dataset(root_dir="/path/to/data", name="my_dataset")
+commit = dataset.get_commit(commit_hash)
+
+# Display in notebook - shows interactive HTML
+commit
+```
+
+**Commit Code Snippets:**
+
+When you click "Copy Code to Access" on a file in a commit, the code includes a
+checkout step:
+
+```python
+# Checkout this commit first
+dataset.checkout("commit_hash")
+# Get path to local clone of file
+with dataset.local_files() as files:
+    file_path = files["data.csv"]
+```
+
+**Note:** Commits are frozen dataclasses, so you cannot set
+`_repr_variable_name` on them. Code snippets will use `"dataset"` as the default
+variable name.
 
 #### Properties
 

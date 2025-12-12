@@ -66,6 +66,15 @@ with ds.local_files() as local_files:
     print(f"File content: {content[:100]}...")
 ```
 
+**Tip**: When you display a dataset, commit, or catalog in a notebook cell
+(e.g., `ds`), Kirin shows an interactive HTML view. Click "Copy Code to Access"
+on any file to copy code snippets to your clipboard. You can customize the
+variable name used in snippets by setting `dataset._repr_variable_name = "my_name"`.
+
+**Note**: The "Copy Code to Access" button requires browser clipboard access.
+It works in Jupyter/Marimo notebooks viewed in a web browser, but may not work
+in VSCode's embedded notebook viewer (as of December 2025).
+
 ### 4. View Your Commit History
 
 ```python

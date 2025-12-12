@@ -519,6 +519,38 @@ with {escape_html(variable_name)}.local_files() as files:
     )
 
 
+def generate_commit_file_access_code(
+    code_id: str,
+    filename: str,
+    commit_hash: str,
+    variable_name: str = "dataset",
+) -> str:
+    """Generate Python code snippet for accessing a file from a commit.
+
+    Args:
+        code_id: Unique ID for the code snippet element
+        filename: Name of the file to access
+        commit_hash: Hash of the commit to checkout
+        variable_name: Name of the dataset variable to use in the code snippet.
+                      Defaults to "dataset".
+
+    Returns:
+        HTML string with code snippet (hidden by default)
+    """
+    code = f"""# Checkout this commit first
+{escape_html(variable_name)}.checkout("{escape_html(commit_hash)}")
+# Get path to local clone of file
+with {escape_html(variable_name)}.local_files() as files:
+    file_path = files["{escape_html(filename)}"]"""
+    escaped_code = escape_html(code)
+    return (
+        f'<div id="{code_id}" class="code-snippet hidden">'
+        f'<div class="code-snippet-content">'
+        f"<pre><code>{escaped_code}</code></pre>"
+        f"</div></div>"
+    )
+
+
 def get_inline_javascript() -> str:
     """Return inline JavaScript for interactivity.
 
