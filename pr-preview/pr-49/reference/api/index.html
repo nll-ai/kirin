@@ -1052,6 +1052,45 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#notebook-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Notebook Integration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Notebook Integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#html-representation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTML Representation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#variable-names-in-code-snippets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Variable Names in Code Snippets
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#method-details" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1419,6 +1458,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#commit-notebook-integration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commit Notebook Integration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#properties" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1565,6 +1615,65 @@
   matching criteria</li>
 <li><code>compare_commits(hash1, hash2)</code> - Compare metadata between two commits</li>
 </ul>
+<h4 id="notebook-integration">Notebook Integration</h4>
+<p>Kirin provides rich HTML representations for datasets, commits, and catalogs that
+display beautifully in Jupyter and Marimo notebooks.</p>
+<h5 id="html-representation">HTML Representation</h5>
+<p>When you display a <code>Dataset</code>, <code>Commit</code>, or <code>Catalog</code> object in a notebook cell,
+Kirin automatically generates an interactive HTML view with:</p>
+<ul>
+<li><strong>File Lists</strong>: Click on any file to reveal/hide code snippets showing how to
+  access it</li>
+<li><strong>Copy Code to Access Button</strong>: Each file has a button that copies Python code
+  to your clipboard with the correct variable name</li>
+<li><strong>Commit History</strong>: Visual display of commit history with metadata</li>
+<li><strong>File Metadata</strong>: File sizes, content types, and icons</li>
+</ul>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">kirin</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/data&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">)</span>
+
+<span class="c1"># Display in notebook - shows interactive HTML</span>
+<span class="n">dataset</span>
+</code></pre></div>
+<h5 id="variable-names-in-code-snippets">Variable Names in Code Snippets</h5>
+<p>By default, code snippets use generic variable names ("dataset", "commit", or
+"catalog") based on the class type. You can customize the variable name used
+in code snippets by setting the <code>_repr_variable_name</code> attribute.</p>
+<p><strong>Default Behavior:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/data&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">)</span>
+
+<span class="c1"># Display in notebook - code snippets use &quot;dataset&quot; by default</span>
+<span class="n">dataset</span>
+</code></pre></div>
+<p>When you click "Copy Code to Access" on a file, the copied code will use the
+default variable name:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Get path to local clone of file</span>
+<span class="k">with</span> <span class="n">dataset</span><span class="o">.</span><span class="n">local_files</span><span class="p">()</span> <span class="k">as</span> <span class="n">files</span><span class="p">:</span>
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">files</span><span class="p">[</span><span class="s2">&quot;data.csv&quot;</span><span class="p">]</span>
+</code></pre></div>
+<p><strong>Custom Variable Names:</strong></p>
+<p>If you want code snippets to use a different variable name, set the
+<code>_repr_variable_name</code> attribute:</p>
+<div class="highlight"><pre><span></span><code><span class="n">my_dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/data&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">)</span>
+<span class="n">my_dataset</span><span class="o">.</span><span class="n">_repr_variable_name</span> <span class="o">=</span> <span class="s2">&quot;my_dataset&quot;</span>
+
+<span class="c1"># Now code snippets will use &quot;my_dataset&quot; instead of &quot;dataset&quot;</span>
+<span class="n">my_dataset</span>  <span class="c1"># Display in notebook</span>
+</code></pre></div>
+<p>When you click "Copy Code to Access", the copied code will use your custom
+variable name:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Get path to local clone of file</span>
+<span class="k">with</span> <span class="n">my_dataset</span><span class="o">.</span><span class="n">local_files</span><span class="p">()</span> <span class="k">as</span> <span class="n">files</span><span class="p">:</span>
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">files</span><span class="p">[</span><span class="s2">&quot;data.csv&quot;</span><span class="p">]</span>
+</code></pre></div>
+<p><strong>Note:</strong> The <code>_repr_variable_name</code> attribute is only used for HTML
+representation and doesn't affect the actual dataset object.</p>
+<p><strong>Known Limitation (as of December 2025)</strong>: The "Copy Code to Access" button
+does not work within Marimo notebooks running inside VSCode due to clipboard
+API restrictions. The button works correctly when viewing notebooks in a web
+browser.</p>
 <h4 id="method-details">Method Details</h4>
 <h5 id="commitmessage-add_filesnone-remove_filesnone-metadatanone-tagsnone"><code>commit(message, add_files=None, remove_files=None, metadata=None, tags=None)</code></h5>
 <p>Create a new commit with changes to the dataset.</p>
@@ -1974,6 +2083,36 @@ for more details.</p>
 <h3 id="commit">Commit</h3>
 <p>Represents an immutable snapshot of files at a point in time with optional
 metadata and tags.</p>
+<h4 id="commit-notebook-integration">Commit Notebook Integration</h4>
+<p>Commits also support rich HTML representation in notebooks. When you display a
+<code>Commit</code> object, you'll see:</p>
+<ul>
+<li><strong>Commit Metadata</strong>: Hash, message, timestamp, and parent commit</li>
+<li><strong>File List</strong>: All files in the commit with interactive access</li>
+<li><strong>Copy Code to Access</strong>: Each file has a button that copies code including a
+  checkout step</li>
+</ul>
+<p><strong>Example:</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">kirin</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/data&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_dataset&quot;</span><span class="p">)</span>
+<span class="n">commit</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get_commit</span><span class="p">(</span><span class="n">commit_hash</span><span class="p">)</span>
+
+<span class="c1"># Display in notebook - shows interactive HTML</span>
+<span class="n">commit</span>
+</code></pre></div>
+<p><strong>Commit Code Snippets:</strong></p>
+<p>When you click "Copy Code to Access" on a file in a commit, the code includes a
+checkout step:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Checkout this commit first</span>
+<span class="n">dataset</span><span class="o">.</span><span class="n">checkout</span><span class="p">(</span><span class="s2">&quot;commit_hash&quot;</span><span class="p">)</span>
+<span class="c1"># Get path to local clone of file</span>
+<span class="k">with</span> <span class="n">dataset</span><span class="o">.</span><span class="n">local_files</span><span class="p">()</span> <span class="k">as</span> <span class="n">files</span><span class="p">:</span>
+    <span class="n">file_path</span> <span class="o">=</span> <span class="n">files</span><span class="p">[</span><span class="s2">&quot;data.csv&quot;</span><span class="p">]</span>
+</code></pre></div>
+<p><strong>Note:</strong> Commits are frozen dataclasses, so you cannot set
+<code>_repr_variable_name</code> on them. Code snippets will use <code>"dataset"</code> as the default
+variable name.</p>
 <h4 id="properties">Properties</h4>
 <ul>
 <li><code>hash</code> (str): Unique commit identifier</li>

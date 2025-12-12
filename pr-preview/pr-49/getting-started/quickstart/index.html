@@ -1342,6 +1342,13 @@ pip<span class="w"> </span>install<span class="w"> </span>kirin
     <span class="n">content</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">()</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;File content: </span><span class="si">{</span><span class="n">content</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
 </code></pre></div>
+<p><strong>Tip</strong>: When you display a dataset, commit, or catalog in a notebook cell
+(e.g., <code>ds</code>), Kirin shows an interactive HTML view. Click "Copy Code to Access"
+on any file to copy code snippets to your clipboard. You can customize the
+variable name used in snippets by setting <code>dataset._repr_variable_name = "my_name"</code>.</p>
+<p><strong>Note</strong>: The "Copy Code to Access" button requires browser clipboard access.
+It works in Jupyter/Marimo notebooks viewed in a web browser, but may not work
+in VSCode's embedded notebook viewer (as of December 2025).</p>
 <h3 id="4-view-your-commit-history">4. View Your Commit History</h3>
 <div class="highlight"><pre><span></span><code><span class="c1"># Get commit history</span>
 <span class="n">history</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">history</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
