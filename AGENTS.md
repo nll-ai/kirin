@@ -890,9 +890,9 @@ return {"status": "success", "commit_hash": commit_hash}
 execution pattern:
 
 - **Script Location**: All scripts are placed in the `scripts/` directory
-- **Execution Method**: Scripts are run using `uv run` from the scripts
-  directory
-- **Execution Pattern**: `cd scripts && uv run script_name.py`
+- **Execution Method**: Scripts are run using `pixi run python` from the project
+  root
+- **Execution Pattern**: `pixi run python scripts/script_name.py`
 - **PEP723 Metadata**: All scripts must include inline script metadata for
   dependency management
 
@@ -914,44 +914,39 @@ allows for quick debugging and testing without cluttering the codebase.
 **Required Pattern**:
 
 ```bash
-# Navigate to scripts directory
-cd scripts
-
-# Run any script using uv run
-uv run create_dummy_dataset.py
-uv run other_script.py
+# Run any script using pixi run python from project root
+pixi run python scripts/create_dummy_dataset.py
+pixi run python scripts/other_script.py
 ```
 
 **Key Requirements**:
 
-- **Always use `uv run`** - Never use `python` directly
-- **Always run from scripts directory** - Change to `scripts/` directory
-  first
+- **Always use `pixi run python`** - Never use `python` directly
+- **Run from project root** - Use full path from project root (e.g., `scripts/script_name.py`)
 - **Script naming** - Use descriptive names with underscores (e.g.,
   `create_dummy_dataset.py`)
 
 **Benefits of this pattern**:
 
-- **Consistent execution environment** - All scripts use the same dependency
-  resolution
-- **Proper dependency management** - `uv run` handles script dependencies
-  automatically
-- **Isolated execution** - Scripts don't interfere with the main project
-  environment
+- **Consistent execution environment** - All scripts use the pixi-managed
+  environment with all dependencies
+- **Proper dependency management** - `pixi run python` ensures scripts run
+  with the correct Python version and dependencies
+- **Isolated execution** - Scripts run in the pixi environment, not system
+  Python
 - **Easy maintenance** - All utility scripts are organized in one location
 
 **Examples**:
 
 ```bash
-# ✅ CORRECT - Standard script execution
-cd scripts
-uv run create_dummy_dataset.py
-
-# ❌ WRONG - Don't run from project root
-uv run scripts/create_dummy_dataset.py
+# ✅ CORRECT - Standard script execution from project root
+pixi run python scripts/create_dummy_dataset.py
 
 # ❌ WRONG - Don't use python directly
 python scripts/create_dummy_dataset.py
+
+# ❌ WRONG - Don't use uv run
+uv run scripts/create_dummy_dataset.py
 ```
 
 ### Script Metadata Requirements

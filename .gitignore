@@ -157,3 +157,4 @@ message_log.db
 .pixi
 *.egg-info
 docs/tutorials/*.md
+docs/how-to/*.md
