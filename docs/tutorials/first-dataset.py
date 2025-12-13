@@ -20,6 +20,7 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import marimo as mo
+
     return (mo,)
 
 
@@ -60,6 +61,22 @@ def _(mo):
     return
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Step 1: Understanding Datasets
+
+    A **dataset** in Kirin is a collection of versioned files. Think of it
+    like a Git repository, but specifically designed for data files. Each
+    dataset has:
+
+    - A **name** that identifies it
+    - A **linear commit history** that tracks changes over time
+    - **Files** that are stored using content-addressed storage
+    """)
+    return
+
+
 @app.cell
 def _():
     import tempfile
@@ -83,16 +100,6 @@ def _():
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Step 1: Understanding Datasets
-
-    A **dataset** in Kirin is a collection of versioned files. Think of it
-    like a Git repository, but specifically designed for data files. Each
-    dataset has:
-
-    - A **name** that identifies it
-    - A **linear commit history** that tracks changes over time
-    - **Files** that are stored using content-addressed storage
-
     **Tip**: When you display a dataset in a notebook cell (like `my_dataset`
     above), Kirin shows an interactive HTML view with a "Copy Code to Access"
     button for each file. The copied code uses "dataset" by default, but you
@@ -140,6 +147,16 @@ def _(temp_dir):
     return config_file, csv_file, data_dir
 
 
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Step 3: Making Your First Commit
+
+    Now let's add these files to our dataset. This creates your first commit.
+    """)
+    return
+
+
 @app.cell
 def _(config_file, csv_file, my_dataset):
     # Commit files to the dataset
@@ -156,10 +173,6 @@ def _(config_file, csv_file, my_dataset):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Step 3: Making Your First Commit
-
-    Now let's add these files to our dataset. This creates your first commit.
-
     **What just happened?**
 
     - Kirin calculated content hashes for each file
@@ -193,7 +206,16 @@ def _(mo):
     mo.md(r"""
     ## Step 5: Accessing Files from a Commit
 
-    Now let's access the files from the current commit.
+    Now let's access the files from the current commit. The recommended way to
+    work with files is using the `local_files()` context manager. This downloads
+    files on-demand and cleans them up automatically.
+
+    **Key points:**
+
+    - Files are only downloaded when you access them (lazy loading)
+    - Files are automatically cleaned up when you exit the context manager
+    - You can use standard Python libraries (pandas, polars, etc.) with the
+      local paths
     """)
     return
 
@@ -226,21 +248,12 @@ def _(Path, my_dataset):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Step 6: Working with Files Locally
+    ## Step 6: Adding More Files
 
-    The recommended way to work with files is using the `local_files()`
-    context manager. This downloads files on-demand and cleans them up
-    automatically.
-
-    **Key points:**
-
-    - Files are only downloaded when you access them (lazy loading)
-    - Files are automatically cleaned up when you exit the context manager
-    - You can use standard Python libraries (pandas, polars, etc.) with the
-      local paths
+    Let's add another file to see how the commit history grows.
     """)
     return
 
@@ -272,12 +285,13 @@ def _(data_dir, my_dataset):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Step 7: Adding More Files
+    ## Step 7: Viewing the Updated History
 
-    Let's add another file to see how the commit history grows.
+    Let's see how the history has changed. Notice how the commit history is
+    linear - each commit builds on the previous one.
     """)
     return
 
@@ -293,10 +307,9 @@ def _(my_dataset):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Step 8: Viewing the Updated History
+    ## Step 8: Checking Out Different Commits
 
-    Let's see how the history has changed. Notice how the commit history is
-    linear - each commit builds on the previous one.
+    You can checkout any commit to see what files were available at that point.
     """)
     return
 
@@ -319,9 +332,17 @@ def _(my_dataset, updated_history):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Step 9: Checking Out Different Commits
+    ## Step 9: Understanding Content-Addressed Storage
 
-    You can checkout any commit to see what files were available at that point.
+    One of Kirin's key features is content-addressed storage. This means:
+
+    - Files are stored by their content hash, not by filename
+    - Identical files are automatically deduplicated
+    - File integrity is guaranteed by the hash
+
+    Let's demonstrate this by creating a duplicate file with the same content.
+    Even though the files have different names, they have the same content
+    hash, so Kirin stores them only once!
     """)
     return
 
@@ -343,23 +364,6 @@ def _(csv_file, data_dir, my_dataset):
     print(f"   Original file hash: {original.hash}")
     print(f"   Duplicate file hash: {duplicate.hash}")
     print(f"   Same content = Same hash: {original.hash == duplicate.hash}")
-    return
-
-
-@app.cell
-def _(mo):
-    mo.md(r"""
-    ## Understanding Content-Addressed Storage
-
-    One of Kirin's key features is content-addressed storage. This means:
-
-    - Files are stored by their content hash, not by filename
-    - Identical files are automatically deduplicated
-    - File integrity is guaranteed by the hash
-
-    Even though the files have different names, they have the same content
-    hash, so Kirin stores them only once!
-    """)
     return
 
 
