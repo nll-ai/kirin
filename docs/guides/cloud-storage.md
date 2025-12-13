@@ -122,8 +122,12 @@ catalog = Catalog(root_dir="gs://my-bucket/data")
 
 #### Using Workload Identity (GKE/Kubernetes)
 
+When running on GKE with Workload Identity configured, Application Default
+Credentials automatically detect credentials from the metadata server (which is
+how Workload Identity works):
+
 ```python
-# No explicit credentials needed - uses workload identity
+# No explicit credentials needed - uses ADC (which includes Workload Identity on GKE)
 catalog = Catalog(root_dir="gs://my-bucket/data")
 ```
 
