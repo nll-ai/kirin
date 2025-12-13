@@ -19,6 +19,7 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import marimo as mo
+
     return (mo,)
 
 
@@ -365,10 +366,12 @@ def _(mo):
 
     **3. Workload Identity (GKE/Kubernetes)**
 
-    When running on GKE, workload identity is used automatically:
+    When running on GKE with Workload Identity configured, Application Default
+    Credentials automatically detect credentials from the metadata server (which
+    is how Workload Identity works):
 
     ```python
-    # No credentials needed - uses workload identity
+    # No credentials needed - uses ADC (which includes Workload Identity on GKE)
     catalog = Catalog(root_dir="gs://{{ bucket_name }}/data")
     ```
     """)
