@@ -836,11 +836,9 @@ def _(mo):
 
     ## Next Steps
 
-    - **[Setup S3](../how-to/setup-s3.md)** - Detailed guide for AWS S3 setup
-    - **[Setup GCS](../how-to/setup-gcs.md)** - Detailed guide for Google
-      Cloud Storage setup
-    - **[Setup Azure](../how-to/setup-azure.md)** - Detailed guide for Azure
-      Blob Storage setup
+    - **[Setup Cloud Storage](../how-to/setup-cloud-storage.md)** - Complete
+      guide for setting up AWS S3, Google Cloud Storage, and Azure Blob
+      Storage
     - **[Track Model Training Data](../how-to/track-model-data.md)** - See
       cloud storage in action with ML workflows
     """)
