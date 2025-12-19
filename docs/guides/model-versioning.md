@@ -32,6 +32,48 @@ model_registry = Dataset(
 
 ### 2. Save Your First Model
 
+#### Option A: Committing Model Objects Directly (Recommended for scikit-learn)
+
+Kirin can automatically handle scikit-learn model objects, serializing them and
+extracting hyperparameters and metrics:
+
+```python
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+
+# Load and prepare data
+iris = load_iris()
+X, y = iris.data, iris.target
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# Train model
+model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
+model.fit(X_train, y_train)
+
+# Commit model object directly - everything is automatic!
+commit_hash = model_registry.commit(
+    message="Initial baseline model",
+    add_files=[model],  # Just pass the model object
+    metadata={
+        "accuracy": model.score(X_test, y_test),  # Data-dependent metrics
+        "dataset": "iris",
+    },
+    tags=["baseline", "v1.0"]
+)
+
+# Hyperparameters and metrics are automatically extracted:
+# - model.get_params() → metadata["models"]["model"]["hyperparameters"]
+# - model.feature_importances_ → metadata["models"]["model"]["metrics"]
+# - Source file linking → metadata["models"]["model"]["source_file"]
+```
+
+#### Option B: Manual Serialization (For PyTorch, TensorFlow, etc.)
+
+For frameworks that don't have automatic support yet, manually serialize:
+
 ```python
 import torch
 
@@ -59,6 +101,31 @@ commit_hash = model_registry.commit(
 ```
 
 ### 3. Save Improved Models
+
+**With scikit-learn (automatic):**
+
+```python
+# Train an improved model
+improved_model = RandomForestClassifier(
+    n_estimators=200,  # More trees
+    max_depth=10,  # Deeper trees
+    random_state=42
+)
+improved_model.fit(X_train, y_train)
+
+# Commit improved model - hyperparameters auto-extracted
+commit_hash = model_registry.commit(
+    message="Improved model with more trees",
+    add_files=[improved_model],
+    metadata={
+        "accuracy": improved_model.score(X_test, y_test),
+        "improvements": ["More trees", "Deeper trees"]
+    },
+    tags=["improved", "v2.0"]
+)
+```
+
+**With PyTorch (manual):**
 
 ```python
 # Train an improved model
@@ -88,6 +155,215 @@ commit_hash = model_registry.commit(
 )
 ```
 
+## Committing Model Objects Directly
+
+Kirin supports committing scikit-learn model objects directly, automatically
+handling serialization, hyperparameter extraction, and metrics extraction. This
+simplifies your workflow significantly.
+
+### Basic Usage
+
+Simply pass the model object to `commit()`:
+
+```python
+from sklearn.ensemble import RandomForestClassifier
+
+# Train your model
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Commit directly - no manual serialization needed!
+commit_hash = dataset.commit(
+    message="Initial model",
+    add_files=[model],  # Model object, not file path
+    metadata={"accuracy": model.score(X_test, y_test)}
+)
+```
+
+Kirin automatically:
+
+- Serializes the model using joblib (saves as `model.pkl`)
+- Extracts hyperparameters via `model.get_params()`
+- Extracts available metrics (feature_importances_, coef_, etc.)
+- Links the source script that created the model
+- Structures metadata in `metadata["models"]["model"]`
+
+### Model-Specific Metadata
+
+When you have multiple models with different metrics, use the `metadata["models"]`
+structure to provide model-specific metadata:
+
+**Important:** The keys under `metadata["models"]` must match the model variable
+names exactly. Kirin auto-detects variable names (e.g., `rf_model`, `lr_model`)
+and uses them as keys in the metadata structure. If your metadata keys don't
+match the variable names, the metadata won't be properly merged with
+auto-extracted metadata. Always use the same variable names in both your code
+and your metadata structure for consistency.
+
+```python
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+
+# Train multiple models
+rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
+rf_model.fit(X_train, y_train)
+rf_accuracy = rf_model.score(X_test, y_test)
+
+lr_model = LogisticRegression(random_state=42)
+lr_model.fit(X_train, y_train)
+lr_accuracy = lr_model.score(X_test, y_test)
+
+# Commit with model-specific metadata
+commit_hash = dataset.commit(
+    message="Compare RandomForest vs LogisticRegression",
+    add_files=[rf_model, lr_model],
+    metadata={
+        "models": {
+            "rf_model": {
+                "accuracy": rf_accuracy,  # Model-specific
+                "f1_score": 0.93
+            },
+            "lr_model": {
+                "accuracy": lr_accuracy,  # Different accuracy
+                "f1_score": 0.85
+            }
+        },
+        "dataset": "iris",  # Shared metadata (top-level)
+        "test_size": 0.2
+    }
+)
+```
+
+**Metadata Structure:**
+
+The final metadata will be structured as:
+
+```python
+{
+    "models": {
+        "rf_model": {
+            "model_type": "RandomForestClassifier",  # Auto-extracted
+            "hyperparameters": {...},  # Auto-extracted
+            "metrics": {...},  # Auto-extracted
+            "sklearn_version": "1.3.0",  # Auto-extracted
+            "accuracy": 0.95,  # User-provided
+            "f1_score": 0.93,  # User-provided
+            "source_file": "ml-workflow.py",  # Auto-detected
+            "source_hash": "..."
+        },
+        "lr_model": {
+            "model_type": "LogisticRegression",  # Auto-extracted
+            "hyperparameters": {...},  # Auto-extracted
+            "metrics": {...},  # Auto-extracted
+            "sklearn_version": "1.3.0",  # Auto-extracted
+            "accuracy": 0.87,  # User-provided
+            "f1_score": 0.85,  # User-provided
+            "source_file": "ml-workflow.py",  # Auto-detected
+            "source_hash": "..."
+        }
+    },
+    "dataset": "iris",  # Top-level (shared)
+    "test_size": 0.2
+}
+```
+
+### Metadata Merging
+
+Kirin automatically merges auto-extracted metadata with your provided metadata:
+
+1. **Auto-extracted first**: Hyperparameters, metrics, sklearn_version, and
+   source info are extracted and added to each model's entry
+2. **User-provided merges in**: Your model-specific metadata (via
+   `metadata["models"][var_name]`) is merged, overriding auto-extracted values
+   on conflicts
+3. **Top-level metadata**: Metadata outside the `models` dict applies to the
+   entire commit (shared context)
+
+**Example:**
+
+```python
+from sklearn.ensemble import RandomForestClassifier
+
+# Train a model
+model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42)
+model.fit(X_train, y_train)
+
+# Commit with both auto-extracted and user-provided metadata
+commit_hash = dataset.commit(
+    message="Model with custom metadata",
+    add_files=[model],
+    metadata={
+        "models": {
+            "model": {
+                "accuracy": 0.95,  # User-provided metric
+                "f1_score": 0.93,  # User-provided metric
+                "custom_note": "Trained on v2 dataset",  # Custom field
+            }
+        },
+        "dataset": "iris",  # Top-level metadata
+    }
+)
+
+# The final metadata structure will be:
+# {
+#     "models": {
+#         "model": {
+#             "model_type": "RandomForestClassifier",  # Auto-extracted
+#             "hyperparameters": {  # Auto-extracted
+#                 "n_estimators": 100,
+#                 "max_depth": 5,
+#                 "random_state": 42,
+#                 # ... all other hyperparameters
+#             },
+#             "metrics": {  # Auto-extracted
+#                 "feature_importances": [...],
+#                 "n_features_in": 4,
+#                 # ... other available metrics
+#             },
+#             "sklearn_version": "1.3.0",  # Auto-extracted
+#             "accuracy": 0.95,  # User-provided (merged in)
+#             "f1_score": 0.93,  # User-provided (merged in)
+#             "custom_note": "Trained on v2 dataset",  # User-provided (merged in)
+#             "source_file": "ml-workflow.py",  # Auto-extracted
+#             "source_hash": "..."  # Auto-extracted
+#         }
+#     },
+#     "dataset": "iris"  # Top-level metadata
+# }
+```
+
+### Mixed Files and Models
+
+You can mix model objects with regular file paths:
+
+```python
+dataset.commit(
+    message="Model with plots and config",
+    add_files=[
+        model,  # Model object (auto-serialized)
+        "plot1.svg",  # Regular file path
+        "config.json",  # Regular file path
+    ],
+    metadata={"accuracy": 0.95}
+)
+```
+
+### When to Use Model Objects vs File Paths
+
+**Use model objects when:**
+
+- Working with scikit-learn models
+- You want automatic hyperparameter/metrics extraction
+- You want source file linking
+- You want simplified workflow
+
+**Use file paths when:**
+
+- Working with PyTorch, TensorFlow, or other frameworks (not yet supported)
+- Models are already serialized
+- You need explicit control over serialization format
+- You're migrating existing workflows
+
 ## Querying and Discovery
 
 ### Find Models by Tags
@@ -102,24 +378,54 @@ v2_models = model_registry.find_commits(tags=["v2.0", "production"])
 
 ### Find Models by Performance Metrics
 
+When models are committed as objects, their metadata is nested under
+`metadata["models"][var_name]`. Here's how to query them:
+
 ```python
-# Find high-accuracy models
+# Find high-accuracy models (checking nested model metadata)
+def has_high_accuracy(metadata):
+    """Check if any model in commit has high accuracy."""
+    if "models" in metadata:
+        for model_name, model_meta in metadata["models"].items():
+            if model_meta.get("accuracy", 0) > 0.9:
+                return True
+    # Also check top-level accuracy (for backward compatibility)
+    return metadata.get("accuracy", 0) > 0.9
+
 high_accuracy = model_registry.find_commits(
-    metadata_filter=lambda m: m.get("accuracy", 0) > 0.9
+    metadata_filter=has_high_accuracy
 )
 
-# Find models by framework
-pytorch_models = model_registry.find_commits(
-    metadata_filter=lambda m: m.get("framework") == "pytorch"
-)
+# Find models by specific model type
+def is_sklearn_model(metadata):
+    """Check if commit contains scikit-learn models."""
+    if "models" in metadata:
+        for model_name, model_meta in metadata["models"].items():
+            if model_meta.get("model_type", "").startswith("RandomForest"):
+                return True
+    return False
 
-# Complex queries
+rf_models = model_registry.find_commits(metadata_filter=is_sklearn_model)
+
+# Complex queries: find best models with multiple criteria
+def is_best_model(metadata):
+    """Find models with high accuracy and f1_score."""
+    if "models" in metadata:
+        for model_name, model_meta in metadata["models"].items():
+            accuracy = model_meta.get("accuracy", 0)
+            f1_score = model_meta.get("f1_score", 0)
+            if accuracy > 0.9 and f1_score > 0.85:
+                return True
+    return False
+
 best_models = model_registry.find_commits(
     tags=["production"],
-    metadata_filter=lambda m: (
-        m.get("accuracy", 0) > 0.9 and
-        m.get("f1_score", 0) > 0.85
-    )
+    metadata_filter=is_best_model
+)
+
+# For top-level metadata (backward compatibility or non-model commits)
+high_accuracy_simple = model_registry.find_commits(
+    metadata_filter=lambda m: m.get("accuracy", 0) > 0.9
 )
 ```
 
@@ -162,8 +468,22 @@ with model_registry.local_files() as files:
 # Get current model info
 current_commit = model_registry.current_commit
 print(f"Model: {current_commit.message}")
-print(f"Accuracy: {current_commit.metadata['accuracy']}")
 print(f"Tags: {current_commit.tags}")
+
+# Access model metadata (nested structure)
+if "models" in current_commit.metadata:
+    for model_name, model_meta in current_commit.metadata["models"].items():
+        print(f"\nModel: {model_name}")
+        print(f"  Type: {model_meta.get('model_type')}")
+        print(f"  scikit-learn version: {model_meta.get('sklearn_version', 'N/A')}")
+        print(f"  Accuracy: {model_meta.get('accuracy', 'N/A')}")
+        print(f"  Hyperparameters: {model_meta.get('hyperparameters', {})}")
+        print(f"  Metrics: {model_meta.get('metrics', {})}")
+        print(f"  Source: {model_meta.get('source_file', 'N/A')}")
+
+# For top-level metadata (backward compatibility)
+if "accuracy" in current_commit.metadata:
+    print(f"Accuracy: {current_commit.metadata['accuracy']}")
 
 # List all files in current version
 for filename in model_registry.list_files():
@@ -176,6 +496,51 @@ for filename in model_registry.list_files():
 While Kirin doesn't enforce a specific schema, here are recommended conventions:
 
 ### Core Model Information
+
+**For model objects (recommended):**
+
+When committing model objects, metadata is automatically structured under
+`metadata["models"][var_name]`:
+
+```python
+# When committing model objects, structure is automatic
+metadata = {
+    "models": {
+        "model": {  # Key matches variable name
+            # Auto-extracted (for scikit-learn)
+            "model_type": "RandomForestClassifier",
+            "hyperparameters": {
+                "n_estimators": 100,
+                "max_depth": 5,
+                # ... all hyperparameters auto-extracted
+            },
+            "metrics": {
+                "feature_importances": [...],
+                "n_features_in": 4,
+                # ... available metrics auto-extracted
+            },
+            "sklearn_version": "1.3.0",  # Auto-extracted
+            "source_file": "ml-workflow.py",  # Auto-detected
+            "source_hash": "...",  # Auto-detected
+
+            # User-provided
+            "accuracy": 0.92,
+            "f1_score": 0.90,
+            "precision": 0.91,
+            "recall": 0.89,
+            "training_data": "dataset_v2",
+            "training_time_seconds": 1200,
+        }
+    },
+    # Top-level metadata (shared across all models in commit)
+    "dataset": "iris",
+    "test_size": 0.2,
+}
+```
+
+**For manual serialization (backward compatibility):**
+
+For frameworks not yet supported or when manually serializing:
 
 ```python
 metadata = {
@@ -355,28 +720,6 @@ tags = ["dev", "staging", "production"]
 
 # Feature flags
 tags = ["feature-xyz", "experimental", "deprecated"]
-```
-
-### 4. Model Validation
-
-Always validate model performance before committing:
-
-```python
-def validate_model(model, test_data):
-    """Validate model before committing."""
-    accuracy = evaluate_model(model, test_data)
-    if accuracy < 0.8:
-        raise ValueError(f"Model accuracy {accuracy} below threshold")
-    return accuracy
-
-# Use in commit workflow
-accuracy = validate_model(model, test_data)
-model_registry.commit(
-    message="Validated model v2.0",
-    add_files=["model.pt"],
-    metadata={"accuracy": accuracy, "validated": True},
-    tags=["validated", "v2.0"]
-)
 ```
 
 ## Integration with ML Workflows

@@ -121,6 +121,7 @@ matplotlib = "*"
 pillow = "*"
 plotly = "*"
 httpx = "*"
+scikit-learn = "*"
 
 [tool.pixi.feature.tests.pypi-dependencies]
 # PyPI-only packages for testing
