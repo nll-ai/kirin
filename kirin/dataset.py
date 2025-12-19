@@ -13,6 +13,12 @@ from loguru import logger
 from .commit import Commit, CommitBuilder
 from .commit_store import CommitStore
 from .file import File
+from .ml_artifacts import (
+    extract_sklearn_hyperparameters,
+    extract_sklearn_metrics,
+    is_sklearn_model,
+    serialize_sklearn_model,
+)
 from .plots import save_plot as save_plot_func
 from .storage import ContentStore
 from .utils import get_filesystem, strip_protocol
@@ -259,18 +265,26 @@ class Dataset:
     def commit(
         self,
         message: str,
-        add_files: List[Union[str, Path]] = None,
+        add_files: List[Union[str, Path, Any]] = None,
         remove_files: List[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
         tags: Optional[List[str]] = None,
     ) -> str:
         """Create a new commit with changes.
 
+        **Enhanced for ML artifacts:**
+
+        - **Model objects**: If `add_files` contains scikit-learn model objects,
+          they are automatically serialized, and hyperparameters/metrics are
+          extracted and added to metadata.
+
+        - **Plot objects**: Use `save_plot()` first, then commit the returned path.
+
         Args:
             message: Commit message
-            add_files: List of files to add/update
+            add_files: List of files (paths) or model objects to add
             remove_files: List of filenames to remove
-            metadata: Optional metadata dictionary (hyperparameters, metrics, etc.)
+            metadata: Optional metadata dictionary (merged with auto-extracted metadata)
             tags: Optional list of tags for staging/versioning
 
         Returns:
@@ -301,9 +315,77 @@ class Dataset:
         # Start building commit from current state
         builder = CommitBuilder(self.current_commit)
 
-        # Add files
+        # Process files and model objects
+        models_metadata = {}
+        processed_files = []
+        temp_dirs = []  # Track temp dirs for cleanup
+
         if add_files:
-            for file_path in add_files:
+            for item in add_files:
+                if isinstance(item, (str, Path)):
+                    # Existing file path handling
+                    file_path = str(item)
+
+                    # Check if file exists
+                    source_fs = get_filesystem(file_path)
+                    if not source_fs.exists(strip_protocol(file_path)):
+                        raise FileNotFoundError(f"File not found: {file_path}")
+
+                    processed_files.append(file_path)
+                elif is_sklearn_model(item):
+                    # New: Handle model object
+                    # Detect variable name
+                    from .ml_artifacts import detect_model_variable_name
+
+                    var_name = detect_model_variable_name(item)
+                    if not var_name:
+                        var_name = item.__class__.__name__
+
+                    # Create temporary directory for model serialization
+                    temp_dir = tempfile.mkdtemp(prefix=f"kirin_model_{var_name}_")
+                    temp_dirs.append(temp_dir)
+
+                    # Serialize model (raises error if fails)
+                    model_path, source_path, source_hash = (
+                        serialize_sklearn_model(
+                            item,
+                            variable_name=var_name,
+                            temp_dir=temp_dir,
+                            storage=self.storage,
+                        )
+                    )
+                    processed_files.append(model_path)
+
+                    # Extract metadata
+                    from .ml_artifacts import get_sklearn_version
+
+                    model_meta = {
+                        "model_type": item.__class__.__name__,
+                        "hyperparameters": extract_sklearn_hyperparameters(item),
+                        "metrics": extract_sklearn_metrics(item),
+                    }
+
+                    # Add scikit-learn version if available
+                    sklearn_version = get_sklearn_version()
+                    if sklearn_version:
+                        model_meta["sklearn_version"] = sklearn_version
+
+                    # Add source linking if available
+                    if source_path and source_hash:
+                        model_meta["source_file"] = os.path.basename(source_path)
+                        model_meta["source_hash"] = source_hash
+
+                    models_metadata[var_name] = model_meta
+                else:
+                    # Unknown type - raise error
+                    raise ValueError(
+                        f"Unsupported item type in add_files: {type(item)}. "
+                        "Expected str, Path, or scikit-learn model object."
+                    )
+
+        # Add processed files to commit
+        if processed_files:
+            for file_path in processed_files:
                 file_path = str(file_path)
 
                 # Check if file exists
@@ -326,14 +408,34 @@ class Dataset:
                 # Add to commit
                 builder.add_file(file_obj.name, file_obj)
 
+        # Structure metadata for multiple models
+        auto_metadata = {}
+        if models_metadata:
+            auto_metadata["models"] = models_metadata
+
+        # Merge with user-provided metadata
+        final_metadata = {**auto_metadata, **(metadata or {})}
+
+        # If user provided model-specific metadata, merge it into each model's entry
+        if "models" in (metadata or {}) and "models" in auto_metadata:
+            user_models_metadata = metadata["models"]
+            for var_name, model_meta in models_metadata.items():
+                if var_name in user_models_metadata:
+                    # Merge user-provided model metadata (user wins on conflicts)
+                    models_metadata[var_name] = {
+                        **model_meta,  # Auto-extracted first
+                        **user_models_metadata[var_name],  # User-provided overrides
+                    }
+            final_metadata["models"] = models_metadata
+
         # Remove files
         if remove_files:
             for filename in remove_files:
                 builder.remove_file(filename)
 
         # Set metadata and tags
-        if metadata:
-            builder.set_metadata(metadata)
+        if final_metadata:
+            builder.set_metadata(final_metadata)
 
         if tags:
             builder.add_tags(tags)
@@ -342,6 +444,16 @@ class Dataset:
         commit = builder(message)
         self.commit_store.save_commit(commit)
         self._current_commit = commit
+
+        # Clean up temporary directories
+        import shutil
+
+        for temp_dir in temp_dirs:
+            try:
+                if os.path.exists(temp_dir):
+                    shutil.rmtree(temp_dir)
+            except Exception as e:
+                logger.warning(f"Failed to clean up temporary directory {temp_dir}: {e}")
 
         logger.info(f"Created commit {commit.short_hash}: {message}")
         return commit.hash

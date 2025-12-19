@@ -146,12 +146,26 @@ browser.
 
 Create a new commit with changes to the dataset.
 
+**Enhanced for ML artifacts:**
+
+- **Model objects**: If `add_files` contains scikit-learn model objects, they
+  are automatically serialized, and hyperparameters/metrics are extracted and
+  added to metadata.
+
+- **Plot objects**: Use `save_plot()` first, then commit the returned path.
+
 **Parameters:**
 
 - `message` (str): Commit message describing the changes
-- `add_files` (List[Union[str, Path]], optional): List of files to add or update
+- `add_files` (List[Union[str, Path, Any]], optional): List of files (paths)
+  or model objects to add. Can include:
+  - File paths (str or Path): Regular files
+  - scikit-learn model objects: Automatically serialized with hyperparameters
+    and metrics extracted
 - `remove_files` (List[str], optional): List of filenames to remove
-- `metadata` (Dict[str, Any], optional): Metadata dictionary for model versioning
+- `metadata` (Dict[str, Any], optional): Metadata dictionary (merged with
+  auto-extracted metadata). For model-specific metadata, use
+  `metadata["models"][var_name]` structure.
 - `tags` (List[str], optional): List of tags for staging/versioning
 
 **Returns:**
@@ -161,10 +175,53 @@ Create a new commit with changes to the dataset.
 **Examples:**
 
 ```python
-# Basic commit
+# Basic commit with file paths
 dataset.commit("Add new data", add_files=["data.csv"])
 
-# Model versioning commit
+# Commit with scikit-learn model object (automatic serialization)
+from sklearn.ensemble import RandomForestClassifier
+
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+dataset.commit(
+    message="Initial model",
+    add_files=[model],  # Auto-serialized as "model.pkl"
+    metadata={"accuracy": 0.95}  # Data-dependent metrics
+)
+
+# Multiple models with model-specific metadata
+rf_model = RandomForestClassifier(n_estimators=100)
+rf_model.fit(X_train, y_train)
+rf_accuracy = rf_model.score(X_test, y_test)
+
+lr_model = LogisticRegression()
+lr_model.fit(X_train, y_train)
+lr_accuracy = lr_model.score(X_test, y_test)
+
+dataset.commit(
+    message="Compare models",
+    add_files=[rf_model, lr_model],
+    metadata={
+        "models": {
+            "rf_model": {"accuracy": rf_accuracy},  # Model-specific
+            "lr_model": {"accuracy": lr_accuracy},  # Model-specific
+        },
+        "dataset": "iris",  # Shared metadata
+    },
+)
+
+# Mixed: model objects and file paths
+dataset.commit(
+    message="Model with plots",
+    add_files=[
+        model,  # Auto-serialized model
+        "plot1.svg",  # Regular file path
+        "config.json",
+    ],
+)
+
+# Traditional model versioning (still works)
 dataset.commit(
     message="Improved model v2.0",
     add_files=["model.pt", "config.json"],
@@ -176,6 +233,36 @@ dataset.commit(
     tags=["production", "v2.0"]
 )
 ```
+
+**Metadata Structure:**
+
+When model objects are committed, metadata is automatically structured as:
+
+```python
+{
+    "models": {
+        "model_name": {
+            "model_type": "RandomForestClassifier",  # Auto-extracted
+            "hyperparameters": {...},  # Auto-extracted via get_params()
+            "metrics": {...},  # Auto-extracted (feature_importances_, etc.)
+            "sklearn_version": "1.3.0",  # Auto-extracted
+            "accuracy": 0.95,  # User-provided, model-specific
+            "source_file": "ml-workflow.py",  # Auto-detected
+            "source_hash": "..."  # Auto-detected
+        }
+    },
+    "dataset": "iris"  # Top-level metadata (shared)
+}
+```
+
+**Metadata Merging:**
+
+- Auto-extracted metadata (hyperparameters, metrics, sklearn_version, source
+  info) is added to each model's entry
+- User-provided model-specific metadata (via `metadata["models"][var_name]`)
+  is merged into each model's entry
+- Top-level metadata (outside `models` dict) applies to the entire commit
+- User-provided metadata wins on conflicts
 
 ##### `find_commits(tags=None, metadata_filter=None, limit=None)`
 
