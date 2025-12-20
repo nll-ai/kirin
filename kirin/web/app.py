@@ -1185,6 +1185,12 @@ async def view_dataset(
                 "last_updated": dataset.current_commit.timestamp.isoformat()
                 if dataset.current_commit
                 else None,
+                "current_commit_metadata": dataset.current_commit.metadata
+                if dataset.current_commit
+                else {},
+                "current_commit_tags": dataset.current_commit.tags
+                if dataset.current_commit
+                else [],
             }
 
             return (
@@ -1296,6 +1302,8 @@ async def dataset_history_tab(request: Request, catalog_id: str, dataset_name: s
                     "files_added": len(commit.files),
                     "files_removed": 0,  # TODO: Calculate from parent
                     "total_size": sum(f.size for f in commit.files.values()),
+                    "metadata": commit.metadata,
+                    "tags": commit.tags,
                 }
             )
 
@@ -1716,6 +1724,8 @@ async def get_file_commits(
                             "short_hash": commit.short_hash,
                             "message": commit.message,
                             "timestamp": commit.timestamp.isoformat(),
+                            "metadata": commit.metadata,
+                            "tags": commit.tags,
                         }
                     )
 

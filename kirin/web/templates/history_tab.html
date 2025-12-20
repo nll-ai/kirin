@@ -61,6 +61,14 @@ dataset.checkout()
                 <span class="commit-message">{{ commit.message }}</span>
             </div>
 
+            {% if commit.tags %}
+            <div class="commit-tags">
+                {% for tag in commit.tags %}
+                <span class="badge badge-tag">{{ tag }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
             <div class="commit-meta">
                 <span class="commit-timestamp">{{ commit.timestamp }}</span>
 
@@ -76,6 +84,22 @@ dataset.checkout()
                     {% endif %}
                 </div>
             </div>
+
+            {% if commit.metadata %}
+            <div class="metadata-section collapsed" id="metadata-{{ commit.short_hash }}" data-metadata='{{ commit.metadata | tojson }}'>
+                <button class="metadata-toggle" onclick="toggleMetadata('{{ commit.short_hash }}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9,18 15,12 9,6"></polyline>
+                    </svg>
+                    Show Metadata
+                </button>
+                <div class="metadata-content">
+                    <div class="json-viewer">
+                        <pre id="json-{{ commit.short_hash }}"></pre>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
 
             <div class="flex gap-2 mt-3">
                 <a href="/catalog/{{ catalog_id }}/{{ dataset_name }}/checkout/{{ commit.hash }}"
@@ -120,6 +144,66 @@ dataset.checkout()
 </div>
 
 <script>
+function toggleMetadata(commitHash) {
+    const section = document.getElementById('metadata-' + commitHash);
+    if (section) {
+        const isExpanding = !section.classList.contains('expanded');
+        section.classList.toggle('expanded');
+        const toggle = section.querySelector('.metadata-toggle');
+        const jsonElement = document.getElementById('json-' + commitHash);
+
+        if (isExpanding && jsonElement && !jsonElement.dataset.formatted) {
+            // Format JSON when first expanded
+            try {
+                const metadata = JSON.parse(section.dataset.metadata);
+                jsonElement.innerHTML = formatJSON(JSON.stringify(metadata, null, 2));
+                jsonElement.dataset.formatted = 'true';
+            } catch (e) {
+                jsonElement.innerHTML = '<span class="text-destructive">Error formatting metadata</span>';
+            }
+        }
+
+        if (section.classList.contains('expanded')) {
+            toggle.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="18,15 12,9 6,15"></polyline>
+                </svg>
+                Hide Metadata
+            `;
+        } else {
+            toggle.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9,18 15,12 9,6"></polyline>
+                </svg>
+                Show Metadata
+            `;
+        }
+    }
+}
+
+function formatJSON(jsonString) {
+    // Simple JSON syntax highlighting
+    return jsonString
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
+            let cls = 'json-number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'json-key';
+                } else {
+                    cls = 'json-string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'json-boolean';
+            } else if (/null/.test(match)) {
+                cls = 'json-null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+}
+
 function copyHash(hash) {
     navigator.clipboard.writeText(hash).then(() => {
         // Show a temporary success message

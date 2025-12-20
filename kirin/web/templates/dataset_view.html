@@ -18,6 +18,11 @@
     {% endif %}
     {% if dataset_info.current_commit %}
     <span class="badge badge-primary">{{ dataset_info.current_commit[:8] }}</span> HEAD
+    {% if dataset_info.current_commit_tags %}
+        {% for tag in dataset_info.current_commit_tags %}
+        <span class="badge badge-tag">{{ tag }}</span>
+        {% endfor %}
+    {% endif %}
     {% else %}
     No commits
     {% endif %}
@@ -137,6 +142,7 @@ document.addEventListener('htmx:afterRequest', function(event) {
                     <div class="commit-nav-details">
                         <span id="commit-hash" class="commit-hash"></span>
                         <span id="commit-message" class="commit-message"></span>
+                        <div id="commit-tags" class="commit-tags"></div>
                     </div>
                 </div>
             </div>
@@ -385,6 +391,20 @@ function updateCommitNavigation() {
     commitHash.textContent = commit.short_hash;
     commitMessage.textContent = commit.message;
 
+    // Update tags display
+    const commitTags = document.getElementById('commit-tags');
+    if (commitTags) {
+        if (commit.tags && commit.tags.length > 0) {
+            commitTags.innerHTML = commit.tags.map(tag =>
+                `<span class="badge badge-tag">${tag}</span>`
+            ).join('');
+            commitTags.style.display = 'flex';
+        } else {
+            commitTags.innerHTML = '';
+            commitTags.style.display = 'none';
+        }
+    }
+
     // Update button states
     prevButton.disabled = currentCommitIndex === 0;
     nextButton.disabled = currentCommitIndex === fileCommits.length - 1;
@@ -572,6 +592,30 @@ function loadPreviewContent(fileName, checkoutHash) {
                             img.decoding = 'async';
                         }
                     });
+
+                    // Initialize image view mode for dynamically loaded images
+                    const imageContainer = content.querySelector('#image-preview-container');
+                    if (imageContainer) {
+                        const savedMode = localStorage.getItem('kirin-image-view-mode') || 'fit';
+                        imageContainer.setAttribute('data-mode', savedMode);
+
+                        // Update toggle buttons if they exist
+                        const buttons = content.querySelectorAll('.image-view-toggle-btn');
+                        buttons.forEach(btn => {
+                            // Ensure onclick handler is set
+                            if (!btn.onclick) {
+                                btn.onclick = function() {
+                                    toggleImageView(this.dataset.mode);
+                                };
+                            }
+                            // Update active state
+                            if (btn.dataset.mode === savedMode) {
+                                btn.classList.add('active');
+                            } else {
+                                btn.classList.remove('active');
+                            }
+                        });
+                    }
                 }
                 // For text files, the content is already in the extractedHTML and will display correctly
             } else {
@@ -771,6 +815,25 @@ document.addEventListener('keydown', function(event) {
         closePreview();
     }
 });
+
+// Image view toggle functionality
+function toggleImageView(mode) {
+    const container = document.getElementById('image-preview-container');
+    const buttons = document.querySelectorAll('.image-view-toggle-btn');
+
+    if (container) {
+        container.setAttribute('data-mode', mode);
+        localStorage.setItem('kirin-image-view-mode', mode);
+
+        buttons.forEach(btn => {
+            if (btn.dataset.mode === mode) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+}
 
 // Code snippet functionality
 function toggleCodeSnippet(snippetId) {
