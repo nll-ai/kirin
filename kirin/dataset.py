@@ -346,13 +346,11 @@ class Dataset:
                     temp_dirs.append(temp_dir)
 
                     # Serialize model (raises error if fails)
-                    model_path, source_path, source_hash = (
-                        serialize_sklearn_model(
-                            item,
-                            variable_name=var_name,
-                            temp_dir=temp_dir,
-                            storage=self.storage,
-                        )
+                    model_path, source_path, source_hash = serialize_sklearn_model(
+                        item,
+                        variable_name=var_name,
+                        temp_dir=temp_dir,
+                        storage=self.storage,
                     )
                     processed_files.append(model_path)
 
