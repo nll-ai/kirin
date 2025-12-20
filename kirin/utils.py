@@ -223,7 +223,10 @@ def is_kirin_internal_file(path: str) -> bool:
     if "/kirin/" not in normalized:
         return False
 
-    parts = normalized.split("/kirin/", 1)
+    # Use rsplit to split on the LAST occurrence of /kirin/
+    # This handles cases like CI paths: /home/runner/work/kirin/kirin/tests/...
+    # where the repo name is also "kirin"
+    parts = normalized.rsplit("/kirin/", 1)
     if len(parts) <= 1:
         return False
 
