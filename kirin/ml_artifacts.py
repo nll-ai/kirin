@@ -82,6 +82,11 @@ def detect_model_variable_name(model: Any) -> Optional[str]:
     object was passed to commit(). Looks for variable assignments in the
     calling frame.
 
+    This function is more robust in CI environments by:
+    - Checking more frames in the stack
+    - Using try/except around frame access (frames can be invalidated)
+    - Checking both locals and globals more carefully
+
     Args:
         model: Model object to find variable name for
 
@@ -90,34 +95,50 @@ def detect_model_variable_name(model: Any) -> Optional[str]:
     """
     try:
         # Walk up the call stack to find the calling frame
-        stack = inspect.stack()
+        # Use context=0 to avoid loading source lines (faster, more reliable)
+        stack = inspect.stack(context=0)
 
         # Skip frames that are inside the kirin package itself
         # Frame 0: detect_model_variable_name() itself
         # Frame 1+: Callers (may include kirin internal functions)
         for frame_info in stack[1:]:
-            frame = frame_info.frame
+            try:
+                frame = frame_info.frame
 
-            # Skip Kirin internal files
-            if hasattr(frame, "f_code") and hasattr(frame.f_code, "co_filename"):
-                filename = frame.f_code.co_filename
-                if filename and is_kirin_internal_file(filename):
-                    continue
+                # Skip Kirin internal files
+                if hasattr(frame, "f_code") and hasattr(frame.f_code, "co_filename"):
+                    filename = frame.f_code.co_filename
+                    if filename and is_kirin_internal_file(filename):
+                        continue
 
-            # Look for the model object in frame locals
-            # Check if model is in locals (as a variable)
-            if "f_locals" in dir(frame):
-                for var_name, var_value in frame.f_locals.items():
-                    if var_value is model:
-                        # Found the variable name
-                        return var_name
+                # Look for the model object in frame locals
+                # Use getattr with default to handle cases where f_locals
+                # might not be accessible
+                try:
+                    locals_dict = frame.f_locals
+                    if locals_dict:
+                        for var_name, var_value in locals_dict.items():
+                            # Use 'is' for identity check (same object)
+                            if var_value is model:
+                                return var_name
+                except (AttributeError, RuntimeError):
+                    # Frame might be invalidated or locals not accessible
+                    pass
 
-            # Also check globals
-            if "f_globals" in dir(frame):
-                for var_name, var_value in frame.f_globals.items():
-                    if var_value is model:
-                        # Found the variable name
-                        return var_name
+                # Also check globals
+                try:
+                    globals_dict = frame.f_globals
+                    if globals_dict:
+                        for var_name, var_value in globals_dict.items():
+                            if var_value is model:
+                                return var_name
+                except (AttributeError, RuntimeError):
+                    # Frame might be invalidated or globals not accessible
+                    pass
+
+            except (AttributeError, RuntimeError):
+                # Frame might be invalidated, skip it
+                continue
 
         # If we couldn't determine the variable name, return None
         return None
