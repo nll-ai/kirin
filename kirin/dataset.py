@@ -334,12 +334,18 @@ class Dataset:
                     processed_files.append(file_path)
                 elif is_sklearn_model(item):
                     # New: Handle model object
-                    # Detect variable name
+                    # Detect variable name - required, no fallback
                     from .ml_artifacts import detect_model_variable_name
 
                     var_name = detect_model_variable_name(item)
                     if not var_name:
-                        var_name = item.__class__.__name__
+                        raise ValueError(
+                            f"Could not detect variable name for model object of type "
+                            f"{item.__class__.__name__}. "
+                            "Variable name detection is required for model objects. "
+                            "Ensure the model is assigned to a variable before passing "
+                            "it to commit()."
+                        )
 
                     # Create temporary directory for model serialization
                     temp_dir = tempfile.mkdtemp(prefix=f"kirin_model_{var_name}_")
