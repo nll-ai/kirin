@@ -648,8 +648,7 @@ def _(
     # Model object passed directly - hyperparameters and metrics auto-extracted!
     improved_commit_hash = model_registry.commit(
         message=(
-            "Improved model v2.0 - Better hyperparameters "
-            "(100 trees, unlimited depth)"
+            "Improved model v2.0 - Better hyperparameters (100 trees, unlimited depth)"
         ),
         add_files=[
             improved_model,  # Model object - auto-serialized as "improved_model.pkl"
