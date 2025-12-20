@@ -2,130 +2,130 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://nll-ai.github.io/kirin/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/cloud-storage-auth/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/architecture/overview/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/getting-started/core-concepts/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/getting-started/installation/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/getting-started/quickstart/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/guides/basic-usage/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/guides/cloud-storage/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/guides/commit-management/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/guides/model-versioning/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/guides/working-with-files/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/how-to/manage-multiple-datasets/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/how-to/setup-cloud-storage/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/how-to/track-model-data/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/how-to/version-control-pipeline/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/reference/api/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/reference/storage-format/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/releases/v0.0.2/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/releases/v0.0.3/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/releases/v0.0.4/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/releases/v0.0.5/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/releases/v0.0.6/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/releases/v0.0.7/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/releases/v0.0.8/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/tutorials/cloud-storage/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/tutorials/commits/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/tutorials/first-dataset/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/tutorials/ml-workflow/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/web-ui/catalog-management/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/web-ui/getting-started/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/web-ui/how-to/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
     <url>
          <loc>https://nll-ai.github.io/kirin/web-ui/overview/</loc>
-         <lastmod>2025-12-19</lastmod>
+         <lastmod>2025-12-20</lastmod>
     </url>
 </urlset>
