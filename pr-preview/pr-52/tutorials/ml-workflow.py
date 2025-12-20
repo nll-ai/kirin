@@ -133,6 +133,12 @@ def _():
     )
 
 
+@app.cell
+def _(temp_dir):
+    print(temp_dir)
+    return
+
+
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
