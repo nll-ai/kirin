@@ -340,7 +340,9 @@ def serialize_plot(
                 source_filename = os.path.basename(detected_source)
 
                 # Store source file in content-addressed storage
-                source_file_hash = storage.store_content(source_content, source_filename)
+                source_file_hash = storage.store_content(
+                    source_content, source_filename
+                )
                 source_file_path = detected_source
 
                 logger.info(

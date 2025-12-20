@@ -371,7 +371,6 @@ dataset = Dataset(
 )
 ```
 
-
 ### Catalog
 
 The main class for managing collections of datasets.
