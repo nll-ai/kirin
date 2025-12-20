@@ -293,7 +293,8 @@ class Dataset:
                       Can include:
                       - File paths (str or Path): Regular files
                       - scikit-learn model objects: Automatically serialized
-                      - matplotlib/plotly figure objects: Automatically converted to SVG/WebP
+                      - matplotlib/plotly figures: Automatically converted to
+                        SVG/WebP
             remove_files: List of filenames to remove
             metadata: Optional metadata dictionary (merged with auto-extracted metadata)
             tags: Optional list of tags for staging/versioning
@@ -412,8 +413,8 @@ class Dataset:
                     temp_dir = tempfile.mkdtemp(prefix=f"kirin_plot_{clean_name}_")
                     temp_dirs.append(temp_dir)
 
-                    # Serialize plot (auto-detects format: SVG for vector, WebP for raster)
-                    # Use cleaned name for filename
+                    # Serialize plot (auto-detects format: SVG for vector,
+                    # WebP for raster). Use cleaned name for filename
                     plot_path, source_path, source_hash = serialize_plot(
                         item,
                         variable_name=clean_name,
@@ -422,18 +423,14 @@ class Dataset:
                     )
                     processed_files.append(plot_path)
 
-                    # Determine plot type and format for metadata
-                    plot_type = "matplotlib" if is_matplotlib_figure(item) else "plotly"
-                    # Extract format from filename
-                    plot_format = Path(plot_path).suffix[1:]  # Remove leading dot
-
                     # Note: Plot metadata could be added here if needed in the future
                     # For now, plots are just stored as files
                 else:
                     # Unknown type - raise error
                     raise ValueError(
                         f"Unsupported item type in add_files: {type(item)}. "
-                        "Expected str, Path, scikit-learn model object, or matplotlib/plotly figure."
+                        "Expected str, Path, scikit-learn model, or "
+                        "matplotlib/plotly figure."
                     )
 
         # Add processed files to commit

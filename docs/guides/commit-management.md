@@ -44,7 +44,8 @@ if commit:
 The `commit()` method accepts the following parameters:
 
 - **message** (required): Human-readable description of the changes
-- **add_files** (optional): List of file paths, model objects, or plot objects to add
+- **add_files** (optional): List of file paths, model objects, or plot
+  objects to add
 - **remove_files** (optional): List of filenames to remove from the dataset
 
 ```python
@@ -64,8 +65,9 @@ dataset.commit(
 
 ### Committing Plot Objects
 
-You can commit matplotlib and plotly figure objects directly - they are automatically
-converted to files with format auto-detection (SVG for vector plots, WebP for raster plots):
+You can commit matplotlib and plotly figure objects directly - they are
+automatically converted to files with format auto-detection (SVG for
+vector plots, WebP for raster plots):
 
 ```python
 import matplotlib.pyplot as plt

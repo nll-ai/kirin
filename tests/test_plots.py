@@ -5,7 +5,6 @@ import numpy as np
 import pytest
 
 from kirin.plots import (
-    detect_plot_variable_name,
     is_matplotlib_figure,
     is_plotly_figure,
     save_plot,
@@ -371,7 +370,6 @@ def test_serialize_plot_without_variable_name_raises_error(tmp_path, monkeypatch
     """Test that serialize_plot raises error if variable name cannot be detected."""
     import fsspec
 
-    from kirin.plots import detect_plot_variable_name
     from kirin.storage import ContentStore
 
     fig, ax = plt.subplots()
