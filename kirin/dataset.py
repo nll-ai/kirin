@@ -453,7 +453,9 @@ class Dataset:
                 if os.path.exists(temp_dir):
                     shutil.rmtree(temp_dir)
             except Exception as e:
-                logger.warning(f"Failed to clean up temporary directory {temp_dir}: {e}")
+                logger.warning(
+                    f"Failed to clean up temporary directory {temp_dir}: {e}"
+                )
 
         logger.info(f"Created commit {commit.short_hash}: {message}")
         return commit.hash
