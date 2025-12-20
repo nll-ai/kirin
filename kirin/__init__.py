@@ -17,14 +17,12 @@ from kirin.cloud_auth import (
 from kirin.commit import Commit
 from kirin.dataset import Dataset
 from kirin.file import File
-from kirin.plots import save_plot
 
 __all__ = [
     "Catalog",
     "Dataset",
     "File",
     "Commit",
-    "save_plot",
     "get_s3_filesystem",
     "get_gcs_filesystem",
     "get_azure_filesystem",

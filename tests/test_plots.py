@@ -4,7 +4,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from kirin.plots import save_plot
+from kirin.plots import (
+    detect_plot_variable_name,
+    is_matplotlib_figure,
+    is_plotly_figure,
+    save_plot,
+    serialize_plot,
+)
 from kirin.storage import ContentStore
 
 
@@ -272,5 +278,114 @@ def test_save_plot_format_detection_matplotlib_vector(temp_dir):
     svg_filename = "vector_plot.svg"
     assert actual_filename == svg_filename
     assert storage.exists(content_hash, svg_filename)
+
+    plt.close(fig)
+
+
+def test_is_matplotlib_figure():
+    """Test is_matplotlib_figure detection function."""
+    fig, ax = plt.subplots()
+    ax.plot([1, 2, 3], [1, 2, 3])
+
+    assert is_matplotlib_figure(fig) is True
+    assert is_matplotlib_figure("not a figure") is False
+    assert is_matplotlib_figure(42) is False
+    assert is_matplotlib_figure(None) is False
+
+    plt.close(fig)
+
+
+def test_is_plotly_figure():
+    """Test is_plotly_figure detection function."""
+    try:
+        import plotly.graph_objects as go
+    except ImportError:
+        pytest.skip("plotly not installed")
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=[1, 2, 3], y=[1, 2, 3]))
+
+    assert is_plotly_figure(fig) is True
+    assert is_plotly_figure("not a figure") is False
+    assert is_plotly_figure(42) is False
+
+    # Matplotlib figure should not be detected as plotly
+    mpl_fig, _ = plt.subplots()
+    assert is_plotly_figure(mpl_fig) is False
+    plt.close(mpl_fig)
+
+
+def test_serialize_plot_matplotlib(tmp_path):
+    """Test serialize_plot with matplotlib figure."""
+    import fsspec
+
+    from kirin.storage import ContentStore
+
+    fig, ax = plt.subplots()
+    ax.plot([1, 2, 3], [1, 4, 9])
+
+    storage = ContentStore(str(tmp_path), fsspec.filesystem("file"))
+
+    # Serialize plot with explicit variable name
+    plot_path, source_path, source_hash = serialize_plot(
+        fig, variable_name="test_plot", temp_dir=tmp_path, storage=storage
+    )
+
+    # Verify file was created
+    assert plot_path is not None
+    import os
+
+    assert os.path.exists(plot_path)
+    assert plot_path.endswith(".svg")  # Default format is SVG
+
+    # Verify file content is SVG
+    with open(plot_path, "rb") as f:
+        content = f.read()
+        assert content.startswith(b"<svg") or content.startswith(b"<?xml")
+
+    plt.close(fig)
+
+
+def test_serialize_plot_format_detection(tmp_path):
+    """Test that serialize_plot uses format auto-detection."""
+    import fsspec
+
+    from kirin.storage import ContentStore
+
+    fig, ax = plt.subplots()
+    ax.plot([1, 2, 3], [1, 4, 9])
+
+    storage = ContentStore(str(tmp_path), fsspec.filesystem("file"))
+
+    # Serialize without format (should auto-detect SVG)
+    plot_path, _, _ = serialize_plot(
+        fig, variable_name="test_plot", temp_dir=tmp_path, storage=storage
+    )
+
+    assert plot_path.endswith(".svg")
+
+    plt.close(fig)
+
+
+def test_serialize_plot_without_variable_name_raises_error(tmp_path, monkeypatch):
+    """Test that serialize_plot raises error if variable name cannot be detected."""
+    import fsspec
+
+    from kirin.plots import detect_plot_variable_name
+    from kirin.storage import ContentStore
+
+    fig, ax = plt.subplots()
+    ax.plot([1, 2, 3], [1, 4, 9])
+
+    storage = ContentStore(str(tmp_path), fsspec.filesystem("file"))
+
+    # Mock detect_plot_variable_name to return None (simulating detection failure)
+    monkeypatch.setattr(
+        "kirin.plots.detect_plot_variable_name", lambda x: None
+    )
+
+    # Try to serialize without variable name - should raise error
+    with pytest.raises(ValueError, match="Could not detect variable name"):
+        serialize_plot(fig, temp_dir=tmp_path, storage=storage)
 
     plt.close(fig)

@@ -74,13 +74,11 @@ def _(np, plt):
 
 @app.cell
 def _(dataset, fig):
-    """Save the plot with auto-commit."""
+    """Commit the plot directly."""
 
-    commit_hash = dataset.save_plot(
-        fig,
-        "test_plot.svg",
-        auto_commit=True,
+    commit_hash = dataset.commit(
         message="Test plot with source linking",
+        add_files=[fig],  # Plot object automatically converted to SVG
     )
     print(f"✅ Plot saved! Commit hash: {commit_hash[:8]}")
     return
