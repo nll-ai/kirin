@@ -19,7 +19,12 @@ from .ml_artifacts import (
     is_sklearn_model,
     serialize_sklearn_model,
 )
-from .plots import save_plot as save_plot_func
+from .plots import (
+    detect_plot_variable_name,
+    is_matplotlib_figure,
+    is_plotly_figure,
+    serialize_plot,
+)
 from .storage import ContentStore
 from .utils import get_filesystem, strip_protocol
 
@@ -278,11 +283,17 @@ class Dataset:
           they are automatically serialized, and hyperparameters/metrics are
           extracted and added to metadata.
 
-        - **Plot objects**: Use `save_plot()` first, then commit the returned path.
+        - **Plot objects**: If `add_files` contains matplotlib or plotly figure
+          objects, they are automatically converted to files (SVG for vector plots,
+          WebP for raster plots) with format auto-detection.
 
         Args:
             message: Commit message
-            add_files: List of files (paths) or model objects to add
+            add_files: List of files (paths), model objects, or plot objects to add.
+                      Can include:
+                      - File paths (str or Path): Regular files
+                      - scikit-learn model objects: Automatically serialized
+                      - matplotlib/plotly figure objects: Automatically converted to SVG/WebP
             remove_files: List of filenames to remove
             metadata: Optional metadata dictionary (merged with auto-extracted metadata)
             tags: Optional list of tags for staging/versioning
@@ -315,7 +326,7 @@ class Dataset:
         # Start building commit from current state
         builder = CommitBuilder(self.current_commit)
 
-        # Process files and model objects
+        # Process files, model objects, and plot objects
         models_metadata = {}
         processed_files = []
         temp_dirs = []  # Track temp dirs for cleanup
@@ -333,7 +344,7 @@ class Dataset:
 
                     processed_files.append(file_path)
                 elif is_sklearn_model(item):
-                    # New: Handle model object
+                    # Handle model object
                     # Detect variable name - required, no fallback
                     from .ml_artifacts import detect_model_variable_name
 
@@ -380,11 +391,49 @@ class Dataset:
                         model_meta["source_hash"] = source_hash
 
                     models_metadata[var_name] = model_meta
+                elif is_matplotlib_figure(item) or is_plotly_figure(item):
+                    # Handle plot object
+                    # Detect variable name - required, no fallback
+                    var_name = detect_plot_variable_name(item)
+                    if not var_name:
+                        raise ValueError(
+                            f"Could not detect variable name for plot object of type "
+                            f"{item.__class__.__name__}. "
+                            "Variable name detection is required for plot objects. "
+                            "Ensure the plot is assigned to a variable before passing "
+                            "it to commit()."
+                        )
+
+                    # Clean up variable name for filename:
+                    # - Remove leading underscore (private variables)
+                    clean_name = var_name.lstrip("_")
+
+                    # Create temporary directory for plot serialization
+                    temp_dir = tempfile.mkdtemp(prefix=f"kirin_plot_{clean_name}_")
+                    temp_dirs.append(temp_dir)
+
+                    # Serialize plot (auto-detects format: SVG for vector, WebP for raster)
+                    # Use cleaned name for filename
+                    plot_path, source_path, source_hash = serialize_plot(
+                        item,
+                        variable_name=clean_name,
+                        temp_dir=temp_dir,
+                        storage=self.storage,
+                    )
+                    processed_files.append(plot_path)
+
+                    # Determine plot type and format for metadata
+                    plot_type = "matplotlib" if is_matplotlib_figure(item) else "plotly"
+                    # Extract format from filename
+                    plot_format = Path(plot_path).suffix[1:]  # Remove leading dot
+
+                    # Note: Plot metadata could be added here if needed in the future
+                    # For now, plots are just stored as files
                 else:
                     # Unknown type - raise error
                     raise ValueError(
                         f"Unsupported item type in add_files: {type(item)}. "
-                        "Expected str, Path, or scikit-learn model object."
+                        "Expected str, Path, scikit-learn model object, or matplotlib/plotly figure."
                     )
 
         # Add processed files to commit
@@ -575,198 +624,6 @@ class Dataset:
             raise FileNotFoundError(f"File not found: {name}")
 
         return file_obj.download_to(target_path)
-
-    def save_plot(
-        self,
-        plot_object: Union[  # noqa: F821
-            "matplotlib.figure.Figure", "plotly.graph_objects.Figure", object  # noqa: F821
-        ],
-        filename: str,
-        auto_commit: bool = False,
-        message: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
-        format: Optional[str] = None,
-    ) -> str:
-        """Save a plot to the dataset with automatic format detection.
-
-        This method saves plots from matplotlib, plotly, and other plotting
-        libraries in optimal formats (SVG for vectors, WebP for bitmaps).
-
-        **Two modes of operation:**
-
-        1. **Default mode** (auto_commit=False): Returns file path, user commits
-           explicitly. This allows batching multiple plots in one commit.
-
-           Example:
-               plot_path = dataset.save_plot(fig, "plot.png")
-               dataset.commit(message="Add plot", add_files=[plot_path])
-
-        2. **Auto-commit mode** (auto_commit=True): Automatically commits the
-           plot and returns the commit hash. More ergonomic for single-plot
-           workflows.
-
-           Example:
-               commit_hash = dataset.save_plot(
-                   fig, "plot.png", auto_commit=True, message="Add plot"
-               )
-
-        **Important: Strict Content Hashing for SVG Plots**
-
-        Kirin uses **strict content-addressed hashing** based on exact file
-        content. For SVG plots saved from matplotlib:
-
-        - **Identical plots produce different hashes**: Even if you create the
-          same plot twice (same data, same code), the SVG files will have
-          different hashes because matplotlib embeds creation timestamps in
-          the SVG metadata.
-
-        - **Each save creates a new commit**: Saving the same plot multiple
-          times will create separate commits, each with a unique hash. This is
-          the strictest form of content-addressed storage.
-
-        - **This is by design**: The timestamp metadata is part of the file
-          content, so it affects the hash. This ensures complete content
-          integrity and prevents accidental overwrites.
-
-        - **For reproducible plots**: If you need identical plots to produce
-          identical hashes, consider using WebP format (raster) instead of SVG,
-          or strip metadata before saving (not currently implemented).
-
-        Args:
-            plot_object: The plot object to save (matplotlib Figure, plotly Figure,
-                etc.)
-            filename: Desired filename for the plot (extension may be adjusted)
-            auto_commit: If True, automatically commits the plot. If False, returns
-                        file path for explicit commit.
-            message: Commit message (required if auto_commit=True)
-            metadata: Optional metadata dictionary for the commit
-            tags: Optional list of tags for the commit
-            format: Optional format override ('svg' or 'webp'). If None, auto-detects.
-
-        Returns:
-            If auto_commit=False: File path (str) that can be used in commit()
-            If auto_commit=True: Commit hash (str) of the created commit
-
-        Raises:
-            ValueError: If auto_commit=True but message is not provided
-            ValueError: If plot type is not supported
-        """
-        # Validate auto_commit requirements
-        if auto_commit and not message:
-            raise ValueError("message is required when auto_commit=True")
-
-        # Save plot using the plots module
-        # Returns: hash, filename, source path, source hash
-        (
-            content_hash,
-            actual_filename,
-            source_file_path,
-            source_file_hash,
-        ) = save_plot_func(plot_object, filename, self.storage, format=format)
-
-        # Create a temporary file path that points to the stored content
-        # We need to create a File object to use in the commit
-        # But first, let's handle the two modes
-
-        if auto_commit:
-            # Auto-commit mode: create commit immediately
-            # We need to create a File object for the stored plot
-            file_size = self.storage.get_size(content_hash, actual_filename)
-
-            # Determine content type based on format or filename
-            content_type = get_image_content_type(actual_filename, format)
-
-            # Create plot file with source metadata if available
-            plot_metadata = {}
-            if source_file_path and source_file_hash:
-                source_filename = os.path.basename(source_file_path)
-                plot_metadata = {
-                    "source_file": source_filename,
-                    "source_hash": source_file_hash,
-                }
-
-            file_obj = File(
-                hash=content_hash,
-                name=actual_filename,
-                size=file_size,
-                content_type=content_type,
-                metadata=plot_metadata,
-                _storage=self.storage,
-            )
-
-            # Build commit with the plot file
-            builder = CommitBuilder(self.current_commit)
-            builder.add_file(actual_filename, file_obj)
-
-            # If source file was detected, add it to the commit as well
-            if source_file_path and source_file_hash:
-                source_filename = os.path.basename(source_file_path)
-                source_file_size = self.storage.get_size(
-                    source_file_hash, source_filename
-                )
-
-                # Determine content type for source file
-                source_content_type = get_source_file_content_type(source_filename)
-
-                source_file_obj = File(
-                    hash=source_file_hash,
-                    name=source_filename,
-                    size=source_file_size,
-                    content_type=source_content_type,
-                    _storage=self.storage,
-                )
-                builder.add_file(source_filename, source_file_obj)
-
-            # Set metadata and tags if provided
-            if metadata:
-                builder.set_metadata(metadata)
-            if tags:
-                builder.add_tags(tags)
-
-            # Build and save commit
-            commit = builder(message)
-            self.commit_store.save_commit(commit)
-            self._current_commit = commit
-
-            logger.info(
-                f"Saved and committed plot {actual_filename} "
-                f"with hash {content_hash[:8]}"
-            )
-            return commit.hash
-        else:
-            # Default mode: return file path(s) for explicit commit
-            # Since the file is already in content-addressed storage, we need to
-            # create a temporary file that commit() can read from
-            # The commit will store it again, but it will be deduplicated
-
-            # Create temporary file with the plot content
-            temp_file = tempfile.NamedTemporaryFile(
-                mode="wb", delete=False, suffix=f"_{actual_filename}"
-            )
-            try:
-                # Retrieve content from storage and write to temp file
-                content = self.storage.retrieve(content_hash, actual_filename)
-                temp_file.write(content)
-                temp_file.close()
-                temp_path = temp_file.name
-
-                # Note: Source file is already stored in ContentStore if detected
-                # In default mode, we return only the plot path for backward
-                # compatibility. Source file will be automatically included in
-                # auto_commit mode. For default mode, users can manually retrieve
-                # and commit source if needed
-                return temp_path
-                # Note: We can't clean it up here because commit() needs to read it
-                # The user is responsible for cleanup, or we could use a context manager
-                # For now, return the path - the file will be cleaned up by the OS
-                # eventually, or we could add cleanup logic later
-                return temp_file.name
-            except Exception:
-                # Clean up temp file on error
-                if os.path.exists(temp_file.name):
-                    os.unlink(temp_file.name)
-                raise
 
     def open_file(self, name: str, mode: str = "rb"):
         """Open a file from the current commit.

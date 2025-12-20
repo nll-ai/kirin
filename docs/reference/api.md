@@ -42,15 +42,6 @@ Dataset(
 - `get_file(filename)` - Get a file from the current commit
 - `read_file(filename)` - Read file content as text
 - `download_file(filename, target_path)` - Download file to local path
-- `save_plot(plot_object, filename, auto_commit=False, message=None, ...)` -
-  Save plots with automatic format detection
-
-#### Plot Versioning Operations
-
-- `save_plot(plot_object, filename, auto_commit=False, message=None,
-  metadata=None, tags=None, format=None)` - Save plots from matplotlib,
-  plotly, etc. with automatic format detection (SVG for vectors, WebP for
-  bitmaps)
 
 #### Model Versioning Operations
 
@@ -152,16 +143,20 @@ Create a new commit with changes to the dataset.
   are automatically serialized, and hyperparameters/metrics are extracted and
   added to metadata.
 
-- **Plot objects**: Use `save_plot()` first, then commit the returned path.
+- **Plot objects**: If `add_files` contains matplotlib or plotly figure objects,
+  they are automatically converted to files (SVG for vector plots, WebP for
+  raster plots) with format auto-detection.
 
 **Parameters:**
 
 - `message` (str): Commit message describing the changes
-- `add_files` (List[Union[str, Path, Any]], optional): List of files (paths)
-  or model objects to add. Can include:
+- `add_files` (List[Union[str, Path, Any]], optional): List of files (paths),
+  model objects, or plot objects to add. Can include:
   - File paths (str or Path): Regular files
   - scikit-learn model objects: Automatically serialized with hyperparameters
     and metrics extracted
+  - matplotlib/plotly figure objects: Automatically converted to SVG/WebP with
+    format auto-detection
 - `remove_files` (List[str], optional): List of filenames to remove
 - `metadata` (Dict[str, Any], optional): Metadata dictionary (merged with
   auto-extracted metadata). For model-specific metadata, use
@@ -211,13 +206,25 @@ dataset.commit(
     },
 )
 
-# Mixed: model objects and file paths
+# Commit with matplotlib plot object (automatic conversion)
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots()
+ax.plot([1, 2, 3], [1, 4, 9])
+ax.set_title("Training Loss")
+
+dataset.commit(
+    message="Add training plot",
+    add_files=[fig],  # Auto-converted to SVG
+)
+
+# Mixed: model objects, plot objects, and file paths
 dataset.commit(
     message="Model with plots",
     add_files=[
         model,  # Auto-serialized model
-        "plot1.svg",  # Regular file path
-        "config.json",
+        fig,  # Auto-converted plot
+        "config.json",  # Regular file path
     ],
 )
 
@@ -233,6 +240,20 @@ dataset.commit(
     tags=["production", "v2.0"]
 )
 ```
+
+**Format Auto-Detection for Plots:**
+
+When plot objects are committed, Kirin automatically detects the optimal format:
+
+- **SVG (vector)**: Default for matplotlib and plotly figures. Best for line plots,
+  scatter plots, and other vector-based visualizations. Provides infinite
+  scalability without quality loss.
+
+- **WebP (raster)**: Used for plots with raster elements (e.g., images, heatmaps).
+  Provides good compression while maintaining quality.
+
+The format is automatically chosen based on the plot type. Matplotlib and plotly
+figures default to SVG, which is optimal for most scientific visualizations.
 
 **Metadata Structure:**
 
@@ -320,127 +341,6 @@ print("Metadata changes:", comparison["metadata_diff"]["changed"])
 print("Tag changes:", comparison["tags_diff"])
 ```
 
-##### save_plot
-
-Save a plot to the dataset with automatic format detection.
-
-**Signature:**
-
-```python
-save_plot(
-    plot_object,
-    filename,
-    auto_commit=False,
-    message=None,
-    metadata=None,
-    tags=None,
-    format=None
-)
-```
-
-**Parameters:**
-
-- `plot_object`: The plot object to save (matplotlib Figure, plotly Figure,
-  etc.)
-- `filename` (str): Desired filename for the plot (extension may be adjusted)
-- `auto_commit` (bool): If True, automatically commits the plot. If False,
-  returns file path for explicit commit
-- `message` (str, optional): Commit message (required if auto_commit=True)
-- `metadata` (Dict[str, Any], optional): Metadata dictionary for the commit
-- `tags` (List[str], optional): List of tags for the commit
-- `format` (str, optional): Format override ('svg' or 'webp'). If None, auto-detects
-
-**Returns:**
-
-- If `auto_commit=False`: File path (str) that can be used in `commit()`
-- If `auto_commit=True`: Commit hash (str) of the created commit
-
-#### Strict Content Hashing for SVG Plots
-
-Kirin uses strict content-addressed hashing based on exact file content.
-This means:
-
-- SVG plots will produce different hashes even when the plot content is
-  identical, because matplotlib embeds creation timestamps in the SVG metadata
-  (`<dc:date>` elements). This is the strictest form of hashing and ensures
-  complete content integrity.
-
-- Identical plots = different commits: If you save the same plot twice (same
-  data, same code), you'll get different hashes and thus different commits,
-  because the SVG files differ by their timestamps.
-
-- This is by design: Content-addressed storage requires exact byte matching.
-  The timestamp metadata is part of the file content, so it affects the hash.
-
-- For deterministic hashing: If you need identical plots to produce identical
-  hashes, consider using WebP format (raster) instead of SVG, or strip metadata
-  before saving (not currently implemented).
-
-#### Automatic Source File Linking
-
-When saving a plot, Kirin automatically detects and stores the source notebook or
-script that generated the plot, linking them together via metadata:
-
-- **Automatic Detection**: Uses `inspect.stack()` to detect the calling script or
-  notebook. For Jupyter notebooks, uses the `ipynbname` package if available.
-
-- **Source File Storage**: The source file is automatically stored in the same
-  commit as the plot, using content-addressed storage (deduplication handled
-  automatically).
-
-- **Metadata Linking**: The plot file's metadata contains:
-  - `source_file`: Filename of the source notebook/script
-  - `source_hash`: Content hash of the source file
-
-- **Web UI Display**: The web UI displays source file links in both the file list
-  and file preview pages, making it easy to navigate from plots to their source
-  code.
-
-- **Edge Cases**: If source detection fails (e.g., running in interactive shell),
-  the plot is still saved successfully, but no source linking occurs.
-
-**Example:**
-
-```python
-# In a Jupyter notebook or Python script
-import matplotlib.pyplot as plt
-
-fig, ax = plt.subplots()
-ax.plot([1, 2, 3], [1, 4, 9])
-
-# Save plot - source file is automatically detected and linked
-commit_hash = dataset.save_plot(
-    fig, "plot.png", auto_commit=True, message="Add visualization"
-)
-
-# Access source file metadata
-plot_file = dataset.get_file("plot.png")
-if plot_file.metadata.get("source_file"):
-    print(f"Plot generated from: {plot_file.metadata['source_file']}")
-    source_file = dataset.get_file(plot_file.metadata["source_file"])
-    print(f"Source file hash: {source_file.hash}")
-```
-
-**Examples:**
-
-```python
-import matplotlib.pyplot as plt
-
-# Create a plot
-fig, ax = plt.subplots()
-ax.plot([1, 2, 3], [1, 4, 9])
-
-# Auto-commit mode (convenient for single plots)
-commit_hash = dataset.save_plot(
-    fig, "plot.png", auto_commit=True, message="Add visualization"
-)
-
-# Default mode (allows batching multiple plots)
-plot_path = dataset.save_plot(fig, "plot1.png")
-plot_path2 = dataset.save_plot(fig2, "plot2.png")
-dataset.commit(message="Add multiple plots", add_files=[plot_path, plot_path2])
-```
-
 #### Examples
 
 ```python
@@ -471,64 +371,6 @@ dataset = Dataset(
 )
 ```
 
-### save_plot (standalone function)
-
-Standalone function for saving plots to content-addressed storage.
-
-```python
-from kirin import save_plot
-from kirin.storage import ContentStore
-
-storage = ContentStore("/path/to/data")
-hash, filename = save_plot(fig, "plot.png", storage)
-```
-
-#### Strict Content Hashing for SVG Plots (save_plot function)
-
-Kirin uses strict content-addressed hashing - files are identified by their
-exact byte content. SVG plots from matplotlib will produce different hashes
-even when the plot content is identical, because matplotlib embeds creation
-timestamps in the SVG metadata. This is the strictest form of hashing and
-ensures complete content integrity. See `Dataset.save_plot()` documentation
-for more details.
-
-**Parameters:**
-
-- `plot_object`: The plot object to save (matplotlib Figure, plotly Figure, etc.)
-- `filename` (str): Desired filename for the plot (extension may be adjusted)
-- `storage` (ContentStore): ContentStore instance to use for storage
-- `format` (str, optional): Format override ('svg' or 'webp'). If None, auto-detects
-
-**Returns:**
-
-- `tuple[str, str, Optional[str], Optional[str]]`: Tuple of
-  (content_hash, actual_filename, source_file_path, source_file_hash) where:
-  - `content_hash`: Hash of the stored plot file
-  - `actual_filename`: Filename used (may have extension adjusted based on format)
-  - `source_file_path`: Path to source notebook/script, or None if not detected
-  - `source_file_hash`: Hash of stored source file, or None if not detected
-
-**Example:**
-
-```python
-import matplotlib.pyplot as plt
-from kirin import save_plot
-from kirin.storage import ContentStore
-
-storage = ContentStore("/path/to/data")
-
-fig, ax = plt.subplots()
-ax.plot([1, 2, 3], [1, 4, 9])
-
-# Save plot (returns hash, filename, and source info)
-content_hash, actual_filename, source_path, source_hash = save_plot(
-    fig, "plot.png", storage
-)
-print(f"Saved plot with hash: {content_hash[:8]}")
-print(f"Actual filename: {actual_filename}")  # May be "plot.svg"
-if source_path:
-    print(f"Source file: {source_path} (hash: {source_hash[:8]})")
-```
 
 ### Catalog
 

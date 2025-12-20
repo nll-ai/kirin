@@ -44,7 +44,7 @@ if commit:
 The `commit()` method accepts the following parameters:
 
 - **message** (required): Human-readable description of the changes
-- **add_files** (optional): List of file paths to add or update
+- **add_files** (optional): List of file paths, model objects, or plot objects to add
 - **remove_files** (optional): List of filenames to remove from the dataset
 
 ```python
@@ -61,6 +61,47 @@ dataset.commit(
     remove_files=["old_data.csv"]
 )
 ```
+
+### Committing Plot Objects
+
+You can commit matplotlib and plotly figure objects directly - they are automatically
+converted to files with format auto-detection (SVG for vector plots, WebP for raster plots):
+
+```python
+import matplotlib.pyplot as plt
+
+# Create a plot
+fig, ax = plt.subplots()
+ax.plot([1, 2, 3], [1, 4, 9])
+ax.set_title("Training Progress")
+
+# Commit the plot object directly
+dataset.commit(
+    message="Add training visualization",
+    add_files=[fig]  # Automatically converted to SVG
+)
+
+# Mix plots with other files
+fig2, ax2 = plt.subplots()
+ax2.scatter([1, 2, 3], [4, 5, 6])
+
+dataset.commit(
+    message="Add analysis plots",
+    add_files=[fig, fig2, "data.csv"]  # Plots + regular file
+)
+```
+
+**Format Auto-Detection:**
+
+- **SVG (vector)**: Default format for matplotlib and plotly figures. Best for line
+  plots, scatter plots, and other vector-based visualizations. Provides infinite
+  scalability without quality loss.
+
+- **WebP (raster)**: Automatically used for plots with raster elements (e.g., images,
+  heatmaps). Provides good compression while maintaining quality.
+
+The format is automatically chosen based on the plot type. You don't need to specify
+it manually - Kirin handles it for you.
 
 ### Error Handling
 

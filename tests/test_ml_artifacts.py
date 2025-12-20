@@ -367,3 +367,117 @@ def test_commit_backward_compatibility_file_paths(tmp_path):
 
     assert commit_hash is not None
     assert "test.txt" in dataset.list_files()
+
+
+def test_commit_with_matplotlib_figure(tmp_path):
+    """Test committing a matplotlib figure directly."""
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    ax.plot([1, 2, 3], [1, 4, 9])
+    ax.set_title("Test Plot")
+
+    dataset = Dataset(root_dir=tmp_path, name="test_plot_commit")
+    commit_hash = dataset.commit(
+        message="Test plot commit",
+        add_files=[fig],
+    )
+
+    assert commit_hash is not None
+    assert dataset.current_commit is not None
+
+    # Check that plot file was committed
+    files = dataset.list_files()
+    plot_files = [f for f in files if f.endswith((".svg", ".webp", ".png"))]
+    assert len(plot_files) > 0
+
+    plt.close(fig)
+
+
+def test_commit_with_plotly_figure(tmp_path):
+    """Test committing a plotly figure directly."""
+    try:
+        import plotly.graph_objects as go
+    except ImportError:
+        pytest.skip("plotly not installed")
+
+    # Check if kaleido is available
+    try:
+        import importlib.util
+
+        spec = importlib.util.find_spec("kaleido")
+        if spec is None:
+            pytest.skip("kaleido not installed (required for plotly image export)")
+    except ImportError:
+        pytest.skip("kaleido not installed (required for plotly image export)")
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=[1, 2, 3], y=[1, 4, 9], mode="lines"))
+
+    dataset = Dataset(root_dir=tmp_path, name="test_plotly_commit")
+    commit_hash = dataset.commit(
+        message="Test plotly commit",
+        add_files=[fig],
+    )
+
+    assert commit_hash is not None
+    assert dataset.current_commit is not None
+
+    # Check that plot file was committed
+    files = dataset.list_files()
+    plot_files = [f for f in files if f.endswith((".svg", ".webp", ".png"))]
+    assert len(plot_files) > 0
+
+
+def test_commit_with_mixed_plots_and_models(tmp_path):
+    """Test committing plots and models together."""
+    import matplotlib.pyplot as plt
+    from sklearn.datasets import make_classification
+
+    X, y = make_classification(n_samples=100, n_features=4, random_state=42)
+    model = RandomForestClassifier(n_estimators=10, random_state=42)
+    model.fit(X, y)
+
+    fig, ax = plt.subplots()
+    ax.plot([1, 2, 3], [1, 4, 9])
+
+    dataset = Dataset(root_dir=tmp_path, name="test_mixed_commit")
+    commit_hash = dataset.commit(
+        message="Test mixed commit",
+        add_files=[model, fig],
+    )
+
+    assert commit_hash is not None
+    files = dataset.list_files()
+    assert len(files) >= 2  # Model file + plot file
+
+    # Check metadata has model info
+    metadata = dataset.current_commit.metadata
+    assert "models" in metadata
+
+    plt.close(fig)
+
+
+def test_commit_with_plot_and_file_path(tmp_path):
+    """Test committing plot object with regular file path."""
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    ax.plot([1, 2, 3], [1, 4, 9])
+
+    # Create a regular file
+    test_file = tmp_path / "test.txt"
+    test_file.write_text("test content")
+
+    dataset = Dataset(root_dir=tmp_path, name="test_plot_file_commit")
+    commit_hash = dataset.commit(
+        message="Test plot and file commit",
+        add_files=[fig, str(test_file)],
+    )
+
+    assert commit_hash is not None
+    files = dataset.list_files()
+    assert len(files) >= 2  # Plot file + test.txt
+    assert "test.txt" in files
+
+    plt.close(fig)

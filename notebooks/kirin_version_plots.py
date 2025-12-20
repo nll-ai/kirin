@@ -116,11 +116,9 @@ def _(dataset):
 
 @app.cell
 def _(dataset, fig):
-    dataset.save_plot(
-        fig,
-        filename="correlated_scatter_plot.png",
-        auto_commit=True,
+    dataset.commit(
         message="Add correlated scatter plot.",
+        add_files=[fig],  # Plot object automatically converted to SVG
     )
     return
 

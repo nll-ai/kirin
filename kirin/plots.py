@@ -7,11 +7,13 @@ WebP for bitmaps) with automatic format detection.
 
 import io
 import os
-from typing import TYPE_CHECKING, Optional, Tuple, Union
+import sys
+from pathlib import Path
+from typing import TYPE_CHECKING, Any, Optional, Tuple, Union
 
 from loguru import logger
 
-from .utils import detect_source_file
+from .utils import detect_source_file, is_kirin_internal_file
 
 if TYPE_CHECKING:
     from .storage import ContentStore
@@ -39,6 +41,79 @@ try:
 except ImportError:
     Image = None
     HAS_PILLOW = False
+
+
+def is_matplotlib_figure(obj: Any) -> bool:
+    """Check if object is a matplotlib Figure.
+
+    Args:
+        obj: Object to check
+
+    Returns:
+        True if object is a matplotlib Figure
+    """
+    if not HAS_MATPLOTLIB or plt is None:
+        return False
+    return isinstance(obj, plt.Figure)
+
+
+def is_plotly_figure(obj: Any) -> bool:
+    """Check if object is a plotly Figure.
+
+    Args:
+        obj: Object to check
+
+    Returns:
+        True if object is a plotly Figure
+    """
+    if not HAS_PLOTLY or go is None:
+        return False
+    return isinstance(obj, go.Figure)
+
+
+def detect_plot_variable_name(plot: Any) -> Optional[str]:
+    """Detect the variable name of a plot object from calling scope.
+
+    Uses sys._getframe() to walk up the call stack and find where the plot
+    object was passed to commit(). Skips kirin-internal frames and looks for
+    the plot in frame.f_locals.
+
+    Args:
+        plot: Plot object to find variable name for
+
+    Returns:
+        Variable name if detected, None otherwise
+    """
+    try:
+        frame = sys._getframe(1)  # Skip this function's frame
+
+        while frame is not None:
+            try:
+                # Skip Kirin internal files
+                filename = getattr(getattr(frame, "f_code", None), "co_filename", None)
+                if filename and is_kirin_internal_file(filename):
+                    frame = frame.f_back
+                    continue
+
+                # Look for the plot object in frame locals
+                locals_dict = frame.f_locals
+                if locals_dict:
+                    for var_name, var_value in list(locals_dict.items()):
+                        if var_value is plot:
+                            return var_name
+
+            except (AttributeError, RuntimeError, TypeError):
+                # Frame might be invalidated, skip it
+                pass
+
+            # Move to parent frame
+            frame = getattr(frame, "f_back", None)
+
+        return None
+
+    except Exception as e:
+        logger.warning(f"Failed to detect plot variable name: {e}")
+        return None
 
 
 def save_plot(
@@ -142,6 +217,143 @@ def save_plot(
         )
 
     return (content_hash, actual_filename, source_file_path, source_file_hash)
+
+
+def serialize_plot(
+    plot_object: Any,
+    variable_name: Optional[str] = None,
+    temp_dir: Optional[Path] = None,
+    storage: Optional["ContentStore"] = None,
+    format: Optional[str] = None,
+) -> Tuple[str, Optional[str], Optional[str]]:
+    """Serialize a plot to a file with automatic format detection.
+
+    Uses _detect_plot_format() to choose SVG (vector) or WebP (raster).
+    Saves to a temporary file that can be read by commit().
+
+    Args:
+        plot_object: The plot object to save (matplotlib Figure, plotly Figure, etc.)
+        variable_name: Optional variable name (auto-detected if None)
+        temp_dir: Optional temporary directory (creates one if None)
+        storage: ContentStore instance for storing source file
+        format: Optional format override ('svg' or 'webp'). If None, auto-detects.
+
+    Returns:
+        Tuple of (file_path, source_file_path, source_file_hash)
+        - file_path: Path to serialized plot file (e.g., "plot.svg")
+        - source_file_path: Path to source script (if detected)
+        - source_file_hash: Hash of source file (if detected and stored)
+
+    Raises:
+        ValueError: If plot type is not supported or variable name cannot be detected
+    """
+    import tempfile
+
+    # Detect variable name if not provided
+    if variable_name is None:
+        variable_name = detect_plot_variable_name(plot_object)
+        if not variable_name:
+            raise ValueError(
+                f"Could not detect variable name for plot object of type "
+                f"{plot_object.__class__.__name__}. "
+                "Variable name detection is required for plot objects. "
+                "Either provide variable_name explicitly or ensure the plot is "
+                "assigned to a variable before passing it to serialize_plot()."
+            )
+
+    # Detect format if not provided
+    if format is None:
+        # Generate a default filename based on variable name
+        default_filename = f"{variable_name}.svg"
+        format = _detect_plot_format(plot_object, default_filename)
+    else:
+        # Validate format
+        if format not in ("svg", "webp"):
+            raise ValueError(f"Unsupported format: {format}. Must be 'svg' or 'webp'")
+
+    # Generate filename from variable name and format
+    filename = f"{variable_name}.{format}"
+
+    # Create temporary directory if not provided
+    if temp_dir is None:
+        temp_dir = Path(tempfile.mkdtemp(prefix="kirin_plot_"))
+    else:
+        temp_dir = Path(temp_dir)
+        temp_dir.mkdir(parents=True, exist_ok=True)
+
+    # Save plot to temp file
+    plot_path = temp_dir / filename
+
+    # Save based on plot type
+    if HAS_MATPLOTLIB and plt is not None and isinstance(plot_object, plt.Figure):
+        # Save matplotlib plot to temp file
+        if format == "svg":
+            plot_object.savefig(plot_path, format="svg", bbox_inches="tight")
+        elif format == "webp":
+            if HAS_PILLOW and Image is not None:
+                # Save to PNG first, then convert to WebP
+                png_path = temp_dir / f"{variable_name}.png"
+                plot_object.savefig(png_path, format="png", bbox_inches="tight")
+                # Convert PNG to WebP
+                img = Image.open(png_path)
+                img.save(plot_path, format="webp")
+                png_path.unlink()  # Remove temporary PNG
+            else:
+                # Fallback to PNG if Pillow not available
+                plot_object.savefig(plot_path, format="png", bbox_inches="tight")
+                filename = f"{variable_name}.png"
+                plot_path = temp_dir / filename
+    elif HAS_PLOTLY and go is not None and isinstance(plot_object, go.Figure):
+        # Save plotly plot to temp file
+        if format == "svg":
+            content_bytes = plot_object.to_image(format="svg")
+            plot_path.write_bytes(content_bytes)
+        elif format == "webp":
+            # Export to PNG first, then convert to WebP
+            png_bytes = plot_object.to_image(format="png")
+            if HAS_PILLOW and Image is not None:
+                img = Image.open(io.BytesIO(png_bytes))
+                img.save(plot_path, format="webp")
+            else:
+                # Fallback to PNG if Pillow not available
+                plot_path.write_bytes(png_bytes)
+                filename = f"{variable_name}.png"
+                plot_path = temp_dir / filename
+    else:
+        raise ValueError(
+            f"Unsupported plot type: {type(plot_object)}. "
+            "Supported types: matplotlib.Figure, plotly.graph_objects.Figure"
+        )
+
+    # Detect and store source file
+    source_file_path = None
+    source_file_hash = None
+
+    if storage is not None:
+        detected_source = detect_source_file()
+        if detected_source and os.path.exists(detected_source):
+            try:
+                with open(detected_source, "rb") as f:
+                    source_content = f.read()
+
+                # Get just the filename from the path for storage
+                source_filename = os.path.basename(detected_source)
+
+                # Store source file in content-addressed storage
+                source_file_hash = storage.store_content(source_content, source_filename)
+                source_file_path = detected_source
+
+                logger.info(
+                    f"Detected and stored source file: {source_filename} "
+                    f"(hash: {source_file_hash[:8]})"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Failed to store source file {detected_source}: {e}. "
+                    "Plot will be saved without source linking."
+                )
+
+    return (str(plot_path), source_file_path, source_file_hash)
 
 
 def _detect_plot_format(plot_object: object, filename: str) -> str:
