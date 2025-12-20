@@ -1569,7 +1569,10 @@ commit history.</p>
 <div class="marimo highlight"><pre><span></span><code><span class="c1"># Commit improved version</span>
 <span class="c1"># Model object passed directly - hyperparameters and metrics auto-extracted!</span>
 <span class="n">improved_commit_hash</span> <span class="o">=</span> <span class="n">model_registry</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
-    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Improved model v2.0 - Better hyperparameters (100 trees, unlimited depth)&quot;</span><span class="p">,</span>
+    <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+        <span class="s2">&quot;Improved model v2.0 - Better hyperparameters &quot;</span>
+        <span class="s2">&quot;(100 trees, unlimited depth)&quot;</span>
+    <span class="p">),</span>
     <span class="n">add_files</span><span class="o">=</span><span class="p">[</span>
         <span class="n">improved_model</span><span class="p">,</span>  <span class="c1"># Model object - auto-serialized as &quot;improved_model.pkl&quot;</span>
         <span class="nb">str</span><span class="p">(</span><span class="n">confusion_matrix_improved_path</span><span class="p">),</span>
