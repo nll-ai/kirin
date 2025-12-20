@@ -1421,7 +1421,8 @@ exactly one parent commit, creating a simple chain of changes.</p>
 <p>The <code>commit()</code> method accepts the following parameters:</p>
 <ul>
 <li><strong>message</strong> (required): Human-readable description of the changes</li>
-<li><strong>add_files</strong> (optional): List of file paths, model objects, or plot objects to add</li>
+<li><strong>add_files</strong> (optional): List of file paths, model objects, or plot
+  objects to add</li>
 <li><strong>remove_files</strong> (optional): List of filenames to remove from the dataset</li>
 </ul>
 <div class="highlight"><pre><span></span><code><span class="c1"># Add new files</span>
@@ -1438,8 +1439,9 @@ exactly one parent commit, creating a simple chain of changes.</p>
 <span class="p">)</span>
 </code></pre></div>
 <h3 id="committing-plot-objects">Committing Plot Objects</h3>
-<p>You can commit matplotlib and plotly figure objects directly - they are automatically
-converted to files with format auto-detection (SVG for vector plots, WebP for raster plots):</p>
+<p>You can commit matplotlib and plotly figure objects directly - they are
+automatically converted to files with format auto-detection (SVG for
+vector plots, WebP for raster plots):</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 
 <span class="c1"># Create a plot</span>
