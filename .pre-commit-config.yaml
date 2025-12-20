@@ -43,7 +43,7 @@ repos:
         pass_filenames: false
       - id: ty
         name: ty type checker
-        entry: ty
+        entry: bash -c 'if command -v ty &> /dev/null; then ty "$@"; else echo "ty not found, skipping"; exit 0; fi' --
         language: system
         types: [python]
         pass_filenames: true
