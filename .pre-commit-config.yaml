@@ -41,3 +41,9 @@ repos:
         always_run: true
         require_serial: true
         pass_filenames: false
+      - id: ty
+        name: ty type checker
+        entry: ty
+        language: system
+        types: [python]
+        pass_filenames: true
