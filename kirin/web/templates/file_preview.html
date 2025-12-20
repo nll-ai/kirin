@@ -124,12 +124,67 @@ with dataset.local_files() as local_files:
         </div>
         <div class="panel-content">
             {% if is_image %}
-            <div class="text-center py-8">
-                <img src="/catalog/{{ catalog_id }}/{{ dataset_name }}/file/{{ file_name }}/image{% if checkout_commit %}?checkout={{ checkout_commit }}{% endif %}"
-                     alt="{{ file_name }}"
-                     class="max-w-full h-auto mx-auto rounded-lg shadow-lg"
-                     style="max-height: 80vh;">
+            <div class="image-preview-wrapper">
+                <div class="image-view-toggle">
+                    <button class="image-view-toggle-btn active" data-mode="fit" onclick="toggleImageView('fit')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <path d="M8 8h8v8H8z"></path>
+                        </svg>
+                        Fit to View
+                    </button>
+                    <button class="image-view-toggle-btn" data-mode="scroll" onclick="toggleImageView('scroll')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <path d="M9 9h6v6H9z"></path>
+                            <path d="M9 3v6M15 15v6M3 9h6M15 15h6"></path>
+                        </svg>
+                        Scroll
+                    </button>
+                </div>
+                <div class="image-preview-container" id="image-preview-container" data-mode="fit">
+                    <img src="/catalog/{{ catalog_id }}/{{ dataset_name }}/file/{{ file_name }}/image{% if checkout_commit %}?checkout={{ checkout_commit }}{% endif %}"
+                         alt="{{ file_name }}"
+                         class="preview-image">
+                </div>
             </div>
+            <script>
+                // Initialize image view mode from localStorage
+                (function() {
+                    const savedMode = localStorage.getItem('kirin-image-view-mode') || 'fit';
+                    const container = document.getElementById('image-preview-container');
+                    const buttons = document.querySelectorAll('.image-view-toggle-btn');
+
+                    if (container) {
+                        container.setAttribute('data-mode', savedMode);
+                        buttons.forEach(btn => {
+                            if (btn.dataset.mode === savedMode) {
+                                btn.classList.add('active');
+                            } else {
+                                btn.classList.remove('active');
+                            }
+                        });
+                    }
+                })();
+
+                function toggleImageView(mode) {
+                    const container = document.getElementById('image-preview-container');
+                    const buttons = document.querySelectorAll('.image-view-toggle-btn');
+
+                    if (container) {
+                        container.setAttribute('data-mode', mode);
+                        localStorage.setItem('kirin-image-view-mode', mode);
+
+                        buttons.forEach(btn => {
+                            if (btn.dataset.mode === mode) {
+                                btn.classList.add('active');
+                            } else {
+                                btn.classList.remove('active');
+                            }
+                        });
+                    }
+                }
+            </script>
             {% elif is_binary %}
             <div class="text-center py-12">
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-4 text-muted-foreground">
