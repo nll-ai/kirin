@@ -367,4 +367,3 @@ def test_commit_backward_compatibility_file_paths(tmp_path):
 
     assert commit_hash is not None
     assert "test.txt" in dataset.list_files()
-
