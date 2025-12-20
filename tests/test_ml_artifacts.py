@@ -162,16 +162,16 @@ def test_serialize_sklearn_model_without_storage(tmp_path):
     assert source_hash is None
 
 
-def test_serialize_sklearn_model_fallback_name(tmp_path):
-    """Test model serialization with fallback to class name."""
+def test_serialize_sklearn_model_with_explicit_name(tmp_path):
+    """Test model serialization with explicit variable name."""
     model = RandomForestClassifier(n_estimators=10, random_state=42)
 
+    # When variable_name is provided explicitly, should work
     model_path, _, _ = serialize_sklearn_model(
-        model, variable_name=None, temp_dir=tmp_path, storage=None
+        model, variable_name="my_model", temp_dir=tmp_path, storage=None
     )
 
-    # Should use class name as fallback
-    assert Path(model_path).name == "RandomForestClassifier.pkl"
+    assert Path(model_path).name == "my_model.pkl"
 
 
 def test_detect_model_variable_name():

@@ -294,8 +294,13 @@ def serialize_sklearn_model(
     if variable_name is None:
         variable_name = detect_model_variable_name(model)
         if not variable_name:
-            # Fallback to model class name
-            variable_name = model.__class__.__name__
+            raise ValueError(
+                f"Could not detect variable name for model object of type "
+                f"{model.__class__.__name__}. "
+                "Variable name detection is required for model objects. "
+                "Either provide variable_name explicitly or ensure the model is "
+                "assigned to a variable before passing it to serialize_sklearn_model()."
+            )
 
     # Generate filename from variable name
     filename = f"{variable_name}.pkl"
