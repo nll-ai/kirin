@@ -25,7 +25,6 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import marimo as mo
-
     return (mo,)
 
 
@@ -90,7 +89,6 @@ def _(mo):
 
 @app.cell
 def _():
-    import json
     import tempfile
     from pathlib import Path
 
@@ -125,7 +123,6 @@ def _():
         classification_report,
         confusion_matrix,
         joblib,
-        json,
         load_iris,
         model_registry,
         np,
@@ -314,91 +311,7 @@ def _(
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Step 5: Save Model Artifact
-
-    We'll save the trained model using joblib, which is the recommended way
-    to serialize scikit-learn models.
-    """)
-    return
-
-
-@app.cell
-def _(initial_model, joblib, temp_dir):
-    # Create directory for model artifacts
-    models_dir = temp_dir / "models"
-    models_dir.mkdir(exist_ok=True)
-
-    # Save the model
-    model_path = models_dir / "iris_classifier.pkl"
-    joblib.dump(initial_model, model_path)
-
-    print("✅ Model artifact saved")
-    print(f"   Model file: {model_path.name}")
-    return model_path, models_dir
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## Step 6: Prepare Metadata and Metrics
-
-    We'll create a JSON file containing all the important information about this
-    model version: hyperparameters, metrics, dataset information, and training
-    configuration.
-    """)
-    return
-
-
-@app.cell
-def _(
-    X_train,
-    accuracy,
-    feature_names,
-    initial_model,
-    json,
-    models_dir,
-    target_names,
-):
-    # Create metadata dictionary
-    metadata = {
-        "model_type": "RandomForestClassifier",
-        "version": "1.0.0",
-        "hyperparameters": {
-            "n_estimators": initial_model.n_estimators,
-            "max_depth": initial_model.max_depth,
-            "random_state": 1,
-        },
-        "metrics": {
-            "accuracy": float(accuracy),
-        },
-        "dataset": {
-            "name": "Iris",
-            "n_features": len(feature_names),
-            "feature_names": list(feature_names),
-            "n_classes": len(target_names),
-            "class_names": list(target_names),
-            "train_samples": len(X_train),
-        },
-        "training_config": {
-            "test_size": 0.2,
-            "random_state": 42,
-            "stratify": True,
-        },
-    }
-
-    # Save metadata to JSON file
-    metadata_path = models_dir / "model_metadata.json"
-    metadata_path.write_text(json.dumps(metadata, indent=2))
-
-    print("✅ Metadata prepared")
-    print(f"   Metadata file: {metadata_path.name}")
-    return (metadata_path,)
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## Step 7: Commit Everything to Kirin
+    ## Step 5: Commit Everything to Kirin
 
     Now we'll commit all our artifacts together: the model, plots, and
     metadata. Kirin automatically handles model serialization and extracts
@@ -482,7 +395,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Step 7: Train an Improved Model
+    ## Step 6: Train an Improved Model
 
     Now let's train an improved version with better hyperparameters. We'll
     increase the number of trees, allow deeper trees, and tune other
@@ -596,41 +509,14 @@ def _(
     )
 
 
-@app.cell
-def _(improved_model, joblib, models_dir):
-    # Save improved model (same filename - versioning handled by commits)
-    improved_model_path = models_dir / "iris_classifier.pkl"
-    joblib.dump(improved_model, improved_model_path)
-
-    print("✅ Improved model artifact saved")
-    print(f"   Model file: {improved_model_path.name}")
-    print("   (Same filename - versioning handled by Kirin commits)")
-    return (improved_model_path,)
-
-
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Step 8: Commit the Improved Version
-
-    We'll commit the improved model version. Notice that we're using the same
-    approach - just pass the model object directly. Kirin automatically handles
-    serialization and metadata extraction!
-    """)
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## Step 8: Commit the Improved Version
+    ## Step 7: Commit the Improved Version
 
     Now we'll commit the improved model version. We'll use the same simplified
     approach - just pass the model object directly. Kirin automatically handles
-    serialization, hyperparameter extraction, and metrics extraction. Notice
-    that we're using the same variable name for the model - Kirin's versioning
-    system tracks different versions of files with the same name through the
-    commit history.
+    serialization, hyperparameter extraction, and metrics extraction.
     """)
     return
 
@@ -677,7 +563,7 @@ def _(
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Step 9: View the Commit History
+    ## Step 8: View the Commit History
 
     Let's look at the commit history to see how our model has evolved. This
     shows the linear progression of our model versions.
@@ -731,7 +617,7 @@ def _(mo):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## Step 10: Access Files from Different Versions
+    ## Step 9: Access Files from Different Versions
 
     One of the powerful features of Kirin is the ability to access files from
     any commit in the history. We'll use `checkout()` to switch to a specific

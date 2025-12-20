@@ -1061,10 +1061,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-5-save-model-artifact" class="md-nav__link">
+  <a href="#step-5-commit-everything-to-kirin" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 5: Save Model Artifact
+        Step 5: Commit Everything to Kirin
       
     </span>
   </a>
@@ -1072,10 +1072,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-6-prepare-metadata-and-metrics" class="md-nav__link">
+  <a href="#step-6-train-an-improved-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 6: Prepare Metadata and Metrics
+        Step 6: Train an Improved Model
       
     </span>
   </a>
@@ -1083,10 +1083,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-7-commit-everything-to-kirin" class="md-nav__link">
+  <a href="#step-7-commit-the-improved-version" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 7: Commit Everything to Kirin
+        Step 7: Commit the Improved Version
       
     </span>
   </a>
@@ -1094,10 +1094,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-7-train-an-improved-model" class="md-nav__link">
+  <a href="#step-8-view-the-commit-history" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 7: Train an Improved Model
+        Step 8: View the Commit History
       
     </span>
   </a>
@@ -1105,43 +1105,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#step-8-commit-the-improved-version" class="md-nav__link">
+  <a href="#step-9-access-files-from-different-versions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Step 8: Commit the Improved Version
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-8-commit-the-improved-version_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 8: Commit the Improved Version
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-9-view-the-commit-history" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 9: View the Commit History
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-10-access-files-from-different-versions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step 10: Access Files from Different Versions
+        Step 9: Access Files from Different Versions
       
     </span>
   </a>
@@ -1219,8 +1186,7 @@ artifacts together:</p>
 <p>Kirin lets you commit all of these together, creating a complete snapshot
 of your model at a point in time. When you improve your model, you create
 a new commit with updated artifacts, showing the evolution of your work.</p>
-<div class="marimo highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<div class="marimo highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">joblib</span>
@@ -1360,59 +1326,7 @@ create:</p>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   - Feature importance: </span><span class="si">{</span><span class="n">feature_importance_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   - Classification report: </span><span class="si">{</span><span class="n">report_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
-<h2 id="step-5-save-model-artifact">Step 5: Save Model Artifact</h2>
-<p>We'll save the trained model using joblib, which is the recommended way
-to serialize scikit-learn models.</p>
-<div class="marimo highlight"><pre><span></span><code><span class="c1"># Create directory for model artifacts</span>
-<span class="n">models_dir</span> <span class="o">=</span> <span class="n">temp_dir</span> <span class="o">/</span> <span class="s2">&quot;models&quot;</span>
-<span class="n">models_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="c1"># Save the model</span>
-<span class="n">model_path</span> <span class="o">=</span> <span class="n">models_dir</span> <span class="o">/</span> <span class="s2">&quot;iris_classifier.pkl&quot;</span>
-<span class="n">joblib</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">initial_model</span><span class="p">,</span> <span class="n">model_path</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ Model artifact saved&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Model file: </span><span class="si">{</span><span class="n">model_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</code></pre></div>
-<h2 id="step-6-prepare-metadata-and-metrics">Step 6: Prepare Metadata and Metrics</h2>
-<p>We'll create a JSON file containing all the important information about this
-model version: hyperparameters, metrics, dataset information, and training
-configuration.</p>
-<div class="marimo highlight"><pre><span></span><code><span class="c1"># Create metadata dictionary</span>
-<span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;model_type&quot;</span><span class="p">:</span> <span class="s2">&quot;RandomForestClassifier&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;1.0.0&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;hyperparameters&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;n_estimators&quot;</span><span class="p">:</span> <span class="n">initial_model</span><span class="o">.</span><span class="n">n_estimators</span><span class="p">,</span>
-        <span class="s2">&quot;max_depth&quot;</span><span class="p">:</span> <span class="n">initial_model</span><span class="o">.</span><span class="n">max_depth</span><span class="p">,</span>
-        <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;metrics&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">accuracy</span><span class="p">),</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;dataset&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="s2">&quot;Iris&quot;</span><span class="p">,</span>
-        <span class="s2">&quot;n_features&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_names</span><span class="p">),</span>
-        <span class="s2">&quot;feature_names&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">feature_names</span><span class="p">),</span>
-        <span class="s2">&quot;n_classes&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_names</span><span class="p">),</span>
-        <span class="s2">&quot;class_names&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">target_names</span><span class="p">),</span>
-        <span class="s2">&quot;train_samples&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">),</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;training_config&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;test_size&quot;</span><span class="p">:</span> <span class="mf">0.2</span><span class="p">,</span>
-        <span class="s2">&quot;random_state&quot;</span><span class="p">:</span> <span class="mi">42</span><span class="p">,</span>
-        <span class="s2">&quot;stratify&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="p">},</span>
-<span class="p">}</span>
-
-<span class="c1"># Save metadata to JSON file</span>
-<span class="n">metadata_path</span> <span class="o">=</span> <span class="n">models_dir</span> <span class="o">/</span> <span class="s2">&quot;model_metadata.json&quot;</span>
-<span class="n">metadata_path</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ Metadata prepared&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Metadata file: </span><span class="si">{</span><span class="n">metadata_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</code></pre></div>
-<h2 id="step-7-commit-everything-to-kirin">Step 7: Commit Everything to Kirin</h2>
+<h2 id="step-5-commit-everything-to-kirin">Step 5: Commit Everything to Kirin</h2>
 <p>Now we'll commit all our artifacts together: the model, plots, and
 metadata. Kirin automatically handles model serialization and extracts
 hyperparameters and metrics, so we can just pass the model object directly!
@@ -1465,7 +1379,7 @@ stored together in Kirin:</p>
 Kirin handled the rest!</p>
 <p>Now let's see how to create an improved version.</p>
 <!---->
-<h2 id="step-7-train-an-improved-model">Step 7: Train an Improved Model</h2>
+<h2 id="step-6-train-an-improved-model">Step 6: Train an Improved Model</h2>
 <p>Now let's train an improved version with better hyperparameters. We'll
 increase the number of trees, allow deeper trees, and tune other
 parameters to improve performance.</p>
@@ -1546,26 +1460,10 @@ parameters to improve performance.</p>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   - Feature importance: </span><span class="si">{</span><span class="n">feature_importance_improved_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   - Classification report: </span><span class="si">{</span><span class="n">report_improved_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
-<div class="marimo highlight"><pre><span></span><code><span class="c1"># Save improved model (same filename - versioning handled by commits)</span>
-<span class="n">improved_model_path</span> <span class="o">=</span> <span class="n">models_dir</span> <span class="o">/</span> <span class="s2">&quot;iris_classifier.pkl&quot;</span>
-<span class="n">joblib</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">improved_model</span><span class="p">,</span> <span class="n">improved_model_path</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ Improved model artifact saved&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Model file: </span><span class="si">{</span><span class="n">improved_model_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   (Same filename - versioning handled by Kirin commits)&quot;</span><span class="p">)</span>
-</code></pre></div>
-<h2 id="step-8-commit-the-improved-version">Step 8: Commit the Improved Version</h2>
-<p>We'll commit the improved model version. Notice that we're using the same
-approach - just pass the model object directly. Kirin automatically handles
-serialization and metadata extraction!</p>
-<!---->
-<h2 id="step-8-commit-the-improved-version_1">Step 8: Commit the Improved Version</h2>
+<h2 id="step-7-commit-the-improved-version">Step 7: Commit the Improved Version</h2>
 <p>Now we'll commit the improved model version. We'll use the same simplified
 approach - just pass the model object directly. Kirin automatically handles
-serialization, hyperparameter extraction, and metrics extraction. Notice
-that we're using the same variable name for the model - Kirin's versioning
-system tracks different versions of files with the same name through the
-commit history.</p>
+serialization, hyperparameter extraction, and metrics extraction.</p>
 <div class="marimo highlight"><pre><span></span><code><span class="c1"># Commit improved version</span>
 <span class="c1"># Model object passed directly - hyperparameters and metrics auto-extracted!</span>
 <span class="n">improved_commit_hash</span> <span class="o">=</span> <span class="n">model_registry</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
@@ -1594,7 +1492,7 @@ commit history.</p>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;     - Feature importance plot (updated)&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;     - Classification report (updated)&quot;</span><span class="p">)</span>
 </code></pre></div>
-<h2 id="step-9-view-the-commit-history">Step 9: View the Commit History</h2>
+<h2 id="step-8-view-the-commit-history">Step 8: View the Commit History</h2>
 <p>Let's look at the commit history to see how our model has evolved. This
 shows the linear progression of our model versions.</p>
 <div class="marimo highlight"><pre><span></span><code><span class="c1"># Get commit history</span>
@@ -1627,7 +1525,7 @@ and Kirin handled serialization and metadata extraction automatically!</p>
 making it easy to track improvements and understand what changed between
 versions.</p>
 <!---->
-<h2 id="step-10-access-files-from-different-versions">Step 10: Access Files from Different Versions</h2>
+<h2 id="step-9-access-files-from-different-versions">Step 9: Access Files from Different Versions</h2>
 <p>One of the powerful features of Kirin is the ability to access files from
 any commit in the history. We'll use <code>checkout()</code> to switch to a specific
 commit, then use the <code>local_files()</code> context manager to access files as
