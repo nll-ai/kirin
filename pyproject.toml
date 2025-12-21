@@ -64,6 +64,10 @@ include-package-data = true
 [tool.setuptools.packages.find]
 where = ["."]
 
+[tool.setuptools.package-data]
+"kirin.widgets" = ["assets/**/*", "templates/**/*"]
+"kirin.web" = ["static/**/*", "templates/**/*"]
+
 [project]
 name = "kirin"
 version = "0.0.10"

@@ -2868,7 +2868,7 @@ packages:
 - pypi: ./
   name: kirin
   version: 0.0.10
-  sha256: 8e2ce4b08d17fd6935154815c42957cf05321e42116afd4f13d61bf87eb3d9bb
+  sha256: 529db216699043289d03c63240917492c2af089d7596ff49b9580e6eca53c703
   requires_dist:
   - pyprojroot
   - python-dotenv
@@ -2888,6 +2888,7 @@ packages:
   - ipynbname
   - pillow
   - anywidget
+  editable: true
 - conda: https://conda.anaconda.org/conda-forge/linux-64/kiwisolver-1.4.9-py313hc8edb43_2.conda
   sha256: 60d7d525db89401f88f5c91bdbb79d3afbf005e7d7c1326318659fa097607e51
   md5: 3e0e65595330e26515e31b7fc6d933c7

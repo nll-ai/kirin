@@ -548,6 +548,8 @@ ensures code quality and consistency across the entire codebase.
 - **Re-run until clean**: Continue running pre-commit until all files pass with
   zero errors
 - **Before committing**: Never commit files that have pre-commit errors
+- **Never use --no-verify**: Do not use `git commit --no-verify` - all
+  pre-commit issues must be fixed before committing
 
 **Pre-commit handles automatic fixes**:
 
@@ -1724,6 +1726,8 @@ When writing tests for the project:
   `/tests/` directory following the existing naming conventions
 - **Use the test environment** - Always run tests with `pixi run -e tests
   pytest` or `pixi run -e tests pytest tests/test_filename.py`
+- **CRITICAL**: Always prefix test commands with `pixi run -e tests` - Never
+  run pytest directly without this prefix
 - **Test new functionality immediately** - Write tests for new features
   before or alongside implementation
 - **Follow existing test patterns** - Use the same structure and naming

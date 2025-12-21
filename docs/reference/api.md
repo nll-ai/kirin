@@ -59,8 +59,12 @@ display beautifully in Jupyter and Marimo notebooks.
 When you display a `Dataset`, `Commit`, or `Catalog` object in a notebook cell,
 Kirin automatically generates an interactive HTML view with:
 
-- **File Lists**: Click on any file to reveal/hide code snippets showing how to
-  access it
+- **File Lists**: Click on any file to preview its contents or reveal code snippets
+- **File Previews**:
+  - **CSV files**: Displayed as interactive tables with proper formatting
+  - **JSON files**: Formatted JSON with syntax highlighting
+  - **Text files**: Displayed in code blocks with proper formatting
+  - Files larger than 100KB are not previewed for performance
 - **Copy Code to Access Button**: Each file has a button that copies Python code
   to your clipboard with the correct variable name
 - **Commit History**: Visual display of commit history with metadata
