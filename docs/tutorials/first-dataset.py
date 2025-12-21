@@ -20,7 +20,6 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import marimo as mo
-
     return (mo,)
 
 
@@ -354,7 +353,9 @@ def _(csv_file, data_dir, my_dataset):
     duplicate_file.write_text(csv_file.read_text())
 
     # Commit the duplicate
-    my_dataset.commit(message="Add duplicate file", add_files=[str(duplicate_file)])
+    my_dataset.commit(
+        message="Add duplicate file", add_files=[str(duplicate_file)]
+    )
 
     # Check the file objects
     original = my_dataset.get_file("data.csv")
@@ -380,7 +381,9 @@ def _(mo):
 @app.cell
 def _(my_dataset):
     # Remove a file
-    my_dataset.commit(message="Remove duplicate file", remove_files=["data_copy.csv"])
+    my_dataset.commit(
+        message="Remove duplicate file", remove_files=["data_copy.csv"]
+    )
 
     # Display the dataset to see updated state
     my_dataset
@@ -423,7 +426,7 @@ def _(data_dir, my_dataset):
     return
 
 
-@app.cell
+@app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
     ## Summary
