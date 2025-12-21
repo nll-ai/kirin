@@ -1,0 +1,246 @@
+<div class="kirin-commit-view-static">
+<style>{{ css_content }}</style>
+
+<!-- Header panel -->
+<div class="panel">
+    <div class="panel-header">
+        <h2 class="panel-title">Commit</h2>
+    </div>
+    <div class="panel-content">
+        <div class="space-y-4">
+            <div>
+                <span class="text-sm text-muted-foreground">Hash:</span>
+                <span class="commit-hash">{{ data.hash }}</span>
+            </div>
+
+            <div>
+                <span class="text-sm text-muted-foreground">Message:</span>
+                <span class="commit-message">{{ data.message }}</span>
+            </div>
+
+            <div>
+                <span class="text-sm text-muted-foreground">Timestamp:</span>
+                <span class="commit-timestamp">{{ data.timestamp }}</span>
+            </div>
+
+            {% if data.parent_hash %}
+            <div>
+                <span class="text-sm text-muted-foreground">Parent:</span>
+                <span class="commit-hash">{{ data.parent_hash }}</span>
+            </div>
+            {% else %}
+            <div><span class="badge">Initial Commit</span></div>
+            {% endif %}
+
+            <div class="flex items-center gap-4">
+                <span class="text-sm text-muted-foreground">Files: {{ data.file_count }}</span>
+                <span class="text-sm text-muted-foreground">Size: {{ data.size }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Files panel -->
+{% if data.files %}
+<div class="panel">
+    <div class="panel-header">
+        <h3 class="panel-title">Files</h3>
+    </div>
+    <div class="panel-content">
+        <div class="kirin-file-list">
+            {% for file_info in data.files %}
+            {% set index = loop.index0 %}
+            {% set code_id = "code-" ~ index %}
+            {% set preview_id = "preview-" ~ index %}
+
+            <div class="file-item" data-file-index="{{ index }}" style="cursor: pointer;">
+                <div class="file-icon">{{ file_info.icon_html | safe }}</div>
+                <div class="file-name">{{ file_info.name }}</div>
+                <div class="file-size">{{ file_info.size }}</div>
+            </div>
+
+            <!-- Code snippet (initially hidden, shown separately) -->
+            <div class="code-snippet hidden" id="{{ code_id }}">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-muted-foreground">Code to access this file:</span>
+                    <button class="btn btn-sm copy-code-btn" data-code-id="{{ code_id }}">Copy</button>
+                </div>
+                <pre><code id="code-content-{{ index }}"># Checkout this commit first
+dataset.checkout("{{ data.hash }}")
+# Get path to local clone of file
+with dataset.local_files() as files:
+    file_path = files["{{ file_info.name }}"]</code></pre>
+            </div>
+
+            <!-- File preview (initially hidden) -->
+            {% if file_info.is_text and file_info.content %}
+            <div class="file-preview hidden" id="{{ preview_id }}">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h4 class="panel-title">Preview: {{ file_info.name }}</h4>
+                    </div>
+                    <div class="panel-content">
+                        {% if file_info.name.lower().endswith('.csv') %}
+                        <!-- CSV table preview -->
+                        {% set lines = file_info.content.strip().split('\n') %}
+                        {% if lines %}
+                        {% set headers = lines[0].split(',') %}
+                        <div class="overflow-auto">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        {% for header in headers %}
+                                        <th>{{ header.strip() }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for line in lines[1:] %}
+                                    {% if line.strip() %}
+                                    <tr>
+                                        {% for cell in line.split(',') %}
+                                        <td>{{ cell.strip() }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% endif %}
+                        {% elif file_info.name.lower().endswith('.json') %}
+                        <!-- JSON file preview -->
+                        <pre><code class="json">{{ file_info.content }}</code></pre>
+                        {% else %}
+                        <!-- Regular text file preview -->
+                        <pre><code>{{ file_info.content }}</code></pre>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% elif file_info.is_image %}
+            <div class="file-preview hidden" id="{{ preview_id }}">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h4 class="panel-title">Preview: {{ file_info.name }}</h4>
+                    </div>
+                    <div class="panel-content">
+                        <p class="text-muted-foreground">Image preview not yet implemented</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="panel">
+    <div class="panel-content">
+        <p class="text-muted-foreground">No files in this commit</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- JavaScript for file interactions (reused from dataset) -->
+<script>
+(function() {
+    function setupCopyButtons() {
+        document.querySelectorAll('.copy-code-btn').forEach(function(button) {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent file item click
+                const codeId = this.getAttribute('data-code-id');
+                const codeElement = document.getElementById(codeId);
+                if (!codeElement) return;
+
+                const codeContent = codeElement.querySelector('code');
+                if (!codeContent) return;
+
+                const text = codeContent.textContent || codeContent.innerText;
+
+                // Try modern clipboard API
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(function() {
+                        const originalText = button.textContent;
+                        button.textContent = 'Copied!';
+                        setTimeout(function() {
+                            button.textContent = originalText;
+                        }, 2000);
+                    }).catch(function(err) {
+                        console.error('Failed to copy:', err);
+                    });
+                } else {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = text;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        const originalText = button.textContent;
+                        button.textContent = 'Copied!';
+                        setTimeout(function() {
+                            button.textContent = originalText;
+                        }, 2000);
+                    } catch (err) {
+                        console.error('Fallback copy failed:', err);
+                    }
+                    document.body.removeChild(textArea);
+                }
+            });
+        });
+    }
+
+    function initFileInteractions() {
+        // Setup copy buttons
+        setupCopyButtons();
+
+        // Handle file item clicks - show preview (primary action)
+        document.querySelectorAll('.file-item').forEach(function(item) {
+            // Remove existing listeners to avoid duplicates
+            const newItem = item.cloneNode(true);
+            item.parentNode.replaceChild(newItem, item);
+
+            newItem.addEventListener('click', function() {
+                const index = this.getAttribute('data-file-index');
+                const codeId = 'code-' + index;
+                const previewId = 'preview-' + index;
+
+                const codeSnippet = document.getElementById(codeId);
+                const preview = document.getElementById(previewId);
+
+                console.log('File clicked, index:', index, 'preview exists:', !!preview, 'code snippet exists:', !!codeSnippet);
+
+                // Always hide code snippet first
+                if (codeSnippet) {
+                    codeSnippet.classList.add('hidden');
+                }
+
+                // Show preview if it exists (primary action)
+                if (preview) {
+                    // Toggle preview visibility
+                    preview.classList.toggle('hidden');
+                    console.log('Preview toggled, now hidden:', preview.classList.contains('hidden'));
+                } else {
+                    // If no preview exists, show code snippet as fallback
+                    console.log('No preview found, showing code snippet as fallback');
+                    if (codeSnippet) {
+                        codeSnippet.classList.remove('hidden');
+                    }
+                }
+            });
+        });
+    }
+
+    // Run when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initFileInteractions);
+    } else {
+        initFileInteractions();
+    }
+})();
+</script>
+</div>

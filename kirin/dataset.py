@@ -857,6 +857,103 @@ class Dataset:
             f"root_dir='{self.root_dir}')"
         )
 
+    def _get_widget_data(self) -> dict:
+        """Get widget data dictionary for DatasetWidget.
+
+        Returns:
+            Dictionary with dataset data for widget rendering
+        """
+        from .html_repr import format_file_size, get_file_icon_html
+
+        commit_count = self.commit_store.get_commit_count()
+        total_size = None
+        current_commit_data = None
+
+        if self.current_commit:
+            total_size = format_file_size(self.current_commit.get_total_size())
+            current_commit_data = {
+                "hash": self.current_commit.short_hash,
+                "message": self.current_commit.message,
+                "timestamp": self.current_commit.timestamp.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
+            }
+
+        # Build files list with content for preview
+        files = []
+        if self.current_commit and self.files:
+            for filename, file_obj in sorted(self.files.items()):
+                file_data = {
+                    "name": filename,
+                    "size": format_file_size(file_obj.size),
+                    "icon_html": get_file_icon_html(filename, file_obj.content_type),
+                    "content_type": file_obj.content_type,
+                }
+
+                # Add file content for preview (only for small text files)
+                # Limit to 100KB for text files
+                max_preview_size = 100 * 1024  # 100KB
+                # Check if file is text-based
+                is_text_file = (
+                    file_obj.content_type
+                    and (
+                        file_obj.content_type.startswith("text/")
+                        or file_obj.content_type
+                        in ["application/json", "application/xml"]
+                    )
+                ) or filename.lower().endswith((".txt", ".csv", ".json", ".md", ".py"))
+                is_image = (
+                    file_obj.content_type
+                    and file_obj.content_type.startswith("image/")
+                    or filename.lower().endswith(
+                        (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg")
+                    )
+                )
+
+                if is_text_file and file_obj.size <= max_preview_size:
+                    try:
+                        content = file_obj.read_text()
+                        file_data["content"] = content
+                        file_data["is_text"] = True
+                    except Exception as e:
+                        logger.debug(f"Failed to read file {filename} for preview: {e}")
+                        file_data["content"] = None
+                        file_data["is_text"] = False
+                elif is_image:
+                    # For images, we'll need to get the data URL or path
+                    # For now, mark it as an image
+                    file_data["is_image"] = True
+                    file_data["is_text"] = False
+                else:
+                    file_data["is_text"] = False
+                    file_data["is_image"] = False
+
+                files.append(file_data)
+
+        # Build commit history (last 10)
+        history = []
+        for commit in self.history(limit=10):
+            history.append(
+                {
+                    "hash": commit.short_hash,
+                    "message": commit.message,
+                    "timestamp": commit.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                    "file_count": len(commit.files),
+                    "size": format_file_size(commit.get_total_size()),
+                }
+            )
+
+        return {
+            "name": self.name,
+            "description": self.description,
+            "commit_count": commit_count,
+            "total_size": total_size,
+            "current_commit": current_commit_data,
+            "files": files,
+            "history": history,
+            "has_commit": self.current_commit is not None,
+        }
+
     def _repr_html_(self) -> str:
         """Generate HTML representation of the dataset for notebook display.
 
@@ -866,170 +963,8 @@ class Dataset:
         Returns:
             HTML string with dataset information, files, and commit history
         """
-        from .html_repr import (
-            escape_html,
-            format_file_size,
-            generate_file_access_code,
-            get_file_icon_html,
-            get_inline_css,
-            get_inline_javascript,
-        )
+        # Use widgets - let errors propagate for debugging
+        from .widgets import DatasetWidget
 
-        # Get variable name: manual override > default
-        variable_name = getattr(self, "_repr_variable_name", "dataset")
-
-        html_parts = ['<div class="kirin-dataset-view">']
-
-        # Add inline CSS
-        html_parts.append(f"<style>{get_inline_css()}</style>")
-
-        # Dataset header panel
-        html_parts.append('<div class="panel">')
-        html_parts.append('<div class="panel-header">')
-        html_parts.append(f'<h2 class="panel-title">{escape_html(self.name)}</h2>')
-        html_parts.append("</div>")
-        html_parts.append('<div class="panel-content">')
-
-        # Dataset metadata
-        html_parts.append('<div class="space-y-4">')
-        if self.description:
-            html_parts.append(
-                f'<p class="text-muted-foreground">{escape_html(self.description)}</p>'
-            )
-
-        commit_count = self.commit_store.get_commit_count()
-        html_parts.append(
-            f'<div class="flex items-center gap-4">'
-            f'<span class="text-sm text-muted-foreground">'
-            f"Commits: {commit_count}</span>"
-        )
-
-        if self.current_commit:
-            total_size = self.current_commit.get_total_size()
-            html_parts.append(
-                f'<span class="text-sm text-muted-foreground">'
-                f"Size: {format_file_size(total_size)}</span>"
-            )
-        html_parts.append("</div>")
-
-        # Current commit info
-        if self.current_commit:
-            html_parts.append(
-                f'<div><span class="text-sm text-muted-foreground">'
-                f"Current Commit:</span> "
-                f'<span class="commit-hash">'
-                f"{escape_html(self.current_commit.short_hash)}</span> "
-                f'<span class="text-sm">'
-                f"{escape_html(self.current_commit.message)}</span></div>"
-            )
-        else:
-            html_parts.append('<p class="text-muted-foreground">No commits yet</p>')
-
-        html_parts.append("</div>")  # space-y-4
-        html_parts.append("</div>")  # panel-content
-        html_parts.append("</div>")  # panel
-
-        # Files list (from current commit)
-        if self.current_commit and self.current_commit.files:
-            html_parts.append('<div class="panel">')
-            html_parts.append('<div class="panel-header">')
-            html_parts.append('<h3 class="panel-title">Files</h3>')
-            html_parts.append("</div>")
-            html_parts.append('<div class="panel-content">')
-
-            for filename, file_obj in sorted(self.files.items()):
-                # Create unique code ID for this file
-                code_id = (
-                    f"code-{self.name}-"
-                    f"{filename.replace('.', '-').replace('/', '-').replace(' ', '-')}"
-                )
-                html_parts.append(
-                    f'<div class="file-item" data-code-id="{code_id}" '
-                    f'style="cursor: pointer;">'
-                )
-                html_parts.append(
-                    f'<div class="file-icon">'
-                    f"{get_file_icon_html(filename, file_obj.content_type)}</div>"
-                )
-                html_parts.append(
-                    f'<div class="file-name">{escape_html(filename)}</div>'
-                )
-                # Generate the code to copy
-                var_name = getattr(self, "_repr_variable_name", "dataset")
-                code_to_copy = (
-                    f"# Get path to local clone of file\n"
-                    f"with {var_name}.local_files() as files:\n"
-                    f'    file_path = files["{escape_html(filename)}"]'
-                )
-                # Escape for HTML attribute (but keep newlines)
-                code_attr = escape_html(code_to_copy).replace("\n", "&#10;")
-                html_parts.append(
-                    f'<button class="btn btn-sm btn-ghost copy-code-btn" '
-                    f'data-code-id="{code_id}" '
-                    f'data-code="{code_attr}" '
-                    f'data-filename="{escape_html(filename)}" '
-                    f'title="Copy code to access file">'
-                    f"Copy Code to Access</button>"
-                )
-                html_parts.append(
-                    f'<div class="file-size">{format_file_size(file_obj.size)}</div>'
-                )
-                html_parts.append("</div>")
-
-                # Add code snippet for accessing this file (hidden by default)
-                html_parts.append(
-                    generate_file_access_code(code_id, filename, variable_name)
-                )
-
-            html_parts.append("</div>")  # panel-content
-            html_parts.append("</div>")  # panel
-        elif self.current_commit:
-            html_parts.append('<div class="panel">')
-            html_parts.append('<div class="panel-content">')
-            html_parts.append(
-                '<p class="text-muted-foreground">No files in current commit</p>'
-            )
-            html_parts.append("</div>")
-            html_parts.append("</div>")
-
-        # Commit history (limited to last 10 for performance)
-        history = self.history(limit=10)
-        if history:
-            html_parts.append('<div class="panel">')
-            html_parts.append('<div class="panel-header">')
-            html_parts.append('<h3 class="panel-title">Recent Commits</h3>')
-            html_parts.append("</div>")
-            html_parts.append('<div class="panel-content">')
-
-            for commit in history:
-                html_parts.append('<div class="commit-item">')
-                html_parts.append(
-                    f'<div class="flex items-center justify-between gap-4">'
-                    f"<div>"
-                    f'<span class="commit-hash">'
-                    f"{escape_html(commit.short_hash)}</span> "
-                    f'<span class="commit-message">'
-                    f"{escape_html(commit.message)}</span>"
-                    f"</div>"
-                    f'<span class="commit-timestamp">'
-                    f"{escape_html(commit.timestamp.strftime('%Y-%m-%d %H:%M:%S'))}"
-                    f"</span>"
-                    f"</div>"
-                )
-                html_parts.append(
-                    f'<div class="text-sm text-muted-foreground mt-2">'
-                    f"{len(commit.files)} files, "
-                    f"{format_file_size(commit.get_total_size())}"
-                    f"</div>"
-                )
-                html_parts.append("</div>")  # commit-item
-
-            html_parts.append("</div>")  # panel-content
-            html_parts.append("</div>")  # panel
-
-        # Add inline JavaScript
-        html_parts.append(get_inline_javascript())
-
-        html_parts.append("</div>")  # kirin-dataset-view
-
-        return "".join(html_parts)
+        widget = DatasetWidget(data=self._get_widget_data())
+        return widget._repr_html_()

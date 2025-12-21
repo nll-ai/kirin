@@ -1,0 +1,71 @@
+<div class="kirin-catalog-view-static">
+<style>{{ css_content }}</style>
+
+<!-- Header panel -->
+<div class="panel">
+    <div class="panel-header">
+        <h2 class="panel-title">Catalog</h2>
+    </div>
+    <div class="panel-content">
+        <div class="space-y-4">
+            <div>
+                <span class="text-sm text-muted-foreground">Root Directory:</span>
+                <span class="text-sm">{{ data.root_dir }}</span>
+            </div>
+
+            <div>
+                <span class="text-sm text-muted-foreground">Datasets: {{ data.dataset_count }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Datasets panel -->
+{% if data.datasets %}
+<div class="panel">
+    <div class="panel-header">
+        <h3 class="panel-title">Datasets</h3>
+    </div>
+    <div class="panel-content">
+        {% for dataset in data.datasets %}
+        <div class="commit-item">
+            <div class="flex items-center justify-between gap-4">
+                <div>
+                    <div class="font-semibold">{{ dataset.name }}</div>
+                    {% if dataset.description %}
+                    <div class="text-sm text-muted-foreground">{{ dataset.description }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if dataset.commit %}
+            <div class="text-sm text-muted-foreground mt-2">
+                <span class="commit-hash">{{ dataset.commit.hash }}</span>
+                <span>{{ dataset.commit.message }}</span>
+            </div>
+            <div class="text-sm text-muted-foreground">
+                {{ dataset.commit.file_count }} files, {{ dataset.commit.size }}
+            </div>
+            {% else %}
+            <div class="text-sm text-muted-foreground">No commits</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        {% if data.total_size %}
+        <div class="mt-4 pt-4 border-t">
+            <div class="text-sm text-muted-foreground">
+                Total size across all datasets: {{ data.total_size }}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<div class="panel">
+    <div class="panel-content">
+        <p class="text-muted-foreground">No datasets in catalog</p>
+    </div>
+</div>
+{% endif %}
+</div>
