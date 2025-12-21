@@ -17,25 +17,39 @@
 
       const codeId = copyButton.getAttribute("data-code-id");
       const fileIndex = copyButton.getAttribute("data-file-index");
+      const dataCode = copyButton.getAttribute("data-code");
 
-      // Try to find code content by ID first
-      const codeContentId = "code-content-" + fileIndex;
-      let codeContent = document.getElementById(codeContentId);
+      // Try data-code attribute first (pre-escaped HTML)
+      let text = null;
+      if (dataCode) {
+        // Decode HTML entities (e.g., &#10; -> newline)
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = dataCode;
+        text = tempDiv.textContent || tempDiv.innerText;
+      }
 
-      // Fallback: try to find code element in code snippet div
-      if (!codeContent) {
-        const codeElement = document.getElementById(codeId);
-        if (codeElement) {
-          codeContent = codeElement.querySelector("code");
+      // Fallback: try to find code content by ID
+      if (!text) {
+        const codeContentId = "code-content-" + fileIndex;
+        let codeContent = document.getElementById(codeContentId);
+
+        // Fallback: try to find code element in code snippet div
+        if (!codeContent) {
+          const codeElement = document.getElementById(codeId);
+          if (codeElement) {
+            codeContent = codeElement.querySelector("code");
+          }
+        }
+
+        if (codeContent) {
+          text = codeContent.textContent || codeContent.innerText;
         }
       }
 
-      if (!codeContent) {
+      if (!text) {
         console.error("Could not find code content to copy");
         return;
       }
-
-      const text = codeContent.textContent || codeContent.innerText;
 
       // Try modern clipboard API
       if (navigator.clipboard && navigator.clipboard.writeText) {

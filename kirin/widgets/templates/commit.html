@@ -53,8 +53,10 @@
             {% set index = loop.index0 %}
             {% set code_id = "code-" ~ index %}
             {% set preview_id = "preview-" ~ index %}
-            {% set code_snippet = '# Checkout this commit first\ndataset.checkout("' ~ data.hash ~ '")\n# Get path to local clone of file\nwith dataset.local_files() as files:\n    file_path = files["' ~ file_info.name ~ '"]' %}
-            {{ render_file_item(file_info, index, code_id, preview_id, code_snippet) }}
+            {% set variable_name = data.get('variable_name', 'dataset') %}
+            {% set commit_hash = data.get('full_hash', data.hash) %}
+            {% set code_snippet = '# Checkout this commit first\n' ~ variable_name ~ '.checkout("' ~ commit_hash ~ '")\n# Get path to local clone of file\nwith ' ~ variable_name ~ '.local_files() as files:\n    file_path = files["' ~ file_info.name ~ '"]' %}
+            {{ render_file_item(file_info, index, code_id, preview_id, code_snippet, variable_name) }}
             {% endfor %}
         </div>
     </div>

@@ -943,6 +943,9 @@ class Dataset:
                 }
             )
 
+        # Get variable name for code snippets
+        variable_name = getattr(self, "_repr_variable_name", "dataset")
+
         return {
             "name": self.name,
             "description": self.description,
@@ -952,6 +955,7 @@ class Dataset:
             "files": files,
             "history": history,
             "has_commit": self.current_commit is not None,
+            "variable_name": variable_name,
         }
 
     def _repr_html_(self) -> str:

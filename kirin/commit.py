@@ -220,14 +220,19 @@ class Commit:
 
             files.append(file_data)
 
+        # Get variable name for code snippets (commits are frozen, use default)
+        variable_name = "dataset"
+
         return {
             "hash": self.short_hash,
+            "full_hash": self.hash,  # Include full hash for code snippets
             "message": self.message,
             "timestamp": self.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
             "parent_hash": self.parent_hash[:8] if self.parent_hash else None,
             "file_count": file_count,
             "size": format_file_size(total_size),
             "files": files,
+            "variable_name": variable_name,
         }
 
     def _repr_html_(self) -> str:
