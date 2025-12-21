@@ -1,5 +1,6 @@
 <div class="kirin-dataset-view-static">
 <style>{{ css_content }}</style>
+{% from 'macros.html' import render_file_item, render_file_preview %}
 
 <!-- Header panel -->
 <div class="panel">
@@ -44,83 +45,8 @@
             {% set index = loop.index0 %}
             {% set code_id = "code-" ~ index %}
             {% set preview_id = "preview-" ~ index %}
-
-            <div class="file-item" data-file-index="{{ index }}" style="cursor: pointer;">
-                <div class="file-icon">{{ file_info.icon_html | safe }}</div>
-                <div class="file-name">{{ file_info.name }}</div>
-                <div class="file-size">{{ file_info.size }}</div>
-                <button class="btn btn-sm btn-ghost copy-code-btn" data-code-id="{{ code_id }}" data-file-index="{{ index }}" title="Copy code to access file">Copy Code to Access</button>
-            </div>
-
-            <!-- Code snippet (initially hidden, shown separately) -->
-            <div class="code-snippet hidden" id="{{ code_id }}">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm text-muted-foreground">Code to access this file:</span>
-                    <button class="btn btn-sm copy-code-btn" data-code-id="{{ code_id }}">Copy</button>
-                </div>
-                <pre><code id="code-content-{{ index }}"># Get path to local clone of file
-with dataset.local_files() as files:
-    file_path = files["{{ file_info.name }}"]</code></pre>
-            </div>
-
-            <!-- File preview (initially hidden) -->
-            {% if file_info.is_text and file_info.content %}
-            <div class="file-preview hidden" id="{{ preview_id }}">
-                <div class="panel">
-                    <div class="panel-header">
-                        <h4 class="panel-title">Preview: {{ file_info.name }}</h4>
-                    </div>
-                    <div class="panel-content">
-                        {% if file_info.name.lower().endswith('.csv') %}
-                        <!-- CSV table preview -->
-                        {% set lines = file_info.content.strip().split('\n') %}
-                        {% if lines %}
-                        {% set headers = lines[0].split(',') %}
-                        <div class="overflow-auto">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        {% for header in headers %}
-                                        <th>{{ header.strip() }}</th>
-                                        {% endfor %}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for line in lines[1:] %}
-                                    {% if line.strip() %}
-                                    <tr>
-                                        {% for cell in line.split(',') %}
-                                        <td>{{ cell.strip() }}</td>
-                                        {% endfor %}
-                                    </tr>
-                                    {% endif %}
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        {% endif %}
-                        {% elif file_info.name.lower().endswith('.json') %}
-                        <!-- JSON file preview -->
-                        <pre><code class="json">{{ file_info.content }}</code></pre>
-                        {% else %}
-                        <!-- Regular text file preview -->
-                        <pre><code>{{ file_info.content }}</code></pre>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            {% elif file_info.is_image %}
-            <div class="file-preview hidden" id="{{ preview_id }}">
-                <div class="panel">
-                    <div class="panel-header">
-                        <h4 class="panel-title">Preview: {{ file_info.name }}</h4>
-                    </div>
-                    <div class="panel-content">
-                        <p class="text-muted-foreground">Image preview not yet implemented</p>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
+            {% set code_snippet = '# Get path to local clone of file\nwith dataset.local_files() as files:\n    file_path = files["' ~ file_info.name ~ '"]' %}
+            {{ render_file_item(file_info, index, code_id, preview_id, code_snippet) }}
             {% endfor %}
         </div>
     </div>
@@ -160,115 +86,6 @@ with dataset.local_files() as files:
 
 <!-- JavaScript for file interactions -->
 <script>
-(function() {
-    function initFileInteractions() {
-        // Use event delegation for copy buttons (works even after cloning)
-        const fileList = document.querySelector('.kirin-file-list');
-        if (fileList) {
-            fileList.addEventListener('click', function(e) {
-                // Check if clicked element is a copy button
-                const copyButton = e.target.closest('.copy-code-btn');
-                if (copyButton) {
-                    e.stopPropagation(); // Prevent file item click
-                    e.preventDefault(); // Prevent any default behavior
-
-                    const codeId = copyButton.getAttribute('data-code-id');
-                    const fileIndex = copyButton.getAttribute('data-file-index');
-
-                    // Try to find code content by ID first
-                    const codeContentId = 'code-content-' + fileIndex;
-                    let codeContent = document.getElementById(codeContentId);
-
-                    // Fallback: try to find code element in code snippet div
-                    if (!codeContent) {
-                        const codeElement = document.getElementById(codeId);
-                        if (codeElement) {
-                            codeContent = codeElement.querySelector('code');
-                        }
-                    }
-
-                    if (!codeContent) {
-                        console.error('Could not find code content to copy');
-                        return;
-                    }
-
-                    const text = codeContent.textContent || codeContent.innerText;
-
-                    // Try modern clipboard API
-                    if (navigator.clipboard && navigator.clipboard.writeText) {
-                        navigator.clipboard.writeText(text).then(function() {
-                            const originalText = copyButton.textContent;
-                            copyButton.textContent = 'Copied!';
-                            setTimeout(function() {
-                                copyButton.textContent = originalText;
-                            }, 2000);
-                        }).catch(function(err) {
-                            console.error('Failed to copy:', err);
-                        });
-                    } else {
-                        // Fallback for older browsers
-                        const textArea = document.createElement('textarea');
-                        textArea.value = text;
-                        textArea.style.position = 'fixed';
-                        textArea.style.left = '-999999px';
-                        document.body.appendChild(textArea);
-                        textArea.focus();
-                        textArea.select();
-                        try {
-                            document.execCommand('copy');
-                            const originalText = copyButton.textContent;
-                            copyButton.textContent = 'Copied!';
-                            setTimeout(function() {
-                                copyButton.textContent = originalText;
-                            }, 2000);
-                        } catch (err) {
-                            console.error('Fallback copy failed:', err);
-                        }
-                        document.body.removeChild(textArea);
-                    }
-                    return; // Don't process as file item click
-                }
-
-                // Handle file item clicks - show preview (primary action)
-                const fileItem = e.target.closest('.file-item');
-                if (fileItem && !e.target.closest('.copy-code-btn')) {
-                    const index = fileItem.getAttribute('data-file-index');
-                    const codeId = 'code-' + index;
-                    const previewId = 'preview-' + index;
-
-                    const codeSnippet = document.getElementById(codeId);
-                    const preview = document.getElementById(previewId);
-
-                    console.log('File clicked, index:', index, 'preview exists:', !!preview, 'code snippet exists:', !!codeSnippet);
-
-                    // Always hide code snippet first
-                    if (codeSnippet) {
-                        codeSnippet.classList.add('hidden');
-                    }
-
-                    // Show preview if it exists (primary action)
-                    if (preview) {
-                        // Toggle preview visibility
-                        preview.classList.toggle('hidden');
-                        console.log('Preview toggled, now hidden:', preview.classList.contains('hidden'));
-                    } else {
-                        // If no preview exists, show code snippet as fallback
-                        console.log('No preview found, showing code snippet as fallback');
-                        if (codeSnippet) {
-                            codeSnippet.classList.remove('hidden');
-                        }
-                    }
-                }
-            });
-        }
-    }
-
-    // Run when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initFileInteractions);
-    } else {
-        initFileInteractions();
-    }
-})();
+{{ file_interactions_js | safe }}
 </script>
 </div>

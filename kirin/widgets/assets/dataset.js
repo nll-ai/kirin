@@ -1,4 +1,5 @@
 import { escapeHtml } from "./ui_utils.js";
+import { createPanel, createCodeSnippet } from "./panel_utils.js";
 
 function render({ model, el }) {
   const data = model.get("data");
@@ -28,26 +29,6 @@ function render({ model, el }) {
     const historyPanel = createHistoryPanel(data.history);
     el.appendChild(historyPanel);
   }
-}
-
-function createPanel(title, content) {
-  const panel = document.createElement("div");
-  panel.className = "panel";
-
-  const header = document.createElement("div");
-  header.className = "panel-header";
-  const titleEl = document.createElement("h2");
-  titleEl.className = "panel-title";
-  titleEl.textContent = title;
-  header.appendChild(titleEl);
-  panel.appendChild(header);
-
-  const body = document.createElement("div");
-  body.className = "panel-content";
-  body.innerHTML = content;
-  panel.appendChild(body);
-
-  return panel;
 }
 
 function createHeaderContent(data) {
@@ -169,24 +150,6 @@ function createFileItem(file, datasetName, index, model) {
   });
 
   return item;
-}
-
-function createCodeSnippet(filename, datasetName) {
-  const snippet = document.createElement("div");
-  snippet.className = "code-snippet";
-
-  const escapedFilename = escapeHtml(filename);
-  const code = `# Get path to local clone of file
-with dataset.local_files() as files:
-    file_path = files["${escapedFilename}"]`;
-
-  const pre = document.createElement("pre");
-  const codeEl = document.createElement("code");
-  codeEl.textContent = code;
-  pre.appendChild(codeEl);
-  snippet.appendChild(pre);
-
-  return snippet;
 }
 
 function createHistoryPanel(history) {
