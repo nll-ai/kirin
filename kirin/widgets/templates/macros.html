@@ -1,0 +1,82 @@
+{# Jinja2 macros for reusable widget template components #}
+
+{% macro render_file_preview(file_info, preview_id) %}
+    {% if file_info.is_text and file_info.content %}
+    <div class="file-preview hidden" id="{{ preview_id }}">
+        <div class="panel">
+            <div class="panel-header">
+                <h4 class="panel-title">Preview: {{ file_info.name }}</h4>
+            </div>
+            <div class="panel-content">
+                {% if file_info.name.lower().endswith('.csv') %}
+                <!-- CSV table preview -->
+                {% set lines = file_info.content.strip().split('\n') %}
+                {% if lines %}
+                {% set headers = lines[0].split(',') %}
+                <div class="overflow-auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                {% for header in headers %}
+                                <th>{{ header.strip() }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for line in lines[1:] %}
+                            {% if line.strip() %}
+                            <tr>
+                                {% for cell in line.split(',') %}
+                                <td>{{ cell.strip() }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+                {% elif file_info.name.lower().endswith('.json') %}
+                <!-- JSON file preview -->
+                <pre><code class="json">{{ file_info.content }}</code></pre>
+                {% else %}
+                <!-- Regular text file preview -->
+                <pre><code>{{ file_info.content }}</code></pre>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% elif file_info.is_image %}
+    <div class="file-preview hidden" id="{{ preview_id }}">
+        <div class="panel">
+            <div class="panel-header">
+                <h4 class="panel-title">Preview: {{ file_info.name }}</h4>
+            </div>
+            <div class="panel-content">
+                <p class="text-muted-foreground">Image preview not yet implemented</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endmacro %}
+
+{% macro render_file_item(file_info, index, code_id, preview_id, code_snippet_content) %}
+    <div class="file-item" data-file-index="{{ index }}" style="cursor: pointer;">
+        <div class="file-icon">{{ file_info.icon_html | safe }}</div>
+        <div class="file-name">{{ file_info.name }}</div>
+        <div class="file-size">{{ file_info.size }}</div>
+        <button class="btn btn-sm btn-ghost copy-code-btn" data-code-id="{{ code_id }}" data-file-index="{{ index }}" title="Copy code to access file">Copy Code to Access</button>
+    </div>
+
+    <!-- Code snippet (initially hidden, shown separately) -->
+    <div class="code-snippet hidden" id="{{ code_id }}">
+        <div class="flex items-center justify-between mb-2">
+            <span class="text-sm text-muted-foreground">Code to access this file:</span>
+            <button class="btn btn-sm copy-code-btn" data-code-id="{{ code_id }}">Copy</button>
+        </div>
+        <pre><code id="code-content-{{ index }}">{{ code_snippet_content }}</code></pre>
+    </div>
+
+    <!-- File preview (initially hidden) -->
+    {{ render_file_preview(file_info, preview_id) }}
+{% endmacro %}

@@ -1,4 +1,5 @@
 import { escapeHtml } from "./ui_utils.js";
+import { createCodeSnippet } from "./panel_utils.js";
 
 function render({ model, el }) {
   const files = model.get("files") || [];
@@ -80,24 +81,6 @@ function createFileItem(file, datasetName, index, expandedFiles, model) {
   item.appendChild(codeSnippet);
 
   return item;
-}
-
-function createCodeSnippet(filename, datasetName) {
-  const snippet = document.createElement("div");
-  snippet.className = "code-snippet";
-
-  const escapedFilename = escapeHtml(filename);
-  const code = `# Get path to local clone of file
-with dataset.local_files() as files:
-    file_path = files["${escapedFilename}"]`;
-
-  const pre = document.createElement("pre");
-  const codeEl = document.createElement("code");
-  codeEl.textContent = code;
-  pre.appendChild(codeEl);
-  snippet.appendChild(pre);
-
-  return snippet;
 }
 
 function updateExpandedState(container, expandedFiles) {

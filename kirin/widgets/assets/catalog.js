@@ -1,4 +1,5 @@
 import { escapeHtml } from "./ui_utils.js";
+import { createPanel } from "./panel_utils.js";
 
 function render({ model, el }) {
   const data = model.get("data");
@@ -22,26 +23,6 @@ function render({ model, el }) {
     );
     el.appendChild(emptyPanel);
   }
-}
-
-function createPanel(title, content) {
-  const panel = document.createElement("div");
-  panel.className = "panel";
-
-  const header = document.createElement("div");
-  header.className = "panel-header";
-  const titleEl = document.createElement("h2");
-  titleEl.className = "panel-title";
-  titleEl.textContent = title;
-  header.appendChild(titleEl);
-  panel.appendChild(header);
-
-  const body = document.createElement("div");
-  body.className = "panel-content";
-  body.innerHTML = content;
-  panel.appendChild(body);
-
-  return panel;
 }
 
 function createHeaderContent(data) {
