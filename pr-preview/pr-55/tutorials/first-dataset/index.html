@@ -1611,7 +1611,9 @@ hash, so Kirin stores them only once!</p>
 <span class="n">duplicate_file</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">csv_file</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
 
 <span class="c1"># Commit the duplicate</span>
-<span class="n">my_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;Add duplicate file&quot;</span><span class="p">,</span> <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">duplicate_file</span><span class="p">)])</span>
+<span class="n">my_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Add duplicate file&quot;</span><span class="p">,</span> <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">duplicate_file</span><span class="p">)]</span>
+<span class="p">)</span>
 
 <span class="c1"># Check the file objects</span>
 <span class="n">original</span> <span class="o">=</span> <span class="n">my_dataset</span><span class="o">.</span><span class="n">get_file</span><span class="p">(</span><span class="s2">&quot;data.csv&quot;</span><span class="p">)</span>
@@ -1625,7 +1627,9 @@ hash, so Kirin stores them only once!</p>
 <h2 id="step-10-removing-files">Step 10: Removing Files</h2>
 <p>You can also remove files from a dataset.</p>
 <div class="marimo highlight"><pre><span></span><code><span class="c1"># Remove a file</span>
-<span class="n">my_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;Remove duplicate file&quot;</span><span class="p">,</span> <span class="n">remove_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;data_copy.csv&quot;</span><span class="p">])</span>
+<span class="n">my_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Remove duplicate file&quot;</span><span class="p">,</span> <span class="n">remove_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;data_copy.csv&quot;</span><span class="p">]</span>
+<span class="p">)</span>
 
 <span class="c1"># Display the dataset to see updated state</span>
 <span class="n">my_dataset</span>
