@@ -60,19 +60,20 @@
     {% endif %}
 {% endmacro %}
 
-{% macro render_file_item(file_info, index, code_id, preview_id, code_snippet_content) %}
+{% macro render_file_item(file_info, index, code_id, preview_id, code_snippet_content, variable_name) %}
+    {% set escaped_code = code_snippet_content | e | replace('\n', '&#10;') %}
     <div class="file-item" data-file-index="{{ index }}" style="cursor: pointer;">
         <div class="file-icon">{{ file_info.icon_html | safe }}</div>
         <div class="file-name">{{ file_info.name }}</div>
         <div class="file-size">{{ file_info.size }}</div>
-        <button class="btn btn-sm btn-ghost copy-code-btn" data-code-id="{{ code_id }}" data-file-index="{{ index }}" title="Copy code to access file">Copy Code to Access</button>
+        <button class="btn btn-sm btn-ghost copy-code-btn" data-code-id="{{ code_id }}" data-code="{{ escaped_code }}" data-file-index="{{ index }}" title="Copy code to access file">Copy Code to Access</button>
     </div>
 
     <!-- Code snippet (initially hidden, shown separately) -->
     <div class="code-snippet hidden" id="{{ code_id }}">
         <div class="flex items-center justify-between mb-2">
             <span class="text-sm text-muted-foreground">Code to access this file:</span>
-            <button class="btn btn-sm copy-code-btn" data-code-id="{{ code_id }}">Copy</button>
+            <button class="btn btn-sm copy-code-btn" data-code-id="{{ code_id }}" data-code="{{ escaped_code }}">Copy</button>
         </div>
         <pre><code id="code-content-{{ index }}">{{ code_snippet_content }}</code></pre>
     </div>

@@ -1,5 +1,5 @@
-import { escapeHtml } from "./ui_utils.js";
 import { createPanel } from "./panel_utils.js";
+import { escapeHtml } from "./ui_utils.js";
 
 function render({ model, el }) {
   const data = model.get("data");
