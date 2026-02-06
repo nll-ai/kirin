@@ -262,6 +262,14 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down Kirin Web UI")
 
 
+# Resolve static/templates relative to this package (works from source or installed)
+_WEB_DIR = Path(__file__).resolve().parent
+_STATIC_DIR = _WEB_DIR / "static"
+_TEMPLATES_DIR = _WEB_DIR / "templates"
+
+if not _STATIC_DIR.is_dir():
+    raise RuntimeError(f"Kirin web static directory not found: {_STATIC_DIR}")
+
 # Create FastAPI app
 app = FastAPI(
     title="Kirin Web UI",
@@ -270,10 +278,10 @@ app = FastAPI(
 )
 
 # Mount static files
-app.mount("/static", StaticFiles(directory="kirin/web/static"), name="static")
+app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
 
 # Setup templates
-templates = Jinja2Templates(directory="kirin/web/templates")
+templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
 
 
 def get_catalog_manager() -> CatalogManager:
