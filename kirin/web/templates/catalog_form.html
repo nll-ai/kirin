@@ -38,22 +38,14 @@
         </div>
         <div class="panel-content">
             <form method="POST" action="{{ form_action }}" class="space-y-6">
-                <!-- Catalog Name -->
-                <div class="form-group">
-                    <label for="name" class="form-label required">Catalog Name</label>
-                    <input type="text" id="name" name="name" class="input" placeholder="My Data Catalog"
-                           value="{{ catalog.name if catalog else (form_data.name if form_data else '') }}" required>
-                    <p class="text-sm text-muted-foreground mt-1">A friendly name for this data catalog</p>
-                </div>
-
-                <!-- Root Directory -->
+                <!-- Root Directory (catalog is identified and named by this path) -->
                 <div class="form-group">
                     <label for="root_dir" class="form-label required">Root Directory</label>
                     <input type="text" id="root_dir" name="root_dir" class="input"
                            placeholder="/path/to/data or gs://bucket/prefix or s3://bucket/prefix"
                            value="{{ catalog.root_dir if catalog else (form_data.root_dir if form_data else '') }}" required>
                     <p class="text-sm text-muted-foreground mt-1">
-                        Local path or cloud URL (gs://, s3://, az://).
+                        Local path or cloud URL (gs://, s3://, az://). The catalog is shown and identified by this path.
                         <a href="#help" onclick="showHelp()" class="underline">See examples</a>
                     </p>
                 </div>

@@ -10,6 +10,12 @@ from loguru import logger
 from ..catalog import Catalog
 
 
+def normalize_root_dir(root_dir: str) -> str:
+    """Normalize root directory for consistent id/name (e.g. strip trailing slash)."""
+    s = root_dir.rstrip("/")
+    return s if s else root_dir
+
+
 @dataclass
 class CatalogConfig:
     """Configuration for a data catalog."""

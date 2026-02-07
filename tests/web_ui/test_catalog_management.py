@@ -6,15 +6,20 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from slugify import slugify
 
 from kirin.web.app import app
-from kirin.web.config import CatalogManager
+from kirin.web.config import CatalogManager, normalize_root_dir
+
+
+def catalog_id_from_root(root_dir: str) -> str:
+    """Derive catalog id from root directory (same as web app)."""
+    return slugify(normalize_root_dir(root_dir))
 
 
 @pytest.fixture
 def client():
     """Create a test client for the FastAPI app."""
-    # Clear any existing catalogs before each test
     catalog_mgr = CatalogManager()
     catalog_mgr.clear_all_catalogs()
     return TestClient(app)
@@ -22,17 +27,12 @@ def client():
 
 @pytest.fixture
 def temp_catalog():
-    """Create a temporary catalog for testing."""
+    """Create a temporary catalog for testing. Yields root_dir and catalog_id."""
     with tempfile.TemporaryDirectory() as temp_dir:
-        # Create the directory so connection test passes
         data_dir = Path(temp_dir) / "kirin-data"
         data_dir.mkdir(parents=True, exist_ok=True)
-
-        catalog_config = {
-            "name": "Test Catalog",
-            "root_dir": str(data_dir),
-        }
-        yield catalog_config
+        root_dir = str(data_dir)
+        yield {"root_dir": root_dir, "catalog_id": catalog_id_from_root(root_dir)}
 
 
 def test_catalog_list_empty(client):
@@ -44,108 +44,156 @@ def test_catalog_list_empty(client):
 
 
 def test_add_catalog_form_loads(client):
-    """Test that add catalog form loads correctly."""
+    """Test that add catalog form loads correctly (root directory only, no name)."""
     response = client.get("/catalogs/add")
     assert response.status_code == 200
     assert "Add Data Catalog" in response.text
-    assert "Catalog Name" in response.text
     assert "Root Directory" in response.text
 
 
 def test_add_catalog_success(client, temp_catalog):
-    """Test successful catalog creation."""
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    """Test successful catalog creation with root_dir only."""
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
-    assert "Test Catalog" in response.text
+    assert temp_catalog["root_dir"] in response.text
 
 
 def test_add_catalog_duplicate_name(client, temp_catalog):
-    """Test that duplicate catalog names are handled gracefully."""
-    # Create first catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    """Test that duplicate root directory is handled gracefully."""
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
 
-    # Try to create another catalog with same name
-    response = client.post("/catalogs/add", data=temp_catalog)
+    response = client.post("/catalogs/add", data={"root_dir": temp_catalog["root_dir"]})
     assert response.status_code == 400
     assert "already exists" in response.text
 
 
 def test_edit_catalog_form_loads(client, temp_catalog):
-    """Test that edit catalog form loads with pre-populated values."""
-    # First create a catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    """Test that edit catalog form loads with pre-populated root_dir."""
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
 
-    # Test edit form loads (catalog ID will be generated from name)
-    response = client.get("/catalog/test-catalog/edit")
+    response = client.get(f"/catalog/{temp_catalog['catalog_id']}/edit")
     assert response.status_code == 200
     assert "Edit Catalog" in response.text
-    assert 'value="Test Catalog"' in response.text
     assert temp_catalog["root_dir"] in response.text
 
 
 def test_update_catalog_success(client, temp_catalog):
-    """Test successful catalog update."""
-    # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
-    assert response.status_code == 200
-
-    # Update catalog
-    updated_data = {
-        "name": "Updated Test Catalog",
-        "root_dir": temp_catalog["root_dir"],
-    }
+    """Test successful catalog update (root_dir only)."""
     response = client.post(
-        "/catalog/test-catalog/edit", data=updated_data, follow_redirects=True
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
     )
     assert response.status_code == 200
-    assert "Updated Test Catalog" in response.text
+
+    updated_root = "/some/other/path"
+    response = client.post(
+        f"/catalog/{temp_catalog['catalog_id']}/edit",
+        data={"root_dir": updated_root},
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert updated_root in response.text
 
 
 def test_delete_catalog_confirmation_loads(client, temp_catalog):
-    """Test that delete confirmation page loads."""
-    # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    """Test that remove-from-list confirmation page loads with correct copy."""
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
 
-    # Test delete confirmation loads
-    response = client.get("/catalog/test-catalog/delete")
+    response = client.get(f"/catalog/{temp_catalog['catalog_id']}/delete")
     assert response.status_code == 200
-    assert "Delete Catalog" in response.text
-    assert "Test Catalog" in response.text
-    assert "This action cannot be undone" in response.text
+    assert "Remove Catalog from List" in response.text
+    assert temp_catalog["root_dir"] in response.text
+    assert "Remove from List" in response.text
+    assert "delete any data" in response.text or "not deleted" in response.text
+
+
+def test_delete_catalog_confirmation_shows_remove_button_with_datasets(
+    client, temp_catalog
+):
+    """Remove from List button is shown even when catalog has datasets."""
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    response = client.post(
+        f"/catalog/{temp_catalog['catalog_id']}/datasets/create",
+        data={"name": "some-dataset", "description": ""},
+    )
+    assert response.status_code in (200, 302)
+
+    response = client.get(f"/catalog/{temp_catalog['catalog_id']}/delete")
+    assert response.status_code == 200
+    assert "Remove from List" in response.text
+    assert "Remove from list only" in response.text
+
+
+def test_remove_catalog_with_datasets_succeeds(client, temp_catalog):
+    """Removing catalog from list succeeds even when it has datasets (302)."""
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    response = client.post(
+        f"/catalog/{temp_catalog['catalog_id']}/datasets/create",
+        data={"name": "some-dataset", "description": ""},
+    )
+    assert response.status_code in (200, 302)
+
+    response = client.post(
+        f"/catalog/{temp_catalog['catalog_id']}/delete",
+        follow_redirects=True,
+    )
+    assert response.status_code == 200
+    assert "No data catalogs configured" in response.text
 
 
 def test_delete_catalog_success(client, temp_catalog):
-    """Test successful catalog deletion."""
-    # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    """Test successful catalog removal from list."""
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
 
-    # Delete catalog
-    response = client.post("/catalog/test-catalog/delete", follow_redirects=True)
+    response = client.post(
+        f"/catalog/{temp_catalog['catalog_id']}/delete",
+        follow_redirects=True,
+    )
     assert response.status_code == 200
-    # The success message will contain the catalog name, but the catalog list
-    # should be empty
     assert "No data catalogs configured" in response.text
 
 
 def test_catalog_with_cloud_urls(client):
-    """Test that catalogs can be created with cloud URLs."""
+    """Test that catalogs can be created with cloud URLs (root_dir only)."""
     cloud_catalogs = [
-        {
-            "name": "GCS Catalog",
-            "root_dir": "gs://my-bucket/kirin-data",
-        },
-        {
-            "name": "S3 Catalog",
-            "root_dir": "s3://my-bucket/kirin-data",
-        },
-        {
-            "name": "Azure Catalog",
-            "root_dir": "az://my-container/kirin-data",
-        },
+        {"root_dir": "gs://my-bucket/kirin-data"},
+        {"root_dir": "s3://my-bucket/kirin-data"},
+        {"root_dir": "az://my-container/kirin-data"},
     ]
 
     for catalog_data in cloud_catalogs:
@@ -153,31 +201,21 @@ def test_catalog_with_cloud_urls(client):
             "/catalogs/add", data=catalog_data, follow_redirects=True
         )
         assert response.status_code == 200
-        assert catalog_data["name"] in response.text
         assert catalog_data["root_dir"] in response.text
 
 
 def test_catalog_validation(client):
-    """Test that catalog validation works correctly."""
-    # Test missing name
+    """Test that catalog validation works correctly (root_dir required)."""
+    # Only root_dir is required; missing root_dir yields 422
+    response = client.post("/catalogs/add", data={})
+    assert response.status_code == 422
+
+    response = client.post("/catalogs/add", data={"root_dir": ""})
+    assert response.status_code == 422
+
+    # Valid: only root_dir (302 redirect to list or 200 if redirect followed)
     response = client.post("/catalogs/add", data={"root_dir": "/path/to/data"})
-    assert response.status_code == 422  # Validation error
-
-    # Test missing root_dir
-    response = client.post("/catalogs/add", data={"name": "Test Catalog"})
-    assert response.status_code == 422  # Validation error
-
-    # Test empty name
-    response = client.post(
-        "/catalogs/add", data={"name": "", "root_dir": "/path/to/data"}
-    )
-    assert response.status_code == 422  # Validation error
-
-    # Test empty root_dir
-    response = client.post(
-        "/catalogs/add", data={"name": "Test Catalog", "root_dir": ""}
-    )
-    assert response.status_code == 422  # Validation error
+    assert response.status_code in (200, 302)
 
 
 def test_catalog_config_to_catalog_basic():
@@ -369,95 +407,101 @@ def test_catalog_config_to_catalog_with_mixed_credentials():
 
 def test_hide_catalog_success(client, temp_catalog):
     """Test successful catalog hiding."""
-    # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
-    assert "Test Catalog" in response.text
+    assert temp_catalog["root_dir"] in response.text
 
-    # Hide catalog
-    response = client.post("/catalog/test-catalog/hide", follow_redirects=True)
+    response = client.post(
+        f"/catalog/{temp_catalog['catalog_id']}/hide", follow_redirects=True
+    )
     assert response.status_code == 200
-    # Catalog should not appear in default list
-    assert "Test Catalog" not in response.text
+    assert temp_catalog["root_dir"] not in response.text
 
-    # Verify catalog is hidden by checking with show_hidden parameter
     response = client.get("/?show_hidden=true")
     assert response.status_code == 200
-    assert "Test Catalog" in response.text
+    assert temp_catalog["root_dir"] in response.text
     assert "Hidden" in response.text
 
 
 def test_unhide_catalog_success(client, temp_catalog):
     """Test successful catalog unhiding."""
-    # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
 
-    # Hide catalog
-    response = client.post("/catalog/test-catalog/hide", follow_redirects=True)
+    response = client.post(
+        f"/catalog/{temp_catalog['catalog_id']}/hide", follow_redirects=True
+    )
     assert response.status_code == 200
-    assert "Test Catalog" not in response.text
+    assert temp_catalog["root_dir"] not in response.text
 
-    # Unhide catalog
-    response = client.post("/catalog/test-catalog/unhide", follow_redirects=True)
+    response = client.post(
+        f"/catalog/{temp_catalog['catalog_id']}/unhide", follow_redirects=True
+    )
     assert response.status_code == 200
-    # Catalog should appear in default list
-    assert "Test Catalog" in response.text
-    # Check that catalog card doesn't have "Hidden" badge
-    # (but "Show hidden catalogs" label may contain it)
+    assert temp_catalog["root_dir"] in response.text
     assert (
-        '<span class="badge badge-secondary text-xs">Hidden</span>'
-        not in response.text
+        '<span class="badge badge-secondary text-xs">Hidden</span>' not in response.text
     )
 
 
 def test_hide_catalog_from_delete_page(client, temp_catalog):
-    """Test hiding catalog from delete confirmation page."""
-    # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    """Test hiding catalog from remove-from-list confirmation page."""
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
 
-    # Go to delete page
-    response = client.get("/catalog/test-catalog/delete")
+    response = client.get(f"/catalog/{temp_catalog['catalog_id']}/delete")
     assert response.status_code == 200
     assert "Hide Catalog" in response.text
 
-    # Hide catalog from delete page
-    response = client.post("/catalog/test-catalog/hide", follow_redirects=True)
+    response = client.post(
+        f"/catalog/{temp_catalog['catalog_id']}/hide", follow_redirects=True
+    )
     assert response.status_code == 200
-    # Catalog should not appear in default list
-    assert "Test Catalog" not in response.text
+    assert temp_catalog["root_dir"] not in response.text
 
 
 def test_list_catalogs_hides_hidden_by_default(client, temp_catalog):
     """Test that hidden catalogs are filtered out by default."""
-    # Create two catalogs
-    catalog1 = temp_catalog.copy()
-    catalog1["name"] = "Visible Catalog"
-    response = client.post("/catalogs/add", data=catalog1, follow_redirects=True)
-    assert response.status_code == 200
+    with tempfile.TemporaryDirectory() as temp_dir2:
+        root1 = temp_catalog["root_dir"]
+        root2 = str(Path(temp_dir2) / "data")
+        Path(root2).mkdir(parents=True, exist_ok=True)
+        id2 = catalog_id_from_root(root2)
 
-    catalog2 = temp_catalog.copy()
-    catalog2["name"] = "Hidden Catalog"
-    response = client.post("/catalogs/add", data=catalog2, follow_redirects=True)
-    assert response.status_code == 200
+        response = client.post(
+            "/catalogs/add", data={"root_dir": root1}, follow_redirects=True
+        )
+        assert response.status_code == 200
+        response = client.post(
+            "/catalogs/add", data={"root_dir": root2}, follow_redirects=True
+        )
+        assert response.status_code == 200
 
-    # Hide second catalog
-    response = client.post("/catalog/hidden-catalog/hide", follow_redirects=True)
-    assert response.status_code == 200
+        response = client.post(f"/catalog/{id2}/hide", follow_redirects=True)
+        assert response.status_code == 200
 
-    # Default list should only show visible catalog
-    response = client.get("/")
-    assert response.status_code == 200
-    assert "Visible Catalog" in response.text
-    assert "Hidden Catalog" not in response.text
+        response = client.get("/")
+        assert response.status_code == 200
+        assert root1 in response.text
+        assert root2 not in response.text
 
-    # With show_hidden=true, both should appear
-    response = client.get("/?show_hidden=true")
-    assert response.status_code == 200
-    assert "Visible Catalog" in response.text
-    assert "Hidden Catalog" in response.text
-    assert "Hidden" in response.text
+        response = client.get("/?show_hidden=true")
+        assert response.status_code == 200
+        assert root1 in response.text
+        assert root2 in response.text
+        assert "Hidden" in response.text
 
 
 def test_hide_catalog_not_found(client):
@@ -474,29 +518,31 @@ def test_unhide_catalog_not_found(client):
 
 def test_hide_unhide_toggle(client, temp_catalog):
     """Test that hide/unhide can be toggled multiple times."""
-    # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
 
-    # Hide
-    response = client.post("/catalog/test-catalog/hide", follow_redirects=True)
-    assert response.status_code == 200
-    assert "Test Catalog" not in response.text
+    cid = temp_catalog["catalog_id"]
+    root = temp_catalog["root_dir"]
 
-    # Unhide
-    response = client.post("/catalog/test-catalog/unhide", follow_redirects=True)
+    response = client.post(f"/catalog/{cid}/hide", follow_redirects=True)
     assert response.status_code == 200
-    assert "Test Catalog" in response.text
+    assert root not in response.text
 
-    # Hide again
-    response = client.post("/catalog/test-catalog/hide", follow_redirects=True)
+    response = client.post(f"/catalog/{cid}/unhide", follow_redirects=True)
     assert response.status_code == 200
-    assert "Test Catalog" not in response.text
+    assert root in response.text
 
-    # Unhide again
-    response = client.post("/catalog/test-catalog/unhide", follow_redirects=True)
+    response = client.post(f"/catalog/{cid}/hide", follow_redirects=True)
     assert response.status_code == 200
-    assert "Test Catalog" in response.text
+    assert root not in response.text
+
+    response = client.post(f"/catalog/{cid}/unhide", follow_redirects=True)
+    assert response.status_code == 200
+    assert root in response.text
 
 
 def test_catalog_manager_hide_catalog():

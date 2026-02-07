@@ -6,8 +6,15 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from slugify import slugify
 
 from kirin.web.app import app
+from kirin.web.config import normalize_root_dir
+
+
+def catalog_id_from_root(root_dir: str) -> str:
+    """Derive catalog id from root directory (same as web app)."""
+    return slugify(normalize_root_dir(root_dir))
 
 
 @pytest.fixture
@@ -18,27 +25,22 @@ def client():
 
 @pytest.fixture
 def temp_catalog():
-    """Create a temporary catalog for testing."""
-    import uuid
-
+    """Create a temporary catalog for testing. Yields root_dir and catalog_id."""
     with tempfile.TemporaryDirectory() as temp_dir:
-        unique_id = str(uuid.uuid4())[:8]
-        return {
-            "name": f"test-catalog-preview-{unique_id}",
-            "root_dir": temp_dir,
-            "description": "Test catalog for preview tests",
-        }
+        root_dir = temp_dir
+        yield {"root_dir": root_dir, "catalog_id": catalog_id_from_root(root_dir)}
 
 
 def test_text_file_preview(client, temp_catalog):
     """Test that text files can be previewed correctly."""
-    # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
 
-    from slugify import slugify
-
-    catalog_id = slugify(temp_catalog["name"])
+    catalog_id = temp_catalog["catalog_id"]
 
     # Create dataset
     response = client.post(
@@ -79,13 +81,14 @@ def test_text_file_preview(client, temp_catalog):
 
 def test_image_file_preview(client, temp_catalog):
     """Test that image files can be previewed correctly."""
-    # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
 
-    from slugify import slugify
-
-    catalog_id = slugify(temp_catalog["name"])
+    catalog_id = temp_catalog["catalog_id"]
 
     # Create dataset
     response = client.post(
@@ -145,13 +148,14 @@ def test_image_file_preview(client, temp_catalog):
 
 def test_file_preview_with_checkout(client, temp_catalog):
     """Test that file preview works with checkout parameter."""
-    # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
 
-    from slugify import slugify
-
-    catalog_id = slugify(temp_catalog["name"])
+    catalog_id = temp_catalog["catalog_id"]
 
     # Create dataset
     response = client.post(
@@ -210,13 +214,14 @@ def test_file_preview_with_checkout(client, temp_catalog):
 
 def test_file_commits_endpoint(client, temp_catalog):
     """Test the file commits endpoint returns correct data."""
-    # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
 
-    from slugify import slugify
-
-    catalog_id = slugify(temp_catalog["name"])
+    catalog_id = temp_catalog["catalog_id"]
 
     # Create dataset
     response = client.post(
@@ -272,13 +277,14 @@ def test_file_commits_endpoint(client, temp_catalog):
 
 def test_image_file_loading(client, temp_catalog):
     """Test that image files load correctly through the image endpoint."""
-    # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
 
-    from slugify import slugify
-
-    catalog_id = slugify(temp_catalog["name"])
+    catalog_id = temp_catalog["catalog_id"]
 
     # Create dataset
     response = client.post(
@@ -330,13 +336,14 @@ def test_image_file_loading(client, temp_catalog):
 
 def test_file_commits_not_in_latest(client, temp_catalog):
     """Test commits endpoint for file that exists in older commits but not HEAD."""
-    # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
 
-    from slugify import slugify
-
-    catalog_id = slugify(temp_catalog["name"])
+    catalog_id = temp_catalog["catalog_id"]
 
     # Create dataset
     response = client.post(
@@ -404,13 +411,14 @@ def test_file_commits_not_in_latest(client, temp_catalog):
 
 def test_file_commits_removed_and_readded(client, temp_catalog):
     """Test commits endpoint for file that was removed and re-added (gap scenario)."""
-    # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
 
-    from slugify import slugify
-
-    catalog_id = slugify(temp_catalog["name"])
+    catalog_id = temp_catalog["catalog_id"]
 
     # Create dataset
     response = client.post(
@@ -524,13 +532,14 @@ def test_file_commits_removed_and_readded(client, temp_catalog):
 
 def test_file_preview_invalid_checkout(client, temp_catalog):
     """Test preview with invalid checkout hash handles gracefully."""
-    # Create catalog
-    response = client.post("/catalogs/add", data=temp_catalog, follow_redirects=True)
+    response = client.post(
+        "/catalogs/add",
+        data={"root_dir": temp_catalog["root_dir"]},
+        follow_redirects=True,
+    )
     assert response.status_code == 200
 
-    from slugify import slugify
-
-    catalog_id = slugify(temp_catalog["name"])
+    catalog_id = temp_catalog["catalog_id"]
 
     # Create dataset
     response = client.post(

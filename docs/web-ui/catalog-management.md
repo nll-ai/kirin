@@ -28,8 +28,8 @@ For local filesystem storage:
 
 **Web UI Configuration:**
 
-- **Catalog Name**: Friendly name for the catalog
-- **Root Directory**: S3 URL (e.g., `s3://my-bucket/data`)
+- **Root Directory**: S3 URL (e.g., `s3://my-bucket/data`). The catalog is identified
+  and shown by this path (no separate name field).
 - **AWS Profile**: Optional AWS profile name (auto-detected from environment)
 - **Authentication Command**: Optional CLI command for automatic authentication
 
@@ -44,8 +44,8 @@ For local filesystem storage:
 
 **Web UI Configuration:**
 
-- **Catalog Name**: Friendly name for the catalog
-- **Root Directory**: GCS URL (e.g., `gs://my-bucket/data`)
+- **Root Directory**: GCS URL (e.g., `gs://my-bucket/data`). The catalog is identified
+  and shown by this path.
 - **Authentication Command**: Optional CLI command for automatic authentication
 
 #### Azure Blob Storage Configuration
@@ -59,8 +59,8 @@ For local filesystem storage:
 
 **Web UI Configuration:**
 
-- **Catalog Name**: Friendly name for the catalog
-- **Root Directory**: Azure URL (e.g., `az://my-container/data`)
+- **Root Directory**: Azure URL (e.g., `az://my-container/data`). The catalog is
+  identified and shown by this path.
 - **Authentication Command**: Optional CLI command for automatic authentication
 
 ### Authentication Command Auto-Execution
@@ -95,40 +95,40 @@ When adding or editing a catalog, fill in the "Authentication Command
 **Example:**
 
 ```text
-Catalog: production-s3
 Root Directory: s3://my-production-bucket/data
 AWS Profile: production
 Auth Command: aws sso login --profile production
 
-Result: When you click on this catalog, Kirin will automatically
-run the auth command if authentication is needed.
+Result: The catalog is shown as s3://my-production-bucket/data. When you
+click on it, Kirin will automatically run the auth command if needed.
 ```
 
 ## Multi-Catalog Workflows
 
 ### Organizing Catalogs
 
-Structure your catalogs by purpose:
+Structure your catalogs by purpose (each is identified by its root path):
 
 ```text
-s3-production: s3://production-bucket/data
-gcs-production: gs://production-bucket/data
-
-# Analytics catalogs
-gcs-analytics: gs://analytics-bucket/data
-azure-ml: az://ml-container/data
+s3://production-bucket/data
+gs://production-bucket/data
+gs://analytics-bucket/data
+az://ml-container/data
 ```
 
 ### Working with Multiple Catalogs
 
 The web UI allows you to manage multiple catalogs from a single interface:
 
-1. **Add multiple catalogs** using the "Add Catalog" button
+1. **Add multiple catalogs** using the "Add Catalog" button (enter root directory
+   only; the catalog is identified and named by that path)
 2. **Switch between catalogs** by clicking on catalog cards
 3. **View datasets** in each catalog separately
-4. **Edit or delete** catalogs as needed
+4. **Edit or remove** catalogs as needed
 
 Each catalog maintains its own datasets and commit history independently.
+**Removing a catalog** from the list only removes it from your local config; it
+does not delete any data on S3, GCS, or other remote storage.
 
 ## Authentication Management
 

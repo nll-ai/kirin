@@ -112,6 +112,25 @@ class Catalog:
             fs=self.fs,
         )
 
+    def delete_dataset(self, dataset_name: str) -> None:
+        """Remove a dataset from the catalog and delete its data.
+
+        Deletes the dataset directory and all commits/files under it. This cannot
+        be undone.
+
+        :param dataset_name: The name of the dataset to remove.
+        :raises ValueError: If the dataset does not exist.
+        """
+        if dataset_name not in self.datasets():
+            raise ValueError(f"Dataset '{dataset_name}' not found in catalog")
+        path = f"{self.datasets_dir}/{dataset_name}"
+        try:
+            self.fs.rm(path, recursive=True)
+            logger.info(f"Deleted dataset: {dataset_name}")
+        except Exception as e:
+            logger.error(f"Failed to delete dataset {dataset_name}: {e}")
+            raise
+
     def _get_widget_data(self) -> dict:
         """Get widget data dictionary for CatalogWidget.
 
