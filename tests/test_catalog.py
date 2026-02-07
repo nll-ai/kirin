@@ -65,6 +65,23 @@ def test_create_dataset(empty_catalog):
     assert dataset.name == "test_dataset"
 
 
+def test_delete_dataset(empty_catalog):
+    """Test deleting a dataset removes it and its data."""
+    catalog = empty_catalog
+    dataset = catalog.create_dataset("test_dataset", "Test dataset.")
+    dataset.commit(message="test commit", add_files=[dummy_file()])
+    assert "test_dataset" in catalog.datasets()
+    catalog.delete_dataset("test_dataset")
+    assert "test_dataset" not in catalog.datasets()
+    assert len(catalog) == 0
+
+
+def test_delete_dataset_not_found(empty_catalog):
+    """Test delete_dataset raises for missing dataset."""
+    with pytest.raises(ValueError, match="not found"):
+        empty_catalog.delete_dataset("nonexistent")
+
+
 class TestCatalogCloudAuth:
     """Test Catalog class with cloud authentication parameters."""
 

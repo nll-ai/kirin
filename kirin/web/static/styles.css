@@ -182,6 +182,11 @@
   text-decoration: underline;
 }
 
+/* Typography - Whitespace */
+.whitespace-nowrap {
+  white-space: nowrap;
+}
+
 .hover\:underline:hover {
   text-decoration: underline;
 }

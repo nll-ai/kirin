@@ -23,7 +23,7 @@ from fastapi.templating import Jinja2Templates
 from loguru import logger
 from slugify import slugify
 
-from .config import CatalogConfig, CatalogManager
+from .config import CatalogConfig, CatalogManager, normalize_root_dir
 
 # Global catalog manager
 catalog_manager = CatalogManager()
@@ -528,46 +528,41 @@ async def add_catalog_form(
 async def add_catalog(
     request: Request,
     catalog_manager: CatalogManager = Depends(get_catalog_manager),
-    name: str = Form(..., min_length=1, max_length=100),
     root_dir: str = Form(..., min_length=1),
     aws_profile: str = Form(""),
     auth_command: str = Form(""),
 ):
-    """Add a new catalog."""
+    """Add a new catalog. Name and id are derived from root directory."""
     try:
-        # Generate catalog ID from name using slugify
-        catalog_id = slugify(name)
+        normalized = normalize_root_dir(root_dir)
+        catalog_id = slugify(normalized)
+        name = normalized
 
-        # Create catalog config
         logger.info(f"Creating catalog config for: {name}")
         logger.info(f"Catalog ID: {catalog_id}")
-        logger.info(f"Root dir: {root_dir}")
 
         catalog = CatalogConfig(
             id=catalog_id,
             name=name,
-            root_dir=root_dir,
+            root_dir=normalized,
             aws_profile=aws_profile if aws_profile else None,
             auth_command=auth_command if auth_command else None,
         )
 
-        # Add catalog
         catalog_manager.add_catalog(catalog)
 
-        # Redirect to catalog list
         return RedirectResponse(url="/", status_code=302)
 
     except HTTPException:
         raise
     except ValueError as e:
-        # Handle "already exists" error gracefully
         if "already exists" in str(e):
-            logger.warning(f"Catalog '{name}' already exists: {e}")
+            logger.warning(f"Catalog for root_dir already exists: {e}")
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    f"A catalog with the name '{name}' already exists. "
-                    "Please choose a different name or go to the existing catalog."
+                    "A catalog for this root directory already exists. "
+                    "Go to the existing catalog or use a different root."
                 ),
             )
         else:
@@ -932,6 +927,64 @@ async def create_dataset(
         )
 
 
+@app.get(
+    "/catalog/{catalog_id}/dataset/{dataset_name}/delete",
+    response_class=HTMLResponse,
+)
+async def delete_dataset_confirmation(
+    request: Request,
+    catalog_id: str,
+    dataset_name: str,
+    catalog_manager: CatalogManager = Depends(get_catalog_manager),
+):
+    """Show delete dataset confirmation."""
+    catalog = catalog_manager.get_catalog(catalog_id)
+    if not catalog:
+        raise HTTPException(status_code=404, detail="Catalog not found")
+    kirin_catalog = catalog.to_catalog()
+    if dataset_name not in kirin_catalog.datasets():
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    return templates.TemplateResponse(
+        "delete_dataset.html",
+        {
+            "request": request,
+            "catalog": catalog,
+            "dataset_name": dataset_name,
+        },
+    )
+
+
+@app.post(
+    "/catalog/{catalog_id}/dataset/{dataset_name}/delete",
+    response_class=HTMLResponse,
+)
+async def delete_dataset(
+    request: Request,
+    catalog_id: str,
+    dataset_name: str,
+    catalog_manager: CatalogManager = Depends(get_catalog_manager),
+):
+    """Delete a dataset and all its data."""
+    catalog = catalog_manager.get_catalog(catalog_id)
+    if not catalog:
+        raise HTTPException(status_code=404, detail="Catalog not found")
+    try:
+        kirin_catalog = catalog.to_catalog()
+        kirin_catalog.delete_dataset(dataset_name)
+        return RedirectResponse(
+            url=f"/catalog/{catalog_id}",
+            status_code=302,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to delete dataset {dataset_name}: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to delete dataset: {str(e)}",
+        )
+
+
 @app.get("/catalog/{catalog_id}/edit", response_class=HTMLResponse)
 async def edit_catalog_form(
     request: Request,
@@ -961,49 +1014,38 @@ async def update_catalog(
     request: Request,
     catalog_id: str,
     catalog_manager: CatalogManager = Depends(get_catalog_manager),
-    name: str = Form(...),
-    root_dir: str = Form(...),
+    root_dir: str = Form(..., min_length=1),
     aws_profile: str = Form(""),
     auth_command: str = Form(""),
 ):
-    """Update an existing catalog."""
+    """Update an existing catalog. Name and id are derived from root directory."""
     try:
-        # Check if catalog exists
         existing_catalog = catalog_manager.get_catalog(catalog_id)
         if not existing_catalog:
             raise HTTPException(status_code=404, detail="Catalog not found")
 
-        # Generate new catalog ID from name (may change if name changed)
-        new_catalog_id = slugify(name)
+        normalized = normalize_root_dir(root_dir)
+        new_catalog_id = slugify(normalized)
+        name = normalized
 
-        # Create new catalog config
         updated_catalog = CatalogConfig(
             id=new_catalog_id,
             name=name,
-            root_dir=root_dir,
+            root_dir=normalized,
             aws_profile=aws_profile if aws_profile else None,
             auth_command=auth_command if auth_command else None,
         )
 
-        # Update catalog - handle ID changes
         if catalog_id != new_catalog_id:
-            # Catalog ID changed, need to delete old and add new
             catalog_manager.delete_catalog(catalog_id)
-            # Check if new catalog ID already exists
-            existing_catalog = catalog_manager.get_catalog(new_catalog_id)
-            if existing_catalog:
-                # Update existing catalog with new ID
+            existing_with_new_id = catalog_manager.get_catalog(new_catalog_id)
+            if existing_with_new_id:
                 catalog_manager.update_catalog(updated_catalog)
             else:
-                # Add new catalog
                 catalog_manager.add_catalog(updated_catalog)
         else:
-            # Catalog ID didn't change, just update
             catalog_manager.update_catalog(updated_catalog)
 
-        # No more caching - direct creation like notebook
-
-        # Redirect to catalog list
         return RedirectResponse(url="/", status_code=302)
 
     except HTTPException:
@@ -1024,7 +1066,7 @@ async def delete_catalog_confirmation(
     catalog_id: str,
     catalog_manager: CatalogManager = Depends(get_catalog_manager),
 ):
-    """Show delete catalog confirmation."""
+    """Show remove-catalog-from-list confirmation (does not delete remote data)."""
     catalog = catalog_manager.get_catalog(catalog_id)
     if not catalog:
         raise HTTPException(status_code=404, detail="Catalog not found")
@@ -1059,26 +1101,6 @@ async def delete_catalog(
         if not catalog:
             raise HTTPException(status_code=404, detail="Catalog not found")
 
-        # Check if catalog has datasets
-        try:
-            kirin_catalog = catalog.to_catalog()
-            datasets = kirin_catalog.datasets()
-            if datasets:
-                raise HTTPException(
-                    status_code=400,
-                    detail=(
-                        f"Cannot delete catalog with {len(datasets)} "
-                        "existing datasets. Please delete the datasets first."
-                    ),
-                )
-        except HTTPException:
-            # Re-raise HTTP exceptions (like the 400 above)
-            raise
-        except Exception as e:
-            logger.warning(f"Failed to check datasets for catalog {catalog_id}: {e}")
-            # For other exceptions, we'll allow deletion to proceed
-
-        # Delete catalog
         catalog_manager.delete_catalog(catalog_id)
 
         # No more caching - direct creation like notebook
