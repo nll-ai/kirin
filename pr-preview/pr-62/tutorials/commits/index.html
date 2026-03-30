@@ -1,0 +1,2380 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://nll-ai.github.io/kirin/tutorials/commits/">
+      
+      
+        <link rel="prev" href="../first-dataset/">
+      
+      
+        <link rel="next" href="../cloud-storage/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+    
+    
+      
+        <title>Commits - kirin</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../apidocs.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#working-with-commits" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="kirin" class="md-header__button md-logo" aria-label="kirin" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            kirin
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Commits
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/nll-ai/kirin" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    nll-ai/kirin
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="kirin" class="md-nav__button md-logo" aria-label="kirin" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+
+    </a>
+    kirin
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/nll-ai/kirin" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    nll-ai/kirin
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/core-concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../first-dataset/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Your First Dataset
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Working with Commits
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Working with Commits
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-youll-learn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What You'll Learn
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-understanding-commit-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Understanding Commit Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-viewing-commit-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Viewing Commit History
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-limiting-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Limiting History
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-getting-specific-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Getting Specific Commits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-checking-out-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Checking Out Commits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-comparing-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Comparing Commits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-understanding-file-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Understanding File Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-8-commit-metadata-and-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Commit Metadata and Tags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-9-finding-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 9: Finding Commits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-10-commit-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 10: Commit Statistics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-11-working-with-commit-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 11: Working with Commit Files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-12-commit-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 12: Commit Workflows
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 12: Commit Workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pattern-1-linear-data-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 1: Linear Data Processing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-2-experiment-tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 2: Experiment Tracking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-3-versioned-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 3: Versioned Releases
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-13-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 13: Best Practices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 13: Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#write-clear-commit-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write Clear Commit Messages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#make-atomic-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Make Atomic Commits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commit-regularly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commit Regularly
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-14-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 14: Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 14: Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-lost-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding Lost Commits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recovering-from-mistakes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recovering from Mistakes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Concepts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cloud-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud Storage Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-To Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/track-model-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Track Model Training Data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/manage-multiple-datasets/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Manage Multiple Datasets
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/setup-cloud-storage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Setup Cloud Storage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../how-to/version-control-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Version Control Your Data Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/storage-format/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Storage Format
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Web UI
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Web UI
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../web-ui/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../web-ui/getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../web-ui/how-to/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-To Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../web-ui/catalog-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Catalog Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../cloud-storage-auth/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cloud Storage Auth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-youll-learn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What You'll Learn
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prerequisites" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prerequisites
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-1-understanding-commit-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 1: Understanding Commit Structure
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-2-viewing-commit-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 2: Viewing Commit History
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-3-limiting-history" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 3: Limiting History
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-4-getting-specific-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 4: Getting Specific Commits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-5-checking-out-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 5: Checking Out Commits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-6-comparing-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 6: Comparing Commits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-7-understanding-file-changes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 7: Understanding File Changes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-8-commit-metadata-and-tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 8: Commit Metadata and Tags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-9-finding-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 9: Finding Commits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-10-commit-statistics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 10: Commit Statistics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-11-working-with-commit-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 11: Working with Commit Files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-12-commit-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 12: Commit Workflows
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 12: Commit Workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pattern-1-linear-data-processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 1: Linear Data Processing
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-2-experiment-tracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 2: Experiment Tracking
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pattern-3-versioned-releases" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pattern 3: Versioned Releases
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-13-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 13: Best Practices
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 13: Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#write-clear-commit-messages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Write Clear Commit Messages
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#make-atomic-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Make Atomic Commits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#commit-regularly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commit Regularly
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#step-14-troubleshooting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Step 14: Troubleshooting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 14: Troubleshooting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#finding-lost-commits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Finding Lost Commits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recovering-from-mistakes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recovering from Mistakes
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-concepts" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Concepts
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#next-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Next Steps
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<p><a href="https://molab.marimo.io/github/nll-ai/kirin/blob/main/docs/tutorials/commits.py"><img alt="Open in molab" src="https://marimo.io/molab-shield.svg" /></a></p>
+<p>To run this notebook, click on the molab shield above or run the following command at the terminal:</p>
+<div class="highlight"><pre><span></span><code>uvx<span class="w"> </span>marimo<span class="w"> </span>edit<span class="w"> </span>--sandbox<span class="w"> </span>--mcp<span class="w"> </span>--no-token<span class="w"> </span>--watch<span class="w"> </span>https://github.com/nll-ai/kirin/blob/main/docs/tutorials/commits.py
+</code></pre></div>
+<div class="marimo highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">marimo</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mo</span>
+</code></pre></div>
+<h1 id="working-with-commits">Working with Commits</h1>
+<p>This tutorial deep dives into Kirin's commit system. You'll learn how
+commits work, how to navigate commit history, compare commits, and use
+commits effectively in your data science workflows.</p>
+<!---->
+<h2 id="what-youll-learn">What You'll Learn</h2>
+<ul>
+<li>Understanding commit structure and properties</li>
+<li>Navigating linear commit history</li>
+<li>Comparing commits to see what changed</li>
+<li>Working with specific commits</li>
+<li>Best practices for commit messages and workflows</li>
+</ul>
+<!---->
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Completed <a href="../first-dataset/">Your First Dataset</a> tutorial</li>
+<li>Basic understanding of datasets and files</li>
+</ul>
+<div class="marimo highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">kirin</span><span class="w"> </span><span class="kn">import</span> <span class="n">Catalog</span>
+
+<span class="c1"># Create a temporary directory for our tutorial</span>
+<span class="c1"># In production, you might use: Catalog(root_dir=&quot;s3://my-bucket/data&quot;)</span>
+<span class="n">temp_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;kirin_commits_tutorial_&quot;</span><span class="p">))</span>
+<span class="n">catalog</span> <span class="o">=</span> <span class="n">Catalog</span><span class="p">(</span><span class="n">root_dir</span><span class="o">=</span><span class="n">temp_dir</span><span class="p">)</span>
+
+<span class="c1"># Create a new dataset</span>
+<span class="n">commit_demo_dataset</span> <span class="o">=</span> <span class="n">catalog</span><span class="o">.</span><span class="n">create_dataset</span><span class="p">(</span>
+    <span class="s2">&quot;commit_demo&quot;</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Demo dataset for commit tutorial&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># Create a directory for our data files</span>
+<span class="n">data_dir</span> <span class="o">=</span> <span class="n">temp_dir</span> <span class="o">/</span> <span class="s2">&quot;sample_data&quot;</span>
+<span class="n">data_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅ Created dataset: </span><span class="si">{</span><span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Dataset root: </span><span class="si">{</span><span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">root_dir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-1-understanding-commit-structure">Step 1: Understanding Commit Structure</h2>
+<p>A <strong>commit</strong> in Kirin is an immutable snapshot of files at a specific
+point in time. Unlike Git, Kirin uses a <strong>linear commit history</strong> - each
+commit has exactly one parent, creating a simple chain:</p>
+<div class="highlight"><pre><span></span><code>Initial Commit → Commit 2 → Commit 3 → Commit 4
+</code></pre></div>
+<p>Let's create some commits and explore what makes up a commit.</p>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Create first commit</span>
+<span class="n">file1</span> <span class="o">=</span> <span class="n">data_dir</span> <span class="o">/</span> <span class="s2">&quot;data.csv&quot;</span>
+<span class="n">file1</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;name,value</span><span class="se">\n</span><span class="s2">A,10</span><span class="se">\n</span><span class="s2">B,20</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">commit_msg1</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Initial data - </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">commit_hash1</span> <span class="o">=</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="n">commit_msg1</span><span class="p">,</span> <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">file1</span><span class="p">)]</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅ Created first commit: </span><span class="si">{</span><span class="n">commit_hash1</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Create second commit with updated data (same filename - versioning!)</span>
+<span class="n">file2</span> <span class="o">=</span> <span class="n">data_dir</span> <span class="o">/</span> <span class="s2">&quot;data.csv&quot;</span>
+<span class="n">file2</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;name,value</span><span class="se">\n</span><span class="s2">A,10</span><span class="se">\n</span><span class="s2">B,20</span><span class="se">\n</span><span class="s2">C,30</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">commit_msg2</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Add more data - </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">commit_hash2</span> <span class="o">=</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="n">commit_msg2</span><span class="p">,</span> <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">file2</span><span class="p">)]</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅ Created second commit: </span><span class="si">{</span><span class="n">commit_hash2</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   Note: Same filename - versioning handled by commits!&quot;</span><span class="p">)</span>
+</code></pre></div>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Get the current commit and explore its properties</span>
+<span class="n">current_commit</span> <span class="o">=</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">current_commit</span>
+<span class="k">if</span> <span class="n">current_commit</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;📊 Commit Properties:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Hash: </span><span class="si">{</span><span class="n">current_commit</span><span class="o">.</span><span class="n">hash</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Short hash: </span><span class="si">{</span><span class="n">current_commit</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Message: </span><span class="si">{</span><span class="n">current_commit</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Timestamp: </span><span class="si">{</span><span class="n">current_commit</span><span class="o">.</span><span class="n">timestamp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">parent_hash_display</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">current_commit</span><span class="o">.</span><span class="n">parent_hash</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">current_commit</span><span class="o">.</span><span class="n">parent_hash</span>
+        <span class="k">else</span> <span class="s2">&quot;None (initial)&quot;</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Parent hash: </span><span class="si">{</span><span class="n">parent_hash_display</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Files: </span><span class="si">{</span><span class="n">current_commit</span><span class="o">.</span><span class="n">list_files</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   File count: </span><span class="si">{</span><span class="n">current_commit</span><span class="o">.</span><span class="n">get_file_count</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Total size: </span><span class="si">{</span><span class="n">current_commit</span><span class="o">.</span><span class="n">get_total_size</span><span class="p">()</span><span class="si">}</span><span class="s2"> bytes&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Is initial: </span><span class="si">{</span><span class="n">current_commit</span><span class="o">.</span><span class="n">is_initial</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Key properties:</strong></p>
+<ul>
+<li><strong>Hash</strong>: Unique identifier (SHA256) for the commit</li>
+<li><strong>Message</strong>: Human-readable description of what changed</li>
+<li><strong>Timestamp</strong>: When the commit was created</li>
+<li><strong>Parent hash</strong>: Reference to the previous commit (None for initial
+  commit)</li>
+<li><strong>Files</strong>: Dictionary of File objects in this commit</li>
+</ul>
+<!---->
+<h2 id="step-2-viewing-commit-history">Step 2: Viewing Commit History</h2>
+<p>The commit history is a linear sequence. Let's explore it to see how
+commits are organized.</p>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Get all commits (newest to oldest)</span>
+<span class="n">history</span> <span class="o">=</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">history</span><span class="p">()</span>
+<span class="c1"># Reverse to show oldest first for tutorial clarity</span>
+<span class="n">history_oldest_first</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">history</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;📊 Total commits: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">history</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Commit History (oldest → newest):&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">step_num</span><span class="p">,</span> <span class="n">history_commit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">history_oldest_first</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">step_num</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">history_commit</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">history_commit</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Date: </span><span class="si">{</span><span class="n">history_commit</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Files: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">history_commit</span><span class="o">.</span><span class="n">list_files</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">parent_display</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">history_commit</span><span class="o">.</span><span class="n">parent_hash</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">history_commit</span><span class="o">.</span><span class="n">parent_hash</span>
+        <span class="k">else</span> <span class="s2">&quot;None (initial)&quot;</span>
+    <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Parent: </span><span class="si">{</span><span class="n">parent_display</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Understanding the history:</strong></p>
+<ul>
+<li>History is returned from newest to oldest (latest commit first)</li>
+<li>Each commit (except the first) has a parent</li>
+<li>The latest commit is <code>history[0]</code> or use <code>dataset.current_commit</code></li>
+<li>To display oldest first, reverse the list: <code>list(reversed(history))</code></li>
+</ul>
+<!---->
+<h2 id="step-3-limiting-history">Step 3: Limiting History</h2>
+<p>For large datasets with many commits, you can limit how many commits to
+retrieve. This is useful for performance and focusing on recent changes.</p>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Get only the 5 most recent commits</span>
+<span class="n">recent_commits</span> <span class="o">=</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">history</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;📊 Recent commits: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">recent_commits</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">recent_commit</span> <span class="ow">in</span> <span class="n">recent_commits</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   </span><span class="si">{</span><span class="n">recent_commit</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">recent_commit</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-4-getting-specific-commits">Step 4: Getting Specific Commits</h2>
+<p>You can retrieve a specific commit by its hash. This is useful when you
+know exactly which commit you want to work with.</p>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Get a specific commit (using the oldest commit for demonstration)</span>
+<span class="n">oldest_commit_hash</span> <span class="o">=</span> <span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">hash</span>  <span class="c1"># Oldest is last in newest-first list</span>
+<span class="n">retrieved_commit</span> <span class="o">=</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">get_commit</span><span class="p">(</span><span class="n">oldest_commit_hash</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">retrieved_commit</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅ Retrieved commit: </span><span class="si">{</span><span class="n">retrieved_commit</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Message: </span><span class="si">{</span><span class="n">retrieved_commit</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Files: </span><span class="si">{</span><span class="n">retrieved_commit</span><span class="o">.</span><span class="n">list_files</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;❌ Commit not found&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-5-checking-out-commits">Step 5: Checking Out Commits</h2>
+<p>"Checking out" a commit means switching the dataset to that commit's
+state. This lets you see what files were available at that point in
+time.</p>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Checkout the latest commit (default)</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">checkout</span><span class="p">()</span>
+<span class="n">current_commit_hash</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">current_commit</span><span class="o">.</span><span class="n">short_hash</span>
+    <span class="k">if</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">current_commit</span>
+    <span class="k">else</span> <span class="s2">&quot;None&quot;</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;📂 Current commit: </span><span class="si">{</span><span class="n">current_commit_hash</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Files: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Checkout a specific commit (using the oldest commit)</span>
+<span class="n">oldest_commit_for_checkout</span> <span class="o">=</span> <span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Oldest is last in newest-first list</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">checkout</span><span class="p">(</span><span class="n">oldest_commit_for_checkout</span><span class="o">.</span><span class="n">hash</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">📂 After checkout:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Current commit: </span><span class="si">{</span><span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">current_commit</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Files: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Checkout latest again</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">checkout</span><span class="p">()</span>  <span class="c1"># No argument = latest</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">📂 Back to latest:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Current commit: </span><span class="si">{</span><span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">current_commit</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Files: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Important:</strong> Checking out a commit doesn't delete anything - it just
+changes which files are "current" in the dataset. All commits and their
+files remain accessible.</p>
+<!---->
+<h2 id="step-6-comparing-commits">Step 6: Comparing Commits</h2>
+<p>One of the most powerful features is comparing commits to see what
+changed between them. This helps you understand how your dataset evolved
+over time.</p>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Get two commits to compare (oldest vs newest)</span>
+<span class="n">oldest_commit</span> <span class="o">=</span> <span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Oldest is last in newest-first list</span>
+<span class="n">newest_commit</span> <span class="o">=</span> <span class="n">history</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Newest is first in newest-first list</span>
+
+<span class="c1"># Compare them (oldest first, then newest)</span>
+<span class="n">comparison</span> <span class="o">=</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">compare_commits</span><span class="p">(</span>
+    <span class="n">oldest_commit</span><span class="o">.</span><span class="n">hash</span><span class="p">,</span> <span class="n">newest_commit</span><span class="o">.</span><span class="n">hash</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;📊 Commit Comparison:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+<span class="n">commit1_info</span> <span class="o">=</span> <span class="n">comparison</span><span class="p">[</span><span class="s2">&quot;commit1&quot;</span><span class="p">]</span>
+<span class="n">commit2_info</span> <span class="o">=</span> <span class="n">comparison</span><span class="p">[</span><span class="s2">&quot;commit2&quot;</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Commit 1: </span><span class="si">{</span><span class="n">commit1_info</span><span class="p">[</span><span class="s1">&#39;hash&#39;</span><span class="p">][:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">commit1_info</span><span class="p">[</span><span class="s1">&#39;message&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Commit 2: </span><span class="si">{</span><span class="n">commit2_info</span><span class="p">[</span><span class="s1">&#39;hash&#39;</span><span class="p">][:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">commit2_info</span><span class="p">[</span><span class="s1">&#39;message&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># File changes - compute manually by comparing file lists</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">📁 File Changes:&quot;</span><span class="p">)</span>
+<span class="n">files1</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">oldest_commit</span><span class="o">.</span><span class="n">list_files</span><span class="p">())</span>
+<span class="n">files2</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">newest_commit</span><span class="o">.</span><span class="n">list_files</span><span class="p">())</span>
+
+<span class="n">added_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">files2</span> <span class="o">-</span> <span class="n">files1</span><span class="p">)</span>
+<span class="n">removed_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">files1</span> <span class="o">-</span> <span class="n">files2</span><span class="p">)</span>
+<span class="n">unchanged_files</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">files1</span> <span class="o">&amp;</span> <span class="n">files2</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">added_files</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Added: </span><span class="si">{</span><span class="n">added_files</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">removed_files</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Removed: </span><span class="si">{</span><span class="n">removed_files</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">unchanged_files</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Unchanged: </span><span class="si">{</span><span class="n">unchanged_files</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Metadata changes (if any)</span>
+<span class="k">if</span> <span class="n">comparison</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;metadata_diff&quot;</span><span class="p">):</span>
+    <span class="n">metadata_diff</span> <span class="o">=</span> <span class="n">comparison</span><span class="p">[</span><span class="s2">&quot;metadata_diff&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">metadata_diff</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;added&quot;</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">📋 Metadata Added: </span><span class="si">{</span><span class="n">metadata_diff</span><span class="p">[</span><span class="s1">&#39;added&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">metadata_diff</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;changed&quot;</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;📋 Metadata Changed: </span><span class="si">{</span><span class="n">metadata_diff</span><span class="p">[</span><span class="s1">&#39;changed&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Tag changes (if any)</span>
+<span class="k">if</span> <span class="n">comparison</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;tags_diff&quot;</span><span class="p">):</span>
+    <span class="n">tags_diff</span> <span class="o">=</span> <span class="n">comparison</span><span class="p">[</span><span class="s2">&quot;tags_diff&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">tags_diff</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;added&quot;</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">🏷️  Tags Added: </span><span class="si">{</span><span class="n">tags_diff</span><span class="p">[</span><span class="s1">&#39;added&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">tags_diff</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;removed&quot;</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🏷️  Tags Removed: </span><span class="si">{</span><span class="n">tags_diff</span><span class="p">[</span><span class="s1">&#39;removed&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-7-understanding-file-changes">Step 7: Understanding File Changes</h2>
+<p>Let's see how files change between commits by creating more commits and
+comparing them step by step.</p>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Create commits with file changes</span>
+<span class="n">file3</span> <span class="o">=</span> <span class="n">data_dir</span> <span class="o">/</span> <span class="s2">&quot;data_v3.csv&quot;</span>
+<span class="n">file3</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;name,value</span><span class="se">\n</span><span class="s2">A,10</span><span class="se">\n</span><span class="s2">B,20</span><span class="se">\n</span><span class="s2">C,30</span><span class="se">\n</span><span class="s2">D,40</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">commit_msg3</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Add more rows - </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">commit_msg3</span><span class="p">,</span> <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">file3</span><span class="p">)])</span>
+
+<span class="c1"># Remove a file</span>
+<span class="n">commit_msg4</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Remove old file - </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">commit_msg4</span><span class="p">,</span> <span class="n">remove_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;data_v1.csv&quot;</span><span class="p">])</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ Created additional commits with file changes&quot;</span><span class="p">)</span>
+</code></pre></div>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Update history</span>
+<span class="n">updated_history</span> <span class="o">=</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">history</span><span class="p">()</span>
+
+<span class="c1"># Compare adjacent commits (going from newest to oldest)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;📊 Comparing adjacent commits (newest → oldest):&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">step_index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">updated_history</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+    <span class="n">commit_a</span> <span class="o">=</span> <span class="n">updated_history</span><span class="p">[</span><span class="n">step_index</span><span class="p">]</span>  <span class="c1"># Newer commit</span>
+    <span class="n">commit_b</span> <span class="o">=</span> <span class="n">updated_history</span><span class="p">[</span><span class="n">step_index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># Older commit</span>
+
+    <span class="c1"># Compute file differences manually</span>
+    <span class="n">files_a</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">commit_a</span><span class="o">.</span><span class="n">list_files</span><span class="p">())</span>
+    <span class="n">files_b</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">commit_b</span><span class="o">.</span><span class="n">list_files</span><span class="p">())</span>
+
+    <span class="n">added_files_result</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">files_b</span> <span class="o">-</span> <span class="n">files_a</span><span class="p">)</span>
+    <span class="n">removed_files_result</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">files_a</span> <span class="o">-</span> <span class="n">files_b</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">commit_a</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2"> → </span><span class="si">{</span><span class="n">commit_b</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">added_files_result</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   + Added: </span><span class="si">{</span><span class="n">added_files_result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">removed_files_result</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   - Removed: </span><span class="si">{</span><span class="n">removed_files_result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-8-commit-metadata-and-tags">Step 8: Commit Metadata and Tags</h2>
+<p>Commits can have metadata and tags for better organization. This is
+especially useful for tracking experiments, model versions, or data
+releases.</p>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Create a commit with metadata and tags</span>
+<span class="n">file4</span> <span class="o">=</span> <span class="n">data_dir</span> <span class="o">/</span> <span class="s2">&quot;model_v1.pkl&quot;</span>
+<span class="n">file4</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="s2">&quot;fake model data&quot;</span><span class="p">)</span>
+
+<span class="n">commit_msg5</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Add trained model - </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="n">commit_msg5</span><span class="p">,</span>
+    <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">file4</span><span class="p">)],</span>
+    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="mf">0.92</span><span class="p">,</span>
+        <span class="s2">&quot;framework&quot;</span><span class="p">:</span> <span class="s2">&quot;sklearn&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;model_type&quot;</span><span class="p">:</span> <span class="s2">&quot;RandomForest&quot;</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">,</span> <span class="s2">&quot;v1.0&quot;</span><span class="p">,</span> <span class="s2">&quot;production&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ Created commit with metadata and tags&quot;</span><span class="p">)</span>
+</code></pre></div>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Access metadata and tags</span>
+<span class="n">latest_commit</span> <span class="o">=</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">current_commit</span>
+<span class="k">if</span> <span class="n">latest_commit</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;📊 Commit: </span><span class="si">{</span><span class="n">latest_commit</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Metadata: </span><span class="si">{</span><span class="n">latest_commit</span><span class="o">.</span><span class="n">metadata</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Tags: </span><span class="si">{</span><span class="n">latest_commit</span><span class="o">.</span><span class="n">tags</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-9-finding-commits">Step 9: Finding Commits</h2>
+<p>You can search for commits using various criteria: tags, metadata
+filters, or message content. This makes it easy to find specific commits
+in large datasets.</p>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Find commits by tags</span>
+<span class="n">production_commits</span> <span class="o">=</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">find_commits</span><span class="p">(</span><span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;production&quot;</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;🏷️  Production commits: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">production_commits</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">prod_commit</span> <span class="ow">in</span> <span class="n">production_commits</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   </span><span class="si">{</span><span class="n">prod_commit</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">prod_commit</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Find commits by metadata filter</span>
+<span class="n">high_accuracy_commits</span> <span class="o">=</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">find_commits</span><span class="p">(</span>
+    <span class="n">metadata_filter</span><span class="o">=</span><span class="k">lambda</span> <span class="n">m</span><span class="p">:</span> <span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.9</span>
+<span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">📊 High accuracy commits: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">high_accuracy_commits</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">acc_commit</span> <span class="ow">in</span> <span class="n">high_accuracy_commits</span><span class="p">:</span>
+    <span class="n">accuracy_value</span> <span class="o">=</span> <span class="n">acc_commit</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;accuracy&quot;</span><span class="p">)</span>
+    <span class="n">commit_info</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">acc_commit</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">acc_commit</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   </span><span class="si">{</span><span class="n">commit_info</span><span class="si">}</span><span class="s2"> (accuracy: </span><span class="si">{</span><span class="n">accuracy_value</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+</code></pre></div>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Find commits by message content</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_by_message</span><span class="p">(</span><span class="n">commit_demo_dataset</span><span class="p">,</span> <span class="n">search_term</span><span class="p">):</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">history</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">history</span> <span class="k">if</span> <span class="n">search_term</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+
+<span class="n">model_commits</span> <span class="o">=</span> <span class="n">find_by_message</span><span class="p">(</span><span class="n">commit_demo_dataset</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">🔍 Commits with &#39;model&#39; in message: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">model_commits</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">msg_commit</span> <span class="ow">in</span> <span class="n">model_commits</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   </span><span class="si">{</span><span class="n">msg_commit</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">msg_commit</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-10-commit-statistics">Step 10: Commit Statistics</h2>
+<p>Let's analyze commit patterns to understand how your dataset has evolved
+over time.</p>
+<div class="marimo highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">analyze_commits</span><span class="p">(</span><span class="n">commit_demo_dataset</span><span class="p">):</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">history</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">history</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;No commits found&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;📊 Commit Statistics:&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">50</span><span class="p">)</span>
+
+    <span class="c1"># Basic stats</span>
+    <span class="n">total_commits</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">history</span><span class="p">)</span>
+    <span class="n">total_size</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">get_total_size</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">history</span><span class="p">)</span>
+    <span class="n">avg_size</span> <span class="o">=</span> <span class="n">total_size</span> <span class="o">/</span> <span class="n">total_commits</span> <span class="k">if</span> <span class="n">total_commits</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total commits: </span><span class="si">{</span><span class="n">total_commits</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total size: </span><span class="si">{</span><span class="n">total_size</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="mi">1024</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1024</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> MB&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Average commit size: </span><span class="si">{</span><span class="n">avg_size</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">1024</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> KB&quot;</span><span class="p">)</span>
+
+    <span class="c1"># File frequency</span>
+    <span class="n">file_counts</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">commit</span> <span class="ow">in</span> <span class="n">history</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">commit</span><span class="o">.</span><span class="n">list_files</span><span class="p">():</span>
+            <span class="n">file_counts</span><span class="p">[</span><span class="n">filename</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Most frequently changed files:&quot;</span><span class="p">)</span>
+    <span class="n">sorted_files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">file_counts</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">sorted_files</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">: appears in </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> commits&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Time span</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">history</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">first_date</span> <span class="o">=</span> <span class="n">history</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">timestamp</span>
+        <span class="n">last_date</span> <span class="o">=</span> <span class="n">history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">timestamp</span>
+        <span class="n">time_span</span> <span class="o">=</span> <span class="n">last_date</span> <span class="o">-</span> <span class="n">first_date</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Time span: </span><span class="si">{</span><span class="n">time_span</span><span class="o">.</span><span class="n">days</span><span class="si">}</span><span class="s2"> days&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   First commit: </span><span class="si">{</span><span class="n">first_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Last commit: </span><span class="si">{</span><span class="n">last_date</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">analyze_commits</span><span class="p">(</span><span class="n">commit_demo_dataset</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-11-working-with-commit-files">Step 11: Working with Commit Files</h2>
+<p>You can access files from specific commits by checking out that commit
+and then using the standard file access methods.</p>
+<div class="marimo highlight"><pre><span></span><code><span class="c1"># Get files from a specific commit (using oldest for demonstration)</span>
+<span class="n">target_commit</span> <span class="o">=</span> <span class="n">updated_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># Oldest is last in newest-first list</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">checkout</span><span class="p">(</span><span class="n">target_commit</span><span class="o">.</span><span class="n">hash</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;📁 Files in commit </span><span class="si">{</span><span class="n">target_commit</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">dataset</span><span class="o">.</span><span class="n">local_files</span><span class="p">()</span> <span class="k">as</span> <span class="n">local_files</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">local_path</span> <span class="ow">in</span> <span class="n">local_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">file_obj</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get_file</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;      Size: </span><span class="si">{</span><span class="n">file_obj</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> bytes&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;      Hash: </span><span class="si">{</span><span class="n">file_obj</span><span class="o">.</span><span class="n">hash</span><span class="p">[:</span><span class="mi">16</span><span class="p">]</span><span class="si">}</span><span class="s2">...&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;      Local path: </span><span class="si">{</span><span class="n">local_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="step-12-commit-workflows">Step 12: Commit Workflows</h2>
+<p>Here are common commit workflow patterns that you can use in your data
+science projects.</p>
+<!---->
+<h3 id="pattern-1-linear-data-processing">Pattern 1: Linear Data Processing</h3>
+<p>Sequential data processing pipeline where each step commits its output.</p>
+<!---->
+<div class="highlight"><pre><span></span><code><span class="c1"># Sequential data processing pipeline</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Add raw data&quot;</span><span class="p">,</span> <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;raw_data.csv&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="c1"># ... process data ...</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Add cleaned data&quot;</span><span class="p">,</span> <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cleaned_data.csv&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="c1"># ... analyze data ...</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Add analysis results&quot;</span><span class="p">,</span> <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;results.csv&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+</code></pre></div>
+<!---->
+<h3 id="pattern-2-experiment-tracking">Pattern 2: Experiment Tracking</h3>
+<p>Track different experiments with metadata and tags for easy comparison.</p>
+<!---->
+<div class="highlight"><pre><span></span><code><span class="c1"># Track different experiments</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Experiment 1: Random Forest&quot;</span><span class="p">,</span>
+    <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;rf_model.pkl&quot;</span><span class="p">,</span> <span class="s2">&quot;rf_results.csv&quot;</span><span class="p">],</span>
+    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;RandomForest&quot;</span><span class="p">,</span> <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="mf">0.85</span><span class="p">},</span>
+    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;experiment&quot;</span><span class="p">,</span> <span class="s2">&quot;rf&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Experiment 2: Gradient Boosting&quot;</span><span class="p">,</span>
+    <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;gb_model.pkl&quot;</span><span class="p">,</span> <span class="s2">&quot;gb_results.csv&quot;</span><span class="p">],</span>
+    <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="s2">&quot;GradientBoosting&quot;</span><span class="p">,</span> <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span> <span class="mf">0.90</span><span class="p">},</span>
+    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;experiment&quot;</span><span class="p">,</span> <span class="s2">&quot;gb&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+</code></pre></div>
+<!---->
+<h3 id="pattern-3-versioned-releases">Pattern 3: Versioned Releases</h3>
+<p>Version your data releases with tags for easy reference.</p>
+<!---->
+<div class="highlight"><pre><span></span><code><span class="c1"># Version your data releases</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Release v1.0: Initial dataset&quot;</span><span class="p">,</span>
+    <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;dataset_v1.csv&quot;</span><span class="p">],</span>
+    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;release&quot;</span><span class="p">,</span> <span class="s2">&quot;v1.0&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Release v1.1: Added features&quot;</span><span class="p">,</span>
+    <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;dataset_v1.1.csv&quot;</span><span class="p">],</span>
+    <span class="n">tags</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;release&quot;</span><span class="p">,</span> <span class="s2">&quot;v1.1&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+</code></pre></div>
+<!---->
+<h2 id="step-13-best-practices">Step 13: Best Practices</h2>
+<p>Following best practices helps you maintain a clean, understandable
+commit history that makes it easy to track changes and understand your
+dataset's evolution.</p>
+<!---->
+<h3 id="write-clear-commit-messages">Write Clear Commit Messages</h3>
+<p>Good commit messages are descriptive and specific. They explain what
+changed and why, making it easy to understand the dataset's history.</p>
+<!---->
+<div class="highlight"><pre><span></span><code><span class="c1"># ✅ Good: Descriptive and specific</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Add Q1 2024 sales data with customer demographics&quot;</span><span class="p">,</span>
+    <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;sales_q1_2024.csv&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># ✅ Good: Explains the change</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Fix data quality issues: remove duplicates and handle missing values&quot;</span><span class="p">,</span>
+    <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;customers_cleaned.csv&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># ❌ Bad: Vague and unhelpful</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;Update&quot;</span><span class="p">,</span> <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;data.csv&quot;</span><span class="p">])</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;Fix&quot;</span><span class="p">,</span> <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;file.csv&quot;</span><span class="p">])</span>
+</code></pre></div>
+<!---->
+<h3 id="make-atomic-commits">Make Atomic Commits</h3>
+<p>Each commit should represent a single logical change. This makes it
+easier to understand what changed and to revert specific changes if
+needed.</p>
+<!---->
+<div class="highlight"><pre><span></span><code><span class="c1"># ✅ Good: Single logical change</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="s2">&quot;Add customer data&quot;</span><span class="p">,</span> <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;customers.csv&quot;</span><span class="p">])</span>
+
+<span class="c1"># ✅ Good: Related changes together</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Update customer data and add validation rules&quot;</span><span class="p">,</span>
+    <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;customers_updated.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;validation_rules.json&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># ❌ Bad: Unrelated changes</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Add customer data and fix bug&quot;</span><span class="p">,</span>
+    <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;customers.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;bug_fix.py&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+</code></pre></div>
+<!---->
+<h3 id="commit-regularly">Commit Regularly</h3>
+<p>Commit after each logical step in your workflow. This creates a clear
+history of how your dataset evolved and makes it easier to track
+changes.</p>
+<!---->
+<div class="highlight"><pre><span></span><code><span class="c1"># ✅ Good: Commit after each logical step</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Add raw data&quot;</span><span class="p">,</span> <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;raw_data.csv&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="c1"># ... process data ...</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;Add cleaned data&quot;</span><span class="p">,</span> <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cleaned_data.csv&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># ❌ Bad: Too many changes in one commit</span>
+<span class="c1"># ... many processing steps ...</span>
+<span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">commit</span><span class="p">(</span>
+    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;All changes&quot;</span><span class="p">,</span>
+    <span class="n">add_files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;file1.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;file2.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;file3.csv&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+<span class="p">)</span>
+</code></pre></div>
+<!---->
+<h2 id="step-14-troubleshooting">Step 14: Troubleshooting</h2>
+<p>Sometimes you need to find a specific commit or recover to a previous
+state. Here are some helpful techniques.</p>
+<!---->
+<h3 id="finding-lost-commits">Finding Lost Commits</h3>
+<p>If you have a partial commit hash, you can search for the full commit.</p>
+<div class="marimo highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">find_commit_by_hash</span><span class="p">(</span><span class="n">commit_demo_dataset</span><span class="p">,</span> <span class="n">partial_hash</span><span class="p">):</span>
+    <span class="n">history</span> <span class="o">=</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">history</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">commit</span> <span class="ow">in</span> <span class="n">history</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">commit</span><span class="o">.</span><span class="n">hash</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">partial_hash</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">commit</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+<span class="c1"># Find commit using a partial hash (using oldest for demonstration)</span>
+<span class="n">found_commit</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="n">partial_hash</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="k">if</span> <span class="n">updated_history</span><span class="p">:</span>
+    <span class="n">partial_hash</span> <span class="o">=</span> <span class="n">updated_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">hash</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span>  <span class="c1"># Oldest is last</span>
+    <span class="n">found_commit</span> <span class="o">=</span> <span class="n">find_commit_by_hash</span><span class="p">(</span><span class="n">commit_demo_dataset</span><span class="p">,</span> <span class="n">partial_hash</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">found_commit</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅ Found: </span><span class="si">{</span><span class="n">found_commit</span><span class="o">.</span><span class="n">short_hash</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">found_commit</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="recovering-from-mistakes">Recovering from Mistakes</h3>
+<p>You can recover your dataset to a specific commit state by checking out
+that commit.</p>
+<div class="marimo highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">recover_to_commit</span><span class="p">(</span><span class="n">commit_demo_dataset</span><span class="p">,</span> <span class="n">commit_hash</span><span class="p">):</span>
+    <span class="n">commit</span> <span class="o">=</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">get_commit</span><span class="p">(</span><span class="n">commit_hash</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">commit</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;❌ Commit </span><span class="si">{</span><span class="n">commit_hash</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># Checkout the commit</span>
+    <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">checkout</span><span class="p">(</span><span class="n">commit_hash</span><span class="p">)</span>
+
+    <span class="c1"># Verify</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">current_commit</span>
+        <span class="ow">and</span> <span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">current_commit</span><span class="o">.</span><span class="n">hash</span> <span class="o">==</span> <span class="n">commit_hash</span>
+    <span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;✅ Successfully recovered to commit </span><span class="si">{</span><span class="n">commit_hash</span><span class="p">[:</span><span class="mi">8</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Message: </span><span class="si">{</span><span class="n">commit_demo_dataset</span><span class="o">.</span><span class="n">current_commit</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;❌ Failed to recover&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+<span class="c1"># Recover to a known good commit (using oldest for demonstration)</span>
+<span class="n">recover_to_commit</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">updated_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">hash</span><span class="p">)</span>
+</code></pre></div>
+<h2 id="summary">Summary</h2>
+<p>Congratulations! You've learned how to work with commits in Kirin:</p>
+<ul>
+<li>✅ <strong>Understanding commit structure</strong> - Hash, message, timestamp,
+  parent, files</li>
+<li>✅ <strong>Navigating history</strong> - Viewing, limiting, and finding commits</li>
+<li>✅ <strong>Checking out commits</strong> - Switching between different commit
+  states</li>
+<li>✅ <strong>Comparing commits</strong> - Seeing what changed between commits</li>
+<li>✅ <strong>Using metadata and tags</strong> - Organizing commits with additional
+  information</li>
+<li>✅ <strong>Finding commits</strong> - Searching by tags, metadata, or message</li>
+<li>✅ <strong>Best practices</strong> - Writing good commit messages and workflows</li>
+</ul>
+<h2 id="key-concepts">Key Concepts</h2>
+<ul>
+<li><strong>Linear History</strong>: Each commit has one parent, creating a simple
+  chain</li>
+<li><strong>Immutable Snapshots</strong>: Commits are immutable - they never change</li>
+<li><strong>Content-Addressed Files</strong>: Files are stored by content hash, not
+  filename</li>
+<li><strong>Checkout</strong>: Switching the dataset to a specific commit's state</li>
+</ul>
+<h2 id="next-steps">Next Steps</h2>
+<ul>
+<li><strong><a href="../cloud-storage/">Cloud Storage Overview</a></strong> - Learn about using
+  cloud storage backends</li>
+<li><strong><a href="web-ui-basics.md">Web UI Basics</a></strong> - Use the web interface to
+  browse commits</li>
+<li><strong><a href="../../how-to/track-model-data/">Track Model Training Data</a></strong> - See
+  commits in action with ML workflows</li>
+</ul>
+
+
+
+
+
+
+
+  
+  
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/ericmjl" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["instant", "tabs", "content.code.copy"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      
+        <script src="https://unpkg.com/mermaid@10/dist/mermaid.min.js"></script>
+      
+        <script src="../../config.js"></script>
+      
+    
+  </body>
+</html>
