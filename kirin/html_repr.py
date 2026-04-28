@@ -1,8 +1,17 @@
 """HTML representation utilities for Dataset, Commit, and Catalog classes."""
 
+import base64
 import html
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+from loguru import logger
+
+if TYPE_CHECKING:
+    from kirin.file import File
+
+# Max size for embedding raster images as data URLs in notebook widget HTML.
+WIDGET_RASTER_IMAGE_MAX_PREVIEW_BYTES = 2 * 1024 * 1024
 
 
 def escape_html(text: str) -> str:
@@ -86,6 +95,90 @@ def get_file_icon_html(filename: str, content_type: Optional[str] = None) -> str
     }
 
     return icons.get(file_type, icons["file"])
+
+
+def is_raster_image_file(filename: str, content_type: Optional[str]) -> bool:
+    """True if the file is PNG, JPEG, GIF, or WebP (not SVG) for widget preview."""
+
+    lower = filename.lower()
+    if lower.endswith(".svg"):
+        return False
+    trimmed_type = ""
+    if content_type:
+        trimmed_type = content_type.split(";")[0].strip().lower()
+        if trimmed_type == "image/svg+xml":
+            return False
+
+    raster_extensions = (".png", ".jpg", ".jpeg", ".gif", ".webp")
+    if any(lower.endswith(ext) for ext in raster_extensions):
+        return True
+
+    if trimmed_type in (
+        "image/png",
+        "image/jpeg",
+        "image/jpg",
+        "image/gif",
+        "image/webp",
+        "image/pjpeg",
+    ):
+        return True
+
+    return False
+
+
+def raster_mime_for_widget_data_uri(
+    filename: str, content_type: Optional[str]
+) -> Optional[str]:
+    """Infer image/* MIME for raster widget previews from filename and metadata."""
+
+    trimmed = ""
+    if content_type:
+        trimmed = content_type.split(";")[0].strip().lower()
+    if trimmed == "image/jpg":
+        trimmed = "image/jpeg"
+    raster_mimes = {
+        "image/png",
+        "image/jpeg",
+        "image/gif",
+        "image/webp",
+        "image/pjpeg",
+    }
+    if trimmed in raster_mimes:
+        if trimmed == "image/pjpeg":
+            return "image/jpeg"
+        return trimmed
+
+    ext = Path(filename).suffix.lower()
+    return {
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".gif": "image/gif",
+        ".webp": "image/webp",
+    }.get(ext)
+
+
+def widget_raster_image_data_uri(
+    file_obj: "File",
+    max_bytes: int = WIDGET_RASTER_IMAGE_MAX_PREVIEW_BYTES,
+) -> Optional[str]:
+    """Build a raster data-URI (``data:image/...;base64,...``) if within size cap."""
+
+    filename = file_obj.name
+    if not is_raster_image_file(filename, file_obj.content_type):
+        return None
+    mime = raster_mime_for_widget_data_uri(filename, file_obj.content_type)
+    if mime is None:
+        return None
+    if file_obj.size > max_bytes:
+        return None
+    try:
+        raw = file_obj.read_bytes()
+    except OSError as e:
+        logger.debug(f"Skipped raster preview for {filename}: {e}")
+        return None
+    b64 = base64.b64encode(raw).decode("ascii")
+    return f"data:{mime};base64,{b64}"
 
 
 def get_inline_css() -> str:

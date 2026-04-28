@@ -53,7 +53,18 @@
                 <h4 class="panel-title">Preview: {{ file_info.name }}</h4>
             </div>
             <div class="panel-content">
-                <p class="text-muted-foreground">Image preview not yet implemented</p>
+                {% if file_info.image_data_uri %}
+                <div class="widget-raster-image-wrap">
+                    <img src="{{ file_info.image_data_uri }}"
+                         alt="{{ file_info.name|e }}"
+                         class="widget-raster-image"
+                         loading="lazy">
+                </div>
+                {% else %}
+                <p class="text-muted-foreground">
+                    Raster preview unavailable (too large) or unsupported here (e.g.&nbsp;SVG). Use Copy Code / local_files() to view the file.
+                </p>
+                {% endif %}
             </div>
         </div>
     </div>

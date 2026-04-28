@@ -863,7 +863,11 @@ class Dataset:
         Returns:
             Dictionary with dataset data for widget rendering
         """
-        from .html_repr import format_file_size, get_file_icon_html
+        from .html_repr import (
+            format_file_size,
+            get_file_icon_html,
+            widget_raster_image_data_uri,
+        )
 
         commit_count = self.commit_store.get_commit_count()
         total_size = None
@@ -920,10 +924,11 @@ class Dataset:
                         file_data["content"] = None
                         file_data["is_text"] = False
                 elif is_image:
-                    # For images, we'll need to get the data URL or path
-                    # For now, mark it as an image
                     file_data["is_image"] = True
                     file_data["is_text"] = False
+                    image_uri = widget_raster_image_data_uri(file_obj)
+                    if image_uri:
+                        file_data["image_data_uri"] = image_uri
                 else:
                     file_data["is_text"] = False
                     file_data["is_image"] = False
