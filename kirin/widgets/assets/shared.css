@@ -528,3 +528,16 @@ body {
   white-space: pre;
   word-wrap: normal;
 }
+
+/* Raster image preview (notebook widget static HTML) */
+.widget-raster-image-wrap {
+  max-width: 100%;
+  text-align: center;
+}
+
+.file-preview .widget-raster-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: calc(var(--radius) - 2px);
+  border: 1px solid hsl(var(--border));
+}
