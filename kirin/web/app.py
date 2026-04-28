@@ -502,8 +502,9 @@ async def list_catalogs(
         )
 
     return templates.TemplateResponse(
+        request,
         "catalogs.html",
-        {"request": request, "catalogs": catalog_infos, "show_hidden": show_hidden},
+        {"catalogs": catalog_infos, "show_hidden": show_hidden},
     )
 
 
@@ -513,9 +514,9 @@ async def add_catalog_form(
 ):
     """Show add catalog form."""
     return templates.TemplateResponse(
+        request,
         "catalog_form.html",
         {
-            "request": request,
             "page_title": "Add Data Catalog",
             "page_description": "Configure a new data catalog for your datasets",
             "form_action": "/catalogs/add",
@@ -636,9 +637,9 @@ async def list_datasets(
                 continue
 
         return templates.TemplateResponse(
+            request,
             "datasets.html",
             {
-                "request": request,
                 "catalog": catalog,
                 "datasets": datasets,
                 "lazy_loading": False,
@@ -701,9 +702,9 @@ async def list_datasets(
                             continue
 
                     return templates.TemplateResponse(
+                        request,
                         "datasets.html",
                         {
-                            "request": request,
                             "catalog": catalog,
                             "datasets": datasets,
                             "lazy_loading": False,
@@ -716,9 +717,9 @@ async def list_datasets(
                     auto_auth_message += f" (but retry failed: {str(retry_error)})"
 
         return templates.TemplateResponse(
+            request,
             "datasets.html",
             {
-                "request": request,
                 "catalog": catalog,
                 "datasets": [],
                 "error": "Connection timeout - authentication may be required",
@@ -802,9 +803,9 @@ async def list_datasets(
                             continue
 
                     return templates.TemplateResponse(
+                        request,
                         "datasets.html",
                         {
-                            "request": request,
                             "catalog": catalog,
                             "datasets": datasets,
                             "lazy_loading": False,
@@ -817,9 +818,9 @@ async def list_datasets(
                     auto_auth_message += f" (but retry failed: {str(retry_error)})"
 
         return templates.TemplateResponse(
+            request,
             "datasets.html",
             {
-                "request": request,
                 "catalog": catalog,
                 "datasets": [],
                 "error": f"Failed to connect: {str(e)}",
@@ -899,9 +900,9 @@ async def create_dataset(
 
         if result is None:
             return templates.TemplateResponse(
+                request,
                 "datasets.html",
                 {
-                    "request": request,
                     "catalog": catalog,
                     "datasets": [],
                     "error": (
@@ -945,9 +946,9 @@ async def delete_dataset_confirmation(
     if dataset_name not in kirin_catalog.datasets():
         raise HTTPException(status_code=404, detail="Dataset not found")
     return templates.TemplateResponse(
+        request,
         "delete_dataset.html",
         {
-            "request": request,
             "catalog": catalog,
             "dataset_name": dataset_name,
         },
@@ -997,9 +998,9 @@ async def edit_catalog_form(
         raise HTTPException(status_code=404, detail="Catalog not found")
 
     return templates.TemplateResponse(
+        request,
         "catalog_form.html",
         {
-            "request": request,
             "catalog": catalog,
             "page_title": "Edit Catalog",
             "page_description": "Update catalog configuration",
@@ -1080,9 +1081,9 @@ async def delete_catalog_confirmation(
         dataset_count = 0
 
     return templates.TemplateResponse(
+        request,
         "delete_catalog.html",
         {
-            "request": request,
             "catalog": catalog,
             "dataset_count": dataset_count,
         },
@@ -1236,9 +1237,9 @@ async def view_dataset(
         )
 
         return templates.TemplateResponse(
+            request,
             "dataset_view.html",
             {
-                "request": request,
                 "catalog_id": catalog_id,
                 "dataset_name": dataset_name,
                 "dataset_info": info,
@@ -1284,9 +1285,9 @@ async def dataset_files_tab(request: Request, catalog_id: str, dataset_name: str
                 )
 
         return templates.TemplateResponse(
+            request,
             "files_tab.html",
             {
-                "request": request,
                 "catalog_id": catalog_id,
                 "dataset_name": dataset_name,
                 "files": files,
@@ -1300,9 +1301,9 @@ async def dataset_files_tab(request: Request, catalog_id: str, dataset_name: str
     except Exception as e:
         logger.error(f"Failed to load files for dataset {dataset_name}: {e}")
         return templates.TemplateResponse(
+            request,
             "files_tab.html",
             {
-                "request": request,
                 "catalog_id": catalog_id,
                 "dataset_name": dataset_name,
                 "files": [],
@@ -1338,9 +1339,9 @@ async def dataset_history_tab(request: Request, catalog_id: str, dataset_name: s
             )
 
         return templates.TemplateResponse(
+            request,
             "history_tab.html",
             {
-                "request": request,
                 "catalog_id": catalog_id,
                 "dataset_name": dataset_name,
                 "commits": commits,
@@ -1354,9 +1355,9 @@ async def dataset_history_tab(request: Request, catalog_id: str, dataset_name: s
     except Exception as e:
         logger.error(f"Failed to load history for dataset {dataset_name}: {e}")
         return templates.TemplateResponse(
+            request,
             "history_tab.html",
             {
-                "request": request,
                 "catalog_id": catalog_id,
                 "dataset_name": dataset_name,
                 "commits": [],
@@ -1387,9 +1388,9 @@ async def commit_form(request: Request, catalog_id: str, dataset_name: str):
                 )
 
         return templates.TemplateResponse(
+            request,
             "commit_form.html",
             {
-                "request": request,
                 "catalog_id": catalog_id,
                 "dataset_name": dataset_name,
                 "files": files,
@@ -1582,7 +1583,11 @@ async def preview_file(
             # Add file metadata if present (e.g., source file links for plots)
             if file_obj.metadata:
                 template_context["file_metadata"] = file_obj.metadata
-            return templates.TemplateResponse("file_preview.html", template_context)
+            return templates.TemplateResponse(
+                request,
+                "file_preview.html",
+                template_context,
+            )
 
         if not is_text_file:
             # For binary files, show a message instead of content
@@ -1603,7 +1608,11 @@ async def preview_file(
             # Add file metadata if present (e.g., source file links for plots)
             if file_obj.metadata:
                 template_context["file_metadata"] = file_obj.metadata
-            return templates.TemplateResponse("file_preview.html", template_context)
+            return templates.TemplateResponse(
+                request,
+                "file_preview.html",
+                template_context,
+            )
 
         # Use local_files() context manager for file access
         try:
@@ -1636,7 +1645,11 @@ async def preview_file(
             # Add file metadata if present (e.g., source file links for plots)
             if file_obj.metadata:
                 template_context["file_metadata"] = file_obj.metadata
-            return templates.TemplateResponse("file_preview.html", template_context)
+            return templates.TemplateResponse(
+                request,
+                "file_preview.html",
+                template_context,
+            )
 
         template_context = {
             "request": request,
@@ -1654,7 +1667,11 @@ async def preview_file(
         # Add file metadata if present (e.g., source file links for plots)
         if file_obj.metadata:
             template_context["file_metadata"] = file_obj.metadata
-        return templates.TemplateResponse("file_preview.html", template_context)
+        return templates.TemplateResponse(
+            request,
+            "file_preview.html",
+            template_context,
+        )
 
     except HTTPException:
         # Re-raise HTTP exceptions (like 404 errors) as-is
@@ -2011,9 +2028,9 @@ async def checkout_commit(
         info["total_size"] = total_size
 
         return templates.TemplateResponse(
+            request,
             "dataset_view.html",
             {
-                "request": request,
                 "catalog_id": catalog_id,
                 "dataset_name": dataset_name,
                 "dataset_info": info,
