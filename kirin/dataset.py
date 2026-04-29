@@ -72,6 +72,20 @@ def get_source_file_content_type(filename: str) -> str:
         return "text/plain"
 
 
+def get_commit_file_hashes(commit: Optional[Commit]) -> Dict[str, str]:
+    """Get filename-to-hash mapping for a commit.
+
+    Args:
+        commit: Commit to inspect.
+
+    Returns:
+        Dictionary mapping filename to content hash.
+    """
+    if commit is None:
+        return {}
+    return {name: file.hash for name, file in commit.files.items()}
+
+
 class LazyLocalFiles(MutableMapping):
     """Dictionary-like object that lazily downloads files on access.
 
@@ -274,6 +288,7 @@ class Dataset:
         remove_files: List[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
         tags: Optional[List[str]] = None,
+        skip_if_no_changes: bool = False,
     ) -> str:
         """Create a new commit with changes.
 
@@ -298,6 +313,9 @@ class Dataset:
             remove_files: List of filenames to remove
             metadata: Optional metadata dictionary (merged with auto-extracted metadata)
             tags: Optional list of tags for staging/versioning
+            skip_if_no_changes: If True, skip creating a new commit when the
+                resulting file snapshot (filename -> content hash) is unchanged
+                from the latest commit.
 
         Returns:
             Hash of the new commit
@@ -490,8 +508,34 @@ class Dataset:
         if tags:
             builder.add_tags(tags)
 
-        # Build and save commit
+        # Build candidate commit and optionally short-circuit if no snapshot change
         commit = builder(message)
+        if (
+            skip_if_no_changes
+            and latest_commit is not None
+            and get_commit_file_hashes(commit) == get_commit_file_hashes(latest_commit)
+        ):
+            # Clean up temporary directories before returning early.
+            import shutil
+
+            for temp_dir in temp_dirs:
+                try:
+                    if os.path.exists(temp_dir):
+                        shutil.rmtree(temp_dir)
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to clean up temporary directory {temp_dir}: {e}"
+                    )
+
+            # Ensure current commit stays aligned with latest if we skip.
+            self._current_commit = latest_commit
+            logger.info(
+                "Skipped no-op commit because file snapshot is unchanged: "
+                f"{latest_commit.short_hash}"
+            )
+            return latest_commit.hash
+
+        # Save commit if snapshot changed (or idempotency disabled)
         self.commit_store.save_commit(commit)
         self._current_commit = commit
 

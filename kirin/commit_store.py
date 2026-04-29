@@ -12,6 +12,38 @@ from .storage import ContentStore
 from .utils import get_filesystem, strip_protocol
 
 
+def format_commit_load_error_message(root_dir: str, error: Exception) -> str:
+    """Format a user-actionable commit loading error message.
+
+    :param root_dir: Dataset root directory used by the commit store.
+    :param error: Original exception raised while loading commits.
+    :return: Error message with provider-specific remediation when available.
+    """
+    error_message = str(error)
+    error_message_lower = error_message.lower()
+    is_gcs_backend = root_dir.startswith("gs://")
+    looks_like_gcs_auth_failure = any(
+        phrase in error_message_lower
+        for phrase in (
+            "invalid credentials",
+            "reauthentication is needed",
+            "refresherror",
+            " 401",
+        )
+    )
+
+    if is_gcs_backend and looks_like_gcs_auth_failure:
+        return (
+            "Failed to load commits due to invalid Google Cloud credentials. "
+            "Run `gcloud auth application-default login` to refresh Application "
+            "Default Credentials, or set `GOOGLE_APPLICATION_CREDENTIALS` to a "
+            "service account key JSON file and retry. "
+            f"Original error: {error_message}"
+        )
+
+    return f"Failed to load commits: {error_message}"
+
+
 class CommitStore:
     """Manages commit history for a dataset.
 
@@ -213,7 +245,8 @@ class CommitStore:
 
         except Exception as e:
             logger.error(f"Failed to load commits from {self.commits_file}: {e}")
-            raise IOError(f"Failed to load commits: {e}") from e
+            actionable_message = format_commit_load_error_message(self.root_dir, e)
+            raise IOError(actionable_message) from e
 
     def _save_commits(self) -> None:
         """Save commits to the JSON file."""

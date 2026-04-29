@@ -47,6 +47,8 @@ The `commit()` method accepts the following parameters:
 - **add_files** (optional): List of file paths, model objects, or plot
   objects to add
 - **remove_files** (optional): List of filenames to remove from the dataset
+- **skip_if_no_changes** (optional, default `False`): If `True`, skips creating
+  a new commit when the resulting file snapshot is unchanged
 
 ```python
 # Add new files
@@ -61,7 +63,31 @@ dataset.commit(
     add_files=["new_data.csv"],
     remove_files=["old_data.csv"]
 )
+
+# Skip duplicate no-op commits (useful in reactive notebooks)
+dataset.commit(
+    message="Refresh outputs",
+    add_files=["new_data.csv"],
+    skip_if_no_changes=True
+)
 ```
+
+### Design Decision: Keep Idempotency Opt-In
+
+Kirin keeps `skip_if_no_changes=False` as the default for backward
+compatibility.
+
+Why:
+
+- Existing scripts may rely on one commit per `commit()` invocation.
+- Changing the default would silently alter behavior in automation workflows.
+- Reactive notebooks can opt in explicitly with `skip_if_no_changes=True`.
+
+Recommended pattern:
+
+- Use default behavior in scripts where every commit call should create history.
+- Use `skip_if_no_changes=True` in reactive environments (Marimo/Jupyter) to
+  prevent repeated no-op commits on rerun.
 
 ### Committing Plot Objects
 

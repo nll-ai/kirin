@@ -309,3 +309,59 @@ def test_cannot_commit_on_non_latest_commit(dataset_two_commits):
         message="This should work", add_files=[dummy_file()]
     )
     assert commit_hash is not None
+
+
+def test_commit_skip_if_no_changes_skips_duplicate_snapshot(tmp_path):
+    """Test skip_if_no_changes skips commit when file snapshot is unchanged."""
+    dataset = Dataset(root_dir=tmp_path, name="idempotent-test")
+
+    stable_file = tmp_path / "stable.txt"
+    stable_file.write_text("same-content")
+
+    first_hash = dataset.commit(message="initial", add_files=[stable_file])
+    initial_count = len(dataset.history())
+
+    second_hash = dataset.commit(
+        message="same snapshot",
+        add_files=[stable_file],
+        skip_if_no_changes=True,
+    )
+
+    assert second_hash == first_hash
+    assert len(dataset.history()) == initial_count
+
+
+def test_commit_default_behavior_still_creates_commit_for_same_snapshot(tmp_path):
+    """Test commit default keeps creating commits for unchanged snapshots."""
+    dataset = Dataset(root_dir=tmp_path, name="default-behavior-test")
+
+    stable_file = tmp_path / "stable.txt"
+    stable_file.write_text("same-content")
+
+    first_hash = dataset.commit(message="initial", add_files=[stable_file])
+    initial_count = len(dataset.history())
+
+    second_hash = dataset.commit(message="same snapshot", add_files=[stable_file])
+
+    assert second_hash != first_hash
+    assert len(dataset.history()) == initial_count + 1
+
+
+def test_commit_skip_if_no_changes_creates_commit_when_snapshot_changes(tmp_path):
+    """Test skip_if_no_changes still commits when snapshot content changes."""
+    dataset = Dataset(root_dir=tmp_path, name="changed-snapshot-test")
+
+    tracked_file = tmp_path / "tracked.txt"
+    tracked_file.write_text("version-1")
+    first_hash = dataset.commit(message="initial", add_files=[tracked_file])
+    initial_count = len(dataset.history())
+
+    tracked_file.write_text("version-2")
+    second_hash = dataset.commit(
+        message="updated",
+        add_files=[tracked_file],
+        skip_if_no_changes=True,
+    )
+
+    assert second_hash != first_hash
+    assert len(dataset.history()) == initial_count + 1

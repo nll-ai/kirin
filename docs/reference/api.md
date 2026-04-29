@@ -34,7 +34,7 @@ Dataset(
 #### Basic Operations
 
 - `commit(message, add_files=None, remove_files=None, metadata=None,
-  tags=None)` - Commit changes to the dataset
+  tags=None, skip_if_no_changes=False)` - Commit changes to the dataset
 - `checkout(commit_hash=None)` - Switch to a specific commit (latest if None)
 - `files` - Dictionary of files in the current commit
 - `local_files()` - Context manager for accessing files as local paths
@@ -137,7 +137,10 @@ browser.
 
 #### Method Details
 
-##### `commit(message, add_files=None, remove_files=None, metadata=None, tags=None)`
+##### `commit(...)`
+
+Signature:
+`commit(message, add_files=None, remove_files=None, metadata=None, tags=None, skip_if_no_changes=False)`
 
 Create a new commit with changes to the dataset.
 
@@ -166,6 +169,9 @@ Create a new commit with changes to the dataset.
   auto-extracted metadata). For model-specific metadata, use
   `metadata["models"][var_name]` structure.
 - `tags` (List[str], optional): List of tags for staging/versioning
+- `skip_if_no_changes` (bool, optional): When `True`, skip creating a new
+  commit if the resulting file snapshot (filename -> content hash) is unchanged
+  compared to the latest commit. Default is `False`.
 
 **Returns:**
 
@@ -242,6 +248,13 @@ dataset.commit(
         "hyperparameters": {"lr": 0.001, "epochs": 10}
     },
     tags=["production", "v2.0"]
+)
+
+# Reactive notebook safety: avoid duplicate no-op commits on rerun
+dataset.commit(
+    message="Refresh generated files",
+    add_files=["report.csv"],
+    skip_if_no_changes=True
 )
 ```
 
