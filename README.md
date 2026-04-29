@@ -8,8 +8,8 @@ Made with ❤️ by Eric J. Ma (@ericmjl).
 
 - 📦 **Linear versioning for datasets** - Simple, Git-like commits without branching
   complexity
-- 🔗 **Content-addressed storage** - Files stored by content hash for integrity and
-  deduplication
+- 🔗 **Content-addressed storage** - Files stored by content hash for integrity,
+  with deduplication
 - ☁️ **Cloud storage support** - S3, GCS, Azure, Minio, Backblaze B2, etc.
 - 🔄 **Automatic filesystem detection** from URIs
 - 🔐 **Easy authentication helpers**
@@ -32,6 +32,13 @@ ds = catalog.get_dataset("my_dataset")
 
 # Commit files
 commit_hash = ds.commit(message="Initial commit", add_files=["file1.csv"])
+
+# In reactive notebooks, opt in to no-op commit skipping
+commit_hash = ds.commit(
+    message="Initial commit",
+    add_files=["file1.csv"],
+    skip_if_no_changes=True,
+)
 
 # Checkout the latest commit
 ds.checkout()

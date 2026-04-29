@@ -3,6 +3,9 @@
 import json
 from datetime import datetime
 from pathlib import Path
+from unittest.mock import Mock
+
+import pytest
 
 from kirin.commit import Commit
 from kirin.commit_store import CommitStore
@@ -347,3 +350,43 @@ def test_json_file_structure(temp_dir):
     assert commit_data["hash"] == "abc123"
     assert commit_data["message"] == "Test commit"
     assert commit_data["parent_hash"] is None
+
+
+def test_commit_store_gcs_auth_failure_has_prescriptive_message():
+    """Test GCS auth failures include clear recovery instructions."""
+    failing_gcs_filesystem = Mock()
+    failing_gcs_filesystem.protocol = "gs"
+    failing_gcs_filesystem.exists.side_effect = RuntimeError(
+        "Invalid Credentials, 401"
+    )
+
+    with pytest.raises(IOError) as excinfo:
+        CommitStore(
+            "gs://test-bucket",
+            "test_dataset",
+            fs=failing_gcs_filesystem,
+            storage=Mock(),
+        )
+
+    error_message = str(excinfo.value)
+    assert "gcloud auth application-default login" in error_message
+    assert "GOOGLE_APPLICATION_CREDENTIALS" in error_message
+    assert "Invalid Credentials, 401" in error_message
+
+
+def test_commit_store_non_gcs_failure_keeps_generic_message():
+    """Test non-GCS failures keep the generic load error format."""
+    failing_s3_filesystem = Mock()
+    failing_s3_filesystem.protocol = "s3"
+    failing_s3_filesystem.exists.side_effect = RuntimeError("Boom")
+
+    with pytest.raises(IOError) as excinfo:
+        CommitStore(
+            "s3://test-bucket",
+            "test_dataset",
+            fs=failing_s3_filesystem,
+            storage=Mock(),
+        )
+
+    error_message = str(excinfo.value)
+    assert error_message == "Failed to load commits: Boom"
