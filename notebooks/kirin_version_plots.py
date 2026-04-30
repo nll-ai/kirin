@@ -33,15 +33,13 @@ def _(mo):
     1. generate correlated synthetic data
     2. create a scatter plot and CSV artifact
     3. commit both artifacts to a local dataset
-    4. simulate an auto-update commit with idempotent guard
-    5. create and version multiple plot artifacts
+    4. create and version multiple plot artifacts
     """)
     return
 
 
 @app.cell
 def _():
-    from datetime import date
     from pathlib import Path
     import tempfile
 
@@ -51,7 +49,7 @@ def _():
     import numpy as np
     import polars as pl
 
-    return Path, date, kirin, mo, np, pl, plt, tempfile
+    return Path, kirin, mo, np, pl, plt, tempfile
 
 
 @app.cell(hide_code=True)
@@ -116,7 +114,7 @@ def _(Path, pl, x, y):
     df.write_csv(csv_path)
 
     df
-    return csv_path, df
+    return (csv_path,)
 
 
 @app.cell(hide_code=True)
@@ -137,7 +135,7 @@ def _(Path, kirin, tempfile):
     dataset = catalog.get_dataset("plots")
 
     dataset
-    return analysis_root, dataset
+    return (dataset,)
 
 
 @app.cell
@@ -181,79 +179,7 @@ def _(dataset):
 @app.cell(hide_code=True)
 def _(mo):
     mo.md(r"""
-    ## 4) Simulate an auto-updating dataset commit
-
-    Append repeated tail rows, overwrite the CSV, and commit with metadata.
-    """)
-    return
-
-
-@app.cell
-def _(analysis_root, kirin):
-    dataset_autodata = kirin.Dataset(
-        root_dir=str(analysis_root),
-        name="auto-updating-data",
-    )
-
-    if dataset_autodata.history(limit=1):
-        dataset_autodata.checkout()
-
-    dataset_autodata
-    return (dataset_autodata,)
-
-
-@app.cell
-def _(csv_path, df, pl):
-    last_rows = df.tail(2)
-    new_rows = pl.concat([last_rows] * 10)
-    df2 = pl.concat([df, new_rows])
-    df2.write_csv(csv_path)
-
-    df2.tail()
-    return
-
-
-@app.cell
-def _(csv_path, dataset_autodata, date):
-    autocommit_hash = dataset_autodata.commit(
-        message=f"Auto-updated file on {date.today()}",
-        add_files=[str(csv_path)],
-        metadata={"operator": "Eric Name"},
-        skip_if_no_changes=True,
-    )
-
-    autocommit_hash
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## 5) Checkout a prior local commit and read file contents
-    """)
-    return
-
-
-@app.cell
-def _(dataset_autodata, pl):
-    autodata_history = dataset_autodata.history(limit=5)
-    target_commit_hash = autodata_history[-1].hash if autodata_history else None
-
-    if target_commit_hash is not None:
-        dataset_autodata.checkout(target_commit_hash)
-        with dataset_autodata.local_files() as autodata_local_files:
-            df3 = pl.read_csv(autodata_local_files["correlated_data.csv"])
-    else:
-        df3 = pl.DataFrame()
-
-    df3
-    return
-
-
-@app.cell(hide_code=True)
-def _(mo):
-    mo.md(r"""
-    ## 6) Showcase plot storage and versioning
+    ## 4) Showcase plot storage and versioning
 
     Create a second plot variant, commit it, and compare plot-related commits.
     This demonstrates Kirin storing plot artifacts as versioned files.
@@ -261,30 +187,36 @@ def _(mo):
     return
 
 
-@app.cell(hide_code=True)
-def _(np, plt, x, y):
-    plt.figure(figsize=(8, 6))
-    plt.scatter(x, y, alpha=0.6, color="darkorange", label="observations")
+@app.cell
+def _(fig, np, x, y):
+    fig.clf()
+    axis = fig.add_subplot(111)
+    axis.scatter(x, y, alpha=0.6, color="darkorange", label="observations")
     coeffs = np.polyfit(x, y, 1)
     trend = np.poly1d(coeffs)
     sorted_indices = np.argsort(x)
-    plt.plot(x[sorted_indices], trend(x[sorted_indices]), color="black", linewidth=2, label="trendline")
-    plt.xlabel("X values")
-    plt.ylabel("Y values")
-    plt.title("Scatter Plot v2 with Trendline")
-    plt.grid(True, alpha=0.3)
-    plt.legend()
+    axis.plot(
+        x[sorted_indices],
+        trend(x[sorted_indices]),
+        color="black",
+        linewidth=2,
+        label="trendline",
+    )
+    axis.set_xlabel("X values")
+    axis.set_ylabel("Y values")
+    axis.set_title("Scatter Plot v2 with Trendline")
+    axis.grid(True, alpha=0.3)
+    axis.legend()
 
-    fig_v2 = plt.gcf()
-    fig_v2
-    return (fig_v2,)
+    fig
+    return
 
 
 @app.cell
-def _(dataset, fig_v2):
+def _(dataset, fig):
     commit_plot_v2_hash = dataset.commit(
-        message="Add correlated scatter plot v2 with trendline.",
-        add_files=[fig_v2],
+        message="Updated correlated scatter plot with trendline.",
+        add_files=[fig],
         skip_if_no_changes=True,
     )
 
