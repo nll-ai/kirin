@@ -2320,3 +2320,23 @@ Implement File entity with...
 - [ ] Metadata properties defined
 - [ ] Tests written"
 ```
+
+## Pull Request Description Guidelines
+
+### Keep PR Descriptions Up-to-Date
+
+**CRITICAL**: Always keep pull request descriptions current with the actual
+state of the branch. Any time new commits change scope, behavior, tests, or
+documentation, update the PR description accordingly.
+
+**Required Process**:
+
+1. **Re-check branch scope** - Review commits and changed files before editing
+   PR text
+2. **Update summary** - Ensure summary reflects current behavior and design
+   decisions
+3. **Update test plan** - Add newly run checks and remove outdated items
+4. **Push consistency** - Keep PR title/body aligned with what is actually in
+   the branch
+
+**Rule**: Do not leave stale PR descriptions after additional commits.
