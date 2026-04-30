@@ -1,7 +1,7 @@
 # /// script
 # requires-python = ">=3.13"
 # dependencies = [
-#     "kirin==0.0.15",
+#     "kirin>=0.0.15",
 #     "loguru==0.7.3",
 #     "marimo>=0.23.4",
 # ]
