@@ -51,8 +51,27 @@ def _():
     import torch.nn as nn
 
     from kirin import Dataset
+    from kirin.commit_query import (
+        commits_to_records,
+        metadata_exists,
+        metadata_greater_than,
+        metadata_startswith,
+    )
 
-    return Dataset, Path, mo, nn, pd, plt, tempfile, torch
+    return (
+        Dataset,
+        Path,
+        commits_to_records,
+        metadata_exists,
+        metadata_greater_than,
+        metadata_startswith,
+        mo,
+        nn,
+        pd,
+        plt,
+        tempfile,
+        torch,
+    )
 
 
 @app.cell(hide_code=True)
@@ -395,16 +414,22 @@ def _(mo):
 
 
 @app.cell
-def _(mo, model_registry):
+def _(
+    metadata_exists,
+    metadata_greater_than,
+    metadata_startswith,
+    mo,
+    model_registry,
+):
     production_models = model_registry.find_commits(tags=["production"])
     high_accuracy_models = model_registry.find_commits(
-        metadata_filter=lambda metadata: metadata.get("accuracy", 0) > 0.9
+        metadata_filter=metadata_greater_than("accuracy", 0.9)
     )
     domain_models = model_registry.find_commits(
-        metadata_filter=lambda metadata: metadata.get("domain") is not None
+        metadata_filter=metadata_exists("domain")
     )
     v2_models = model_registry.find_commits(
-        metadata_filter=lambda metadata: metadata.get("version", "").startswith("2.")
+        metadata_filter=metadata_startswith("version", "2.")
     )
 
     mo.md(
@@ -418,6 +443,12 @@ def _(mo, model_registry):
     """
     )
     return (production_models,)
+
+
+@app.cell
+def _(production_models):
+    production_models[0]
+    return
 
 
 @app.cell(hide_code=True)
@@ -448,20 +479,12 @@ def _(mo):
 
 
 @app.cell
-def _(model_registry, pd):
+def _(commits_to_records, model_registry, pd):
     history = model_registry.history()
-    metrics_rows = []
-    for commit in history:
-        if commit.metadata:
-            metrics_rows.append(
-                {
-                    "commit": commit.short_hash,
-                    "version": commit.metadata.get("version", "unknown"),
-                    "accuracy": commit.metadata.get("accuracy", 0.0),
-                    "f1_score": commit.metadata.get("f1_score", 0.0),
-                    "tags": ", ".join(commit.tags) if commit.tags else "none",
-                }
-            )
+    metrics_rows = commits_to_records(
+        history,
+        metadata_keys=["version", "accuracy", "f1_score"],
+    )
 
     metrics_dataframe = pd.DataFrame(metrics_rows)
     metrics_dataframe
@@ -472,14 +495,17 @@ def _(model_registry, pd):
 def _(metrics_dataframe, mo, plt):
     if not metrics_dataframe.empty:
         fig, (axis1, axis2) = plt.subplots(1, 2, figsize=(12, 4))
-        axis1.plot(range(len(metrics_dataframe)), metrics_dataframe["accuracy"], "o-", linewidth=2)
+        commit_positions = list(range(len(metrics_dataframe)))
+
+        axis1.plot(commit_positions, metrics_dataframe["accuracy"], "o-", linewidth=2)
         axis1.set_title("Accuracy over commits")
         axis1.set_xlabel("Commit order")
         axis1.set_ylabel("Accuracy")
+        axis1.set_xticks(commit_positions)
         axis1.grid(True, alpha=0.3)
 
         axis2.plot(
-            range(len(metrics_dataframe)),
+            commit_positions,
             metrics_dataframe["f1_score"],
             "s-",
             color="orange",
@@ -488,6 +514,7 @@ def _(metrics_dataframe, mo, plt):
         axis2.set_title("F1 score over commits")
         axis2.set_xlabel("Commit order")
         axis2.set_ylabel("F1 score")
+        axis2.set_xticks(commit_positions)
         axis2.grid(True, alpha=0.3)
 
         plt.tight_layout()
