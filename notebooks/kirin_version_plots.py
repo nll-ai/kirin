@@ -256,7 +256,7 @@ def _(dataset, mo):
 
 @app.cell
 def _(dataset):
-    dataset
+    dataset.get_commits()[-1].get_file('fig.svg')
     return
 
 

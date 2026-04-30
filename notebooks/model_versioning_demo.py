@@ -2,7 +2,7 @@
 # requires-python = ">=3.13"
 # dependencies = [
 #     "torch==2.11.0",
-#     "kirin==0.0.15",
+#     "kirin>=0.0.15",
 #     "loguru==0.7.3",
 #     "numpy==2.4.4",
 #     "matplotlib==3.10.9",

@@ -2,7 +2,7 @@
 # requires-python = ">=3.13"
 # dependencies = [
 #     "polars==1.34.0",
-#     "kirin>=0.0.1",
+#     "kirin>=0.0.15",
 #     "anthropic==0.69.0",
 #     "loguru==0.7.3",
 #     "gcsfs>=2024.2.0",
