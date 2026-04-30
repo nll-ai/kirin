@@ -348,6 +348,7 @@ class Dataset:
         # Process files, model objects, and plot objects
         models_metadata = {}
         processed_files = []
+        processed_file_metadata: dict[str, dict[str, Any]] = {}
         temp_dirs = []  # Track temp dirs for cleanup
 
         if add_files:
@@ -389,6 +390,11 @@ class Dataset:
                         storage=self.storage,
                     )
                     processed_files.append(model_path)
+                    if source_path and source_hash:
+                        processed_file_metadata[str(model_path)] = {
+                            "source_file": os.path.basename(source_path),
+                            "source_hash": source_hash,
+                        }
 
                     # Extract metadata
                     from .ml_artifacts import get_sklearn_version
@@ -440,9 +446,11 @@ class Dataset:
                         storage=self.storage,
                     )
                     processed_files.append(plot_path)
-
-                    # Note: Plot metadata could be added here if needed in the future
-                    # For now, plots are just stored as files
+                    if source_path and source_hash:
+                        processed_file_metadata[str(plot_path)] = {
+                            "source_file": os.path.basename(source_path),
+                            "source_hash": source_hash,
+                        }
                 else:
                     # Unknown type - raise error
                     raise ValueError(
@@ -470,6 +478,7 @@ class Dataset:
                     hash=content_hash,
                     name=Path(file_path).name,
                     size=file_size,
+                    metadata=processed_file_metadata.get(file_path, {}),
                     _storage=self.storage,
                 )
 
