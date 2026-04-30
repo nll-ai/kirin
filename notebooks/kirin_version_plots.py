@@ -256,7 +256,102 @@ def _(dataset, mo):
 
 @app.cell
 def _(dataset):
-    dataset.get_commits()[-1].get_file('fig.svg')
+    dataset
+    return
+
+
+@app.cell(hide_code=True)
+def _(mo):
+    mo.md(r"""
+    ## Plot Source Linking (Preview)
+
+    When you commit a plot object directly (for example, `add_files=[fig]`), Kirin:
+
+    - stores the plot artifact as a normal dataset file (typically SVG), and
+    - stores the source notebook/script in content-addressed storage,
+      then attaches metadata pointers on the plot file:
+      - `source_file`
+      - `source_hash`
+
+    That means each committed plot can be traced back to the code that created it,
+    without forcing the source file to appear as a top-level dataset file entry.
+    """)
+    return
+
+
+@app.cell
+def _(dataset, mo):
+    second_figure_plot_commits = [
+        commit
+        for commit in dataset.history(limit=20)
+        if "plot" in commit.message.lower()
+    ]
+    second_figure_plot_commits_chronological = list(reversed(second_figure_plot_commits))
+
+    if len(second_figure_plot_commits_chronological) >= 2:
+        second_figure_target_commit = second_figure_plot_commits_chronological[1]
+    elif second_figure_plot_commits_chronological:
+        second_figure_target_commit = second_figure_plot_commits_chronological[-1]
+    else:
+        second_figure_target_commit = None
+
+    if second_figure_target_commit is None:
+        second_figure_preview_output = mo.md("No plot commit found yet.")
+    else:
+        second_figure_svg_names = sorted(
+            name
+            for name in second_figure_target_commit.list_files()
+            if name.endswith(".svg")
+        )
+        second_figure_svg_name = (
+            second_figure_svg_names[0] if second_figure_svg_names else None
+        )
+        second_figure_file = (
+            second_figure_target_commit.get_file(second_figure_svg_name)
+            if second_figure_svg_name
+            else None
+        )
+
+        second_figure_source_file = (
+            second_figure_file.metadata.get("source_file") if second_figure_file else None
+        )
+        second_figure_source_hash = (
+            second_figure_file.metadata.get("source_hash") if second_figure_file else None
+        )
+
+        if second_figure_source_file and second_figure_source_hash:
+            second_figure_source_content = dataset.storage.retrieve(
+                second_figure_source_hash,
+                second_figure_source_file,
+            ).decode("utf-8")
+            second_figure_source_preview = "\n".join(
+                second_figure_source_content.splitlines()
+            )
+            second_figure_preview_output = mo.md(
+                f"""
+    ### Source for second figure commit
+
+    - Commit: `{second_figure_target_commit.short_hash}`
+    - Plot file: `{second_figure_svg_name}`
+    - Source file: `{second_figure_source_file}`
+
+    ```python
+    {second_figure_source_preview}
+    ```
+    """
+            )
+        else:
+            second_figure_preview_output = mo.md(
+                f"""
+    ### Source for second figure commit
+
+    - Commit: `{second_figure_target_commit.short_hash}`
+    - Plot file: `{second_figure_svg_name}`
+    - Source metadata unavailable on this file.
+    """
+            )
+
+    second_figure_preview_output
     return
 
 
