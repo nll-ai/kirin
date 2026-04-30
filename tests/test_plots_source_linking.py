@@ -165,3 +165,28 @@ def test_commit_with_file_metadata(tmp_path):
         file_in_commit = commit.files["test.txt"]
         assert hasattr(file_in_commit, "metadata")
         assert isinstance(file_in_commit.metadata, dict)
+
+
+def test_dataset_commit_plot_includes_source_link_metadata(tmp_path):
+    """Test plot commits include source linking metadata on File objects."""
+    pytest = __import__("pytest")
+    pytest.importorskip("matplotlib")
+    import matplotlib.pyplot as plt
+
+    from kirin import Dataset
+
+    dataset = Dataset(root_dir=str(tmp_path), name="plot_source_linking")
+
+    fig, axis = plt.subplots()
+    axis.plot([1, 2, 3], [1, 4, 9])
+    dataset.commit(
+        message="add test plot",
+        add_files=[fig],
+        skip_if_no_changes=True,
+    )
+    plt.close(fig)
+
+    plot_file = dataset.get_file("fig.svg")
+    assert plot_file is not None
+    assert plot_file.metadata.get("source_file")
+    assert plot_file.metadata.get("source_hash")
