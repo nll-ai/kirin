@@ -38,13 +38,14 @@ def _(mo):
 @app.cell
 def _():
     from pathlib import Path
+    import tempfile
 
     import marimo as mo
     import polars as pl
 
     from kirin import Dataset
 
-    return Dataset, Path, mo, pl
+    return Dataset, Path, mo, pl, tempfile
 
 
 @app.cell(hide_code=True)
@@ -58,9 +59,8 @@ def _(mo):
 
 
 @app.cell
-def _(Dataset, Path):
-    demo_dir = Path("/tmp/kirin_demo")
-    demo_dir.mkdir(exist_ok=True)
+def _(Dataset, Path, tempfile):
+    demo_dir = Path(tempfile.mkdtemp(prefix="kirin_local_demo_"))
 
     data_dir = demo_dir / "data"
     data_dir.mkdir(exist_ok=True)

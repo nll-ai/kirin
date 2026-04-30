@@ -131,6 +131,11 @@ dataset.commit(
 The format is automatically chosen based on the plot type. You don't need to specify
 it manually - Kirin handles it for you.
 
+For matplotlib SVGs, Kirin uses deterministic serialization (date metadata
+suppressed and fixed `svg.hashsalt`) so identical plot content hashes
+consistently. This enables `skip_if_no_changes=True` to skip true no-op plot
+commits in reactive notebooks.
+
 ### Error Handling
 
 The `commit()` method can raise the following exceptions:

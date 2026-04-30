@@ -19,10 +19,12 @@ if TYPE_CHECKING:
     from .storage import ContentStore
 
 try:
+    import matplotlib as mpl
     import matplotlib.pyplot as plt
 
     HAS_MATPLOTLIB = True
 except ImportError:
+    mpl = None
     plt = None
     HAS_MATPLOTLIB = False
 
@@ -41,6 +43,9 @@ try:
 except ImportError:
     Image = None
     HAS_PILLOW = False
+
+DETERMINISTIC_SVG_METADATA = {"Date": None}
+DETERMINISTIC_SVG_HASHSALT = "kirin-svg-deterministic"
 
 
 def is_matplotlib_figure(obj: Any) -> bool:
@@ -129,28 +134,17 @@ def save_plot(
     Automatically detects the plot type (matplotlib, plotly, etc.) and chooses
     the optimal format (SVG for vector graphics, WebP for bitmap/raster plots).
 
-    **Important: Strict Content Hashing for SVG Plots**
+    **Important: Deterministic SVG Hashing for Matplotlib**
 
-    Kirin uses **strict content-addressed hashing** - files are identified by
-    their exact byte content. This means:
+    Kirin uses strict content-addressed hashing, so byte-level differences
+    change commit hashes. For matplotlib SVG output, Kirin applies deterministic
+    save options to keep hashes stable for identical plot content:
 
-    - **SVG plots will produce different hashes** even when the plot content
-      is identical, because matplotlib embeds creation timestamps in the SVG
-      metadata (`<dc:date>` elements). This is the strictest form of hashing
-      and ensures complete content integrity.
+    - fixed `Date` metadata in SVG output
+    - fixed matplotlib `svg.hashsalt` value for stable generated IDs
 
-    - **Identical plots = different commits**: If you save the same plot twice
-      (same data, same code), you'll get different hashes and thus different
-      commits, because the SVG files differ by their timestamps.
-
-    - **This is by design**: Content-addressed storage requires exact byte
-      matching. The timestamp metadata is part of the file content, so it
-      affects the hash.
-
-    - **For deterministic hashing**: If you need identical plots to produce
-      identical hashes, you would need to strip metadata before saving, but
-      this is not currently implemented as it would modify the original file
-      content.
+    This allows repeated commits of unchanged matplotlib figures to participate
+    in `skip_if_no_changes=True` idempotency checks.
 
     Args:
         plot_object: The plot object to save (matplotlib Figure, plotly Figure, etc.)
@@ -288,7 +282,16 @@ def serialize_plot(
     if HAS_MATPLOTLIB and plt is not None and isinstance(plot_object, plt.Figure):
         # Save matplotlib plot to temp file
         if format == "svg":
-            plot_object.savefig(plot_path, format="svg", bbox_inches="tight")
+            if mpl is not None:
+                with mpl.rc_context({"svg.hashsalt": DETERMINISTIC_SVG_HASHSALT}):
+                    plot_object.savefig(
+                        plot_path,
+                        format="svg",
+                        bbox_inches="tight",
+                        metadata=DETERMINISTIC_SVG_METADATA,
+                    )
+            else:
+                plot_object.savefig(plot_path, format="svg", bbox_inches="tight")
         elif format == "webp":
             if HAS_PILLOW and Image is not None:
                 # Save to PNG first, then convert to WebP
@@ -417,7 +420,16 @@ def _save_matplotlib_plot(
     # Save to bytes buffer
     buffer = io.BytesIO()
     if format == "svg":
-        fig.savefig(buffer, format="svg", bbox_inches="tight")
+        if mpl is not None:
+            with mpl.rc_context({"svg.hashsalt": DETERMINISTIC_SVG_HASHSALT}):
+                fig.savefig(
+                    buffer,
+                    format="svg",
+                    bbox_inches="tight",
+                    metadata=DETERMINISTIC_SVG_METADATA,
+                )
+        else:
+            fig.savefig(buffer, format="svg", bbox_inches="tight")
     elif format == "webp":
         if not HAS_PILLOW:
             logger.warning(

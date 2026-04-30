@@ -1006,6 +1006,10 @@ demonstrates:
 - **Keep it updated** - Add new capabilities and examples to the notebook
 - **Use real examples** - Show actual use cases, not just toy examples
 - **Document patterns** - Include comments explaining the Kirin patterns
+- **Markdown Before Code** - In instructional notebooks, add markdown cells
+  before code cells to explain what the next code block does
+- **Small Logical Cells** - Split large cells into small, single-purpose units
+  (setup, file creation, commit, analysis, rendering)
 - **Test regularly** - Use `uvx marimo check notebooks/prototype.py` to
   validate the notebook
 - **Interactive demos** - Make it runnable and educational
@@ -1060,6 +1064,12 @@ def _(dataset, temp_dir):
 - **Return Variables** - Always return variables that subsequent cells need
 - **Display Output** - Always assign display objects to variables and
   explicitly display them
+- **Use code_mode for running sessions** - If a notebook is already running in
+  marimo, edit cells through marimo `code_mode` APIs instead of direct file
+  edits
+- **Handle reactive side effects** - For side-effect operations like
+  `dataset.commit(...)`, use idempotent guards (for example,
+  `skip_if_no_changes=True`) in demo notebooks to avoid duplicate rerun effects
 
 **Notebook Validation**:
 
@@ -1108,8 +1118,10 @@ we edit a notebook.
   or pass statements
 - ❌ **Missing Return Values**: All cells should return meaningful values
   for reactive dependencies
-- ❌ **Fragmented Logic**: Combine related operations into single cells for
-  better organization
+- ❌ **Overloaded Cells**: Avoid very large cells that perform many unrelated
+  steps; split into smaller logical units
+- ❌ **Uncontrolled side effects**: Avoid unconditional side-effect cells in
+  reactive notebooks when reruns can duplicate state changes
 - ❌ **Version Numbers in Filenames**: Never use version numbers (v1, v2,
   etc.) in filenames when demonstrating versioning. Use the same filenames
   and let Kirin's commit system handle versioning. This showcases the
