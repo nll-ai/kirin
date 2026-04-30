@@ -1517,6 +1517,10 @@ it manually - Kirin handles it for you.</p>
 suppressed and fixed <code>svg.hashsalt</code>) so identical plot content hashes
 consistently. This enables <code>skip_if_no_changes=True</code> to skip true no-op plot
 commits in reactive notebooks.</p>
+<p>When Kirin can detect the calling source file, committed plot files also
+include automatic source-link metadata on each <code>File</code> object:
+<code>source_file</code> (basename) and <code>source_hash</code> (content hash). This supports
+traceability from visual artifacts back to generating code.</p>
 <h3 id="error-handling">Error Handling</h3>
 <p>The <code>commit()</code> method can raise the following exceptions:</p>
 <ul>
