@@ -1513,6 +1513,10 @@ vector plots, WebP for raster plots):</p>
 </ul>
 <p>The format is automatically chosen based on the plot type. You don't need to specify
 it manually - Kirin handles it for you.</p>
+<p>For matplotlib SVGs, Kirin uses deterministic serialization (date metadata
+suppressed and fixed <code>svg.hashsalt</code>) so identical plot content hashes
+consistently. This enables <code>skip_if_no_changes=True</code> to skip true no-op plot
+commits in reactive notebooks.</p>
 <h3 id="error-handling">Error Handling</h3>
 <p>The <code>commit()</code> method can raise the following exceptions:</p>
 <ul>
