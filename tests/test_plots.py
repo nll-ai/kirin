@@ -148,21 +148,7 @@ def test_save_plot_returns_hash(temp_dir):
 
 
 def test_save_plot_deterministic_hash(temp_dir):
-    """Test that same plot content produces equivalent plots.
-
-    Matplotlib SVG output includes timestamps in metadata (<dc:date> elements),
-    so identical plots will have different hashes. We use XML parsing to normalize
-    and compare the actual plot content, ignoring metadata differences.
-
-    Why SVGs aren't identical:
-    - Matplotlib embeds creation timestamps in <metadata><dc:date> elements
-    - These timestamps make each SVG unique even for identical plots
-    - The actual plot content (paths, lines, shapes) is the same
-
-    Solution: Parse as XML, remove metadata, and compare the plot structure.
-    """
-    import re
-    import xml.etree.ElementTree as ET
+    """Test that same matplotlib plot content produces identical hashes."""
 
     storage = ContentStore(temp_dir)
 
@@ -177,77 +163,8 @@ def test_save_plot_deterministic_hash(temp_dir):
     hash1, filename1, _, _ = save_plot(fig1, filename, storage)
     hash2, filename2, _, _ = save_plot(fig2, filename, storage)
 
-    # Get SVG content
-    content1 = storage.retrieve(hash1, filename1).decode("utf-8")
-    content2 = storage.retrieve(hash2, filename2).decode("utf-8")
-
-    # Method 1: Simple regex approach - remove metadata sections
-    # This is simpler and more reliable than XML tree manipulation
-    def remove_metadata_simple(svg_content):
-        """Remove metadata sections from SVG content."""
-        # Remove entire <metadata>...</metadata> blocks
-        svg_content = re.sub(
-            r"<metadata>.*?</metadata>", "", svg_content, flags=re.DOTALL
-        )
-        # Also remove DOCTYPE and XML declaration for comparison
-        svg_content = re.sub(r"<\?xml.*?\?>", "", svg_content)
-        svg_content = re.sub(r"<!DOCTYPE.*?>", "", svg_content)
-        # Normalize whitespace
-        svg_content = re.sub(r"\s+", " ", svg_content)
-        return svg_content.strip()
-
-    normalized1 = remove_metadata_simple(content1)
-    normalized2 = remove_metadata_simple(content2)
-
-    # After removing metadata, the plots should be very similar
-    # They might still have minor differences (element IDs, etc.), but
-    # the core plot structure should match
-
-    # Parse as XML to verify structure
-    try:
-        root1 = ET.fromstring(content1)
-        root2 = ET.fromstring(content2)
-
-        # Count plot elements (paths, lines, polylines, etc.)
-        # These represent the actual plot content
-        plot_elements1 = (
-            len(root1.findall(".//{http://www.w3.org/2000/svg}path"))
-            + len(root1.findall(".//{http://www.w3.org/2000/svg}line"))
-            + len(root1.findall(".//{http://www.w3.org/2000/svg}polyline"))
-        )
-        plot_elements2 = (
-            len(root2.findall(".//{http://www.w3.org/2000/svg}path"))
-            + len(root2.findall(".//{http://www.w3.org/2000/svg}line"))
-            + len(root2.findall(".//{http://www.w3.org/2000/svg}polyline"))
-        )
-
-        # Both should have plot elements
-        assert plot_elements1 > 0, "Plot 1 should have plot elements"
-        assert plot_elements2 > 0, "Plot 2 should have plot elements"
-
-        # The number of plot elements should be similar (exact match not required
-        # due to potential rendering differences, but should be close)
-        assert abs(plot_elements1 - plot_elements2) <= 2, (
-            f"Plots should have similar number of elements: "
-            f"{plot_elements1} vs {plot_elements2}"
-        )
-
-    except ET.ParseError:
-        # If XML parsing fails, at least verify they're both valid SVG
-        assert content1.startswith("<?xml") or content1.startswith("<svg")
-        assert content2.startswith("<?xml") or content2.startswith("<svg")
-
-    # Verify normalized versions are similar (after removing metadata)
-    # They should match in structure even if not byte-identical
-    assert len(normalized1) > 100, "Normalized SVG 1 should have content"
-    assert len(normalized2) > 100, "Normalized SVG 2 should have content"
-    # Both should contain plot elements
-    assert (
-        "<path" in normalized1 or "<line" in normalized1 or "<polyline" in normalized1
-    )
-    assert (
-        "<path" in normalized2 or "<line" in normalized2 or "<polyline" in normalized2
-    )
+    assert hash1 == hash2
+    assert filename1 == filename2
 
     plt.close(fig1)
     plt.close(fig2)

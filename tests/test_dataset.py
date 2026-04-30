@@ -365,3 +365,32 @@ def test_commit_skip_if_no_changes_creates_commit_when_snapshot_changes(tmp_path
 
     assert second_hash != first_hash
     assert len(dataset.history()) == initial_count + 1
+
+
+def test_commit_skip_if_no_changes_skips_duplicate_matplotlib_plot(tmp_path):
+    """Test skip_if_no_changes skips identical matplotlib plot snapshots."""
+    pytest.importorskip("matplotlib")
+    import matplotlib.pyplot as plt
+
+    dataset = Dataset(root_dir=tmp_path, name="plot-idempotency-test")
+
+    fig, axis = plt.subplots()
+    axis.plot([1, 2, 3], [1, 4, 9])
+    first_hash = dataset.commit(
+        message="add plot",
+        add_files=[fig],
+    )
+    plt.close(fig)
+    initial_count = len(dataset.history())
+
+    fig, axis = plt.subplots()
+    axis.plot([1, 2, 3], [1, 4, 9])
+    second_hash = dataset.commit(
+        message="add same plot again",
+        add_files=[fig],
+        skip_if_no_changes=True,
+    )
+    plt.close(fig)
+
+    assert second_hash == first_hash
+    assert len(dataset.history()) == initial_count
